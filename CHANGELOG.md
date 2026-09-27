@@ -1,6 +1,55 @@
 # Changelog
 
-## Unreleased — surviving Telegram updates
+## 1.0.1 — works on renamed builds, Ghost Mode dialog fixed
+
+Version numbering restarts at 1.0.1 (versionCode 341, so it still installs over 3.7.0).
+
+### Fixed
+
+- **Tapping *Join* in the Ghost Mode dialog crashed Nekogram, and *Dismiss* left the Ghost Mode
+  button dead.** On Nekogram 12.10.3 `LaunchActivity.frameLayout` resolved to the tablet-only
+  `shadowTablet`, which is null on phones: showing the page failed and hiding it threw from
+  inside the dialog's click handler. The field is now found as the view `onCreate` hands to
+  `setContentView`, the wrapper checks it really is the window's content view (and falls back to
+  that view when it is not), `show`/`hide` can no longer throw, and dialog button actions run
+  inside a guard so a failure is logged instead of taking the client down.
+- The dialog button listener no longer depends on the listener method's name, and answers
+  `equals`/`hashCode` properly instead of returning null.
+
+### Restored on obfuscated (R8-renamed) builds
+
+Every feature below was inactive on Nekogram 12.10.3 because its hook point was renamed,
+inlined, reordered or narrowed. Each is now found by what the code does, checked against the
+12.10.3 bytecode in `NekogramApkTest`:
+
+- **Hide pinned messages** — `updatePinnedMessageView` (R8 swapped its parameters to
+  `(int, boolean)`; the real order is now published to the hook), `createPinnedMessageView` and
+  the `pinnedMessageView` field.
+- **Remove content-saving restrictions** — `hasSelectedNoforwardsMessage`.
+- **Save edits history** — `fillMessageMenu`, `processSelectedOption`, `selectedObject`.
+- **Show deleted messages** — `measureTime` and the time-label fields it writes
+  (`currentTimeString`, `timeWidth`, `timeTextWidth`, `Theme.chat_timePaint`).
+- **Secret media save** — the chat's `didPressImage` (R8 dropped its unused flag).
+- **Save protected stories** — `StoryItemHolder.allowScreenshots`.
+- **Disable stories** — `hasStories(long)` is hooked on every client, since `hasStories()` is
+  inlined away in some builds.
+- **Always save media** — `setIsAboutToSwitchToIndex` and `galleryButton`; `openPhoto` and
+  `setParentActivity` fall back to the one overload R8 keeps.
+- **Chat and profile menu entries** (*To the beginning*, *To the message*, *Approximate creation
+  date*) — `ActionBarMenuItem` and its `addSubItem`/`lazilyAddSubItem`, `headerItem`,
+  `otherItem`, `createActionBarMenu`. Clicks are now routed from each screen's live menu listener
+  instead of by class name, which renamed builds do not keep.
+- **Show user ID / hide online status on profiles** — `updateProfileData`, `userId`, `chatId`,
+  `nameTextView`, `onlineTextView`, and `SimpleTextView`'s text methods (found by shape when
+  renamed).
+- Menu and settings icons fall back to the resource table when `R$drawable` has been stripped.
+
+The resolver gained the matching tools: parameter-order tolerance, "called by" and
+"stores a new anonymous subclass" facts, subtype-narrowed fields, and class lookup by one
+distinctive method. The fingerprint version is bumped, so a cached mapping from the previous
+module version is discarded and rebuilt on first start.
+
+## Surviving Telegram updates
 
 Hooks address Telegram by plain name across 74 classes and 172 method names, so a client release
 that moves one of them silently takes a feature out. Two changes make that less likely and, when

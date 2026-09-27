@@ -1,215 +1,73 @@
-# TeleVip LSPosed
+<div align="center">
 
-<p>
-  <img src="https://img.shields.io/badge/Platform-Android-green">
-  <img src="https://img.shields.io/badge/Framework-LSPosed%20%7C%20Vector-blue">
-  <img src="https://img.shields.io/badge/Xposed%20API-93%20%7C%20102-blueviolet">
-  <img src="https://img.shields.io/badge/License-GPL--3.0-orange">
-</p>
+<img src=".github/assets/logo.svg" width="128" alt="TeleVip logo">
 
-A powerful Xposed module that adds advanced customization features to Telegram clients.
+# TeleVip
 
+**Privacy, media and quality-of-life features for Telegram and its forks, as an Xposed module.**
 
-## ✨ Features
+[![Release](https://img.shields.io/github/v/release/2B-4G10/TeleVIP?label=release&color=FFD500)](../../releases/latest)
+[![Xposed API](https://img.shields.io/badge/libxposed-API%20102-4A4D54)](#requirements)
+[![License](https://img.shields.io/badge/license-GPL--3.0-F99B1C)](LICENSE)
 
-### Privacy
-- Hide "Seen" status in:
-    - Private chats
-    - Channels and Groups
-- Hide "Typing..." indicator
-- Hide online status
-- Hide phone number
-- Hide story view status
-- Show deleted messages
-- Prevent deletion of secret media
+[Download](../../releases/latest) · [Changelog](CHANGELOG.md) · [Telegram channel](https://t.me/t_l0_e)
 
-### Media & Stories
-- Save protected stories to gallery
-- Save voice messages
-- Enable secret media
-- Save message edit history
+</div>
 
-### Telegram Modifications
-- Remove content saving restrictions
-- Disable stories
-- Hide pinned messages
-- Disable channel swipe
-- Disable profile swipe
-- Disable update notifications
-- Disable number rounding
+---
 
-### Performance
-- Boost Telegram download speed
+## Features
 
-### Premium
-- Enable Local Premium
-
-
-> More features are available but not listed here.
-
-
-# 📱 Supported Clients
-
-| Client | Version |
-|---|---|
-| Telegram | 12.8.3 (69222) |
-| Telegram Beta | 12.9.0 (69579) |
-| Telegram Web | 12.8.3 (69229) |
-| TG Connect | 11.13.1 (11130109) |
-| Plus Messenger | 12.8.1.0 (22350) |
-| Nagram | 12.8.1 (1239) |
-| NagramX | 12.8.1-2bcd1bd (1253) |
-| Nagram XF | 12.7.3 (1245) |
-| Nekogram | 12.8.1 (69160) |
-| Nekogram X | any (`nekox.messenger`, unobfuscated) |
-| Cherrygram | 12.8.1 (69160) |
-| Nicegram | 1.55.0 (2139) |
-| iMe | 12.8.1 (12080102) |
-| iMe Direct | 12.8.1 (12080109) |
-| X Plus | 12.0.1 (61669) |
-| ForkClient | 12.8.4.0 (691908) |
-| ForkClient Beta | 12.8.4.0 (691909) |
-| Skygram | 10.20.6 (40639) |
-| Teegra | 10.3.2 (41469) |
-| Telegraph | 12.8.1.1 (69172) |
-| Telega | 2.4.3 (107) |
-| Momogram | 12.6.4 |
-| Forkgram Classic | 12.8.10.0 |
-| Turrit | 1.8.9.9.5 |
-
-
-# 🧩 Supported frameworks
-
-TeleVip is a **libxposed API 102 module only**. It declares `minApiVersion=102`, so frameworks that
-implement the modern contract load it and older ones do not advertise it at all.
-
-| Framework | Module API | Entry point |
+| Privacy | Media & stories | Chats |
 |---|---|---|
-| Vector 2.2+ (JingMatrix) | 102 (modern libxposed) | `META-INF/xposed/java_init.list` → `com.my.televip.xposed.TeleVipModule` |
-| LSPosed 1.10+ | 102 (modern libxposed) | same as above |
-| LSPosed 1.9.x, EdXposed, LSPatch | 93 (legacy) | **not supported** — the legacy `assets/xposed_init` entry was removed |
+| Ghost Mode: no *seen*, *typing* or *online* | Save protected stories | Remove content-saving restrictions |
+| Hide phone number | Save voice messages | Save message edit history |
+| Hide story views | Save secret media | Hide pinned messages |
+| Show deleted messages | Always allow saving media | Disable stories |
+| Keep secret media from self-destructing | Faster downloads | Disable channel / profile swipe-back |
+| Show user IDs on profiles | Local Premium | Jump to first / any message |
 
-Zygisk providers: **Zygisk Next / NeoZygisk**, Magisk built-in Zygisk and KernelSU are all supported —
-the module talks to the Xposed framework only through `com.my.televip.xposed.XBridge` and never
-assumes a particular loader. In particular it no longer depends on `initZygote()` for its own APK
-path, which is what used to break language loading on app-scoped modules under Zygisk Next.
+…and more in the module's settings, which live inside the client's own **Settings**.
 
+## Requirements
 
+- **LSPosed 1.10+** or **Vector 2.2+** (libxposed API 102). LSPosed 1.9.x, EdXposed and LSPatch are not supported.
+- Any Zygisk provider: Magisk, KernelSU, Zygisk Next or NeoZygisk.
+- Android 8.1 or newer.
 
-# 🔄 Surviving Telegram updates
+## Install
 
-Official Telegram is not obfuscated, so TeleVip hooks it by plain name — 74 classes and 172
-distinct method names. Every one of those is something a client release can move, and when one
-moves the matching feature simply stops working.
+1. Download `TeleVip-…-debug.apk` from the [latest release](../../releases/latest) and install it.
+2. In LSPosed / Vector: **Modules** → enable **TeleVip** → tick your Telegram clients.
+3. **Force stop** the client and open it again.
 
-What the module does about it:
+## Supported clients
 
-- **Signature drift is tolerated.** A method that keeps its name but gains a parameter, or has a
-  parameter type renamed, used to take its hook down. It is now re-matched by name, and the hook
-  is attached anyway. This is only attempted once the exact lookup has already failed, so a hook
-  that still resolves normally behaves exactly as before.
-- **It refuses to guess.** A drifted candidate is accepted only when it is the single possibility.
-  Where the call site passes parameter types the arity must still match, so the argument positions
-  the callback reads stay aligned; where it passes none, the callback was written against a
-  no-argument method and cannot be reading arguments at all. Anything ambiguous is left alone.
-- **A class that no longer resolves becomes a wildcard** rather than failing the whole hook, so a
-  renamed inner class no longer takes down a hook whose method is still there.
-- **Breakage is visible.** One line at startup reports how the hooks landed:
+Telegram, Telegram Beta and Web, Plus Messenger, Nagram, NagramX, Nagram XF, **Nekogram**,
+Nekogram X, **Cherrygram**, Nicegram, iMe, X Plus, ForkClient, Forkgram, Skygram, Teegra,
+Telegraph, Telega, Momogram, Turrit and TG Connect.
 
-  ```
-  hook health: 68 resolved, 2 drifted, 1 missing
-    drifted (signature changed, hooked anyway): SharedConfig#setNewAppVersionAvailable
-    missing methods (feature inactive): ChatActivity#processSentMessage
-  ```
+Obfuscated forks such as Nekogram and Cherrygram rename their code on every release. TeleVip
+doesn't depend on a name table for a single version. It reads the running client's own APK once
+per update and finds each hook by what the code does. Anything it can't pin down exactly is left
+off rather than guessed. Details are in the [changelog](CHANGELOG.md).
 
-  A bug report can then name the symbol that moved instead of "stories stopped working".
-
-What it still cannot do, and no amount of matching will:
-
-- **A renamed method or class cannot be found.** If Telegram renames `allowScreenshots`, nothing
-  identifies the replacement; that feature is inactive until the name is updated here.
-- **A reordered or ambiguous signature is left alone** on purpose — attaching to the wrong overload
-  in a privacy feature is worse than that feature being off, because it would look like it works.
-- **The obfuscated forks** (Nekogram, Cherrygram) still need their R8 mapping tables regenerated
-  from the target APK on every client release. None of the above helps there.
-
-## Obfuscated clients (Nekogram, Cherrygram)
-
-These clients rename classes and methods with R8, and the names change between releases - even
-*which* parts get renamed changes (Nekogram 12.10.3 stopped renaming `org.telegram.messenger` and
-`tgnet`, which 12.8.1 still renamed). A table of names made for one release therefore points at
-*different* classes in the next one, so TeleVip never applies a table to a build it was not made
-for. Instead it reads the running client's own APK when it starts and finds each class and method
-by what it is rather than what it is called: its real name if the build kept it, otherwise a
-fingerprint - the strings it loads, what it extends, what it calls, its signature. The result is
-cached per client build, so this costs about a second once after each client update.
-
-Anything that cannot be pinned down to exactly one class or method is left off and reported, never
-guessed. The `TeleVip` logcat line starting with `obfuscation:` says how the running build was
-resolved.
-
-# 📥 Download
-
-GitHub builds the APK for you, so you do not need an Android SDK to get one.
-
-1. Open the [**Actions** tab](../../actions/workflows/build-apk.yml).
-2. Click the newest **Build APK** run — or press **Run workflow** to build the current code now.
-3. Scroll to **Artifacts**, download the `TeleVip-…` file, and unzip it.
-4. Copy `TeleVip-…-debug.apk` to your phone and open it to install.
-5. In **LSPosed** or **Vector**: **Modules** → enable **TeleVip** → tick your Telegram clients →
-   **force stop** Telegram and reopen it.
-
-Each run repeats these steps on its own summary page, with the exact file names for that build.
-
-> Install the **debug** APK. The release APK is only signed when the repository has signing
-> secrets set (`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`) — Android
-> refuses to install an unsigned APK, which is what "App not installed" means.
-
-
-
-# 🛠️ Building
+## Building
 
 ```bash
-./gradlew :app:assembleRelease
+./gradlew :app:assembleDebug
 ```
 
-Requirements: JDK 17, Android SDK 36. The libxposed API (`io.github.libxposed:api:102.0.0`) is a
-`compileOnly` dependency, so it is not packaged — the framework provides its own implementation at
-runtime.
+JDK 17 and Android SDK 36. Pushing to `main` builds APKs in [Actions](../../actions/workflows/build-apk.yml).
+Pushing a `v*` tag publishes a release.
 
-To get an installable APK locally, either build the debug variant (`./gradlew :app:assembleDebug`,
-signed with the debug key) or create a `keystore.properties` in the repository root so the release
-variant is signed.
+## Credits
 
-The `Nekogram` and `Cherrygram` resolvers hold R8 name mappings that are **specific to one client
-build**. When a mismatch is detected TeleVip now logs a single explicit warning at startup instead
-of failing silently; regenerate those tables when either client updates.
+- **[Mustafa (@mustafa1dev)](https://github.com/mustafa1dev)** is the original author of TeleVip
+  ([mustafa1dev/TeleVip-LSPosed](https://github.com/mustafa1dev/TeleVip-LSPosed)).
+- Partly based on [Re-Telegram](https://github.com/Sakion-Team/Re-Telegram).
 
+## License
 
-
-# 📢 Updates
-
-All TeleVip updates are published on Telegram:
-
-➡️ https://t.me/t_l0_e
-
-
-# ⚠️ Warning
-> This module is intended for educational purposes only. Its use may result in issues with your Telegram account, including the risk of banning or suspension. Use it at your own risk.
-
-
-# 📄 License
-
-This project is licensed under the **GNU General Public License v3.0 (GPLv3)**.
-
-See the [LICENSE](./LICENSE) file for more information.
-
-
-# Credits
-
-Partially based on:
-
-- [Re-Telegram](https://github.com/Sakion-Team/Re-Telegram).
-
-
-Developed by **@mustafa1dev**
+[GPL-3.0](LICENSE). This project is for educational use. Modified clients can put a Telegram
+account at risk, so use it at your own risk.
