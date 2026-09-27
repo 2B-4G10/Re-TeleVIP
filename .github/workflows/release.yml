@@ -1,13 +1,19 @@
 name: Release
 
-# Publishes a GitHub release with the APKs attached whenever a version tag is pushed:
+# Publishes a GitHub release "v<versionName>" with the APKs attached. It runs when:
 #
-#   git tag v1.0.1 && git push origin v1.0.1
+#   - a commit to main changes app/build.gradle (a version bump) and that release does not exist
+#     yet - so bumping versionName is all it takes to ship;
+#   - a v* tag is pushed (the tag must match versionName);
+#   - it is started by hand from the Actions tab.
 #
 # The release notes are the matching "## <version>" section of CHANGELOG.md.
 on:
   push:
+    branches: [main]
+    paths: ['app/build.gradle']
     tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -22,7 +28,7 @@ jobs:
       KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
 
     steps:
-      - name: Check out the tag
+      - name: Check out
         uses: actions/checkout@v7
 
       - name: Set up JDK 17
@@ -55,28 +61,45 @@ jobs:
           } > keystore.properties
 
       # A tag that disagrees with the app's own version would publish an APK that reports a
-      # different version than the release it hangs under.
-      - name: Check the tag matches versionName
+      # different version than the release it hangs under. On main, an existing release for this
+      # version means the push changed something else in build.gradle: nothing to publish.
+      - name: Work out the version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           version=$(grep -m1 'versionName' app/build.gradle | cut -d'"' -f2)
-          tag="${GITHUB_REF_NAME#v}"
-          tag="${tag#V}"
-          if [ "$version" != "$tag" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME does not match versionName $version in app/build.gradle."
-            exit 1
+          tag="v$version"
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            if [ "$GITHUB_REF_NAME" != "$tag" ] && [ "$GITHUB_REF_NAME" != "V$version" ]; then
+              echo "::error::Tag $GITHUB_REF_NAME does not match versionName $version in app/build.gradle."
+              exit 1
+            fi
+            tag="$GITHUB_REF_NAME"
+          fi
+          publish=true
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "$GITHUB_REF_TYPE" = "branch" ] \
+              && gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $tag already exists; nothing to publish."
+            publish=false
           fi
           echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
 
       - name: Run the unit tests
+        if: steps.version.outputs.publish == 'true'
         timeout-minutes: 12
         run: ./gradlew :app:testDebugUnitTest --stacktrace
 
       - name: Build the APKs
+        if: steps.version.outputs.publish == 'true'
         run: ./gradlew :app:assembleDebug :app:assembleRelease --stacktrace
 
       # Same rule as the Build APK workflow: an unsigned release APK cannot be installed, so it
       # is only attached when the signing secrets made it a signed one.
       - name: Collect the APKs
+        if: steps.version.outputs.publish == 'true'
         run: |
           mkdir -p artifacts
           cp app/build/outputs/apk/debug/app-debug.apk "artifacts/TeleVip-$VERSION-debug.apk"
@@ -88,6 +111,7 @@ jobs:
           ls -lh artifacts
 
       - name: Write the release notes
+        if: steps.version.outputs.publish == 'true'
         run: |
           awk -v v="$VERSION" '
             $0 ~ "^## " v "( |$)" { on = 1; next }
@@ -106,13 +130,15 @@ jobs:
 
       # gh ships on the runner image; GITHUB_TOKEN with contents: write is all it needs.
       - name: Publish the release
+        if: steps.version.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" artifacts/*.apk --clobber
-            gh release edit "$GITHUB_REF_NAME" --notes-file notes.md
+          # gh creates the tag on this commit when it does not exist yet.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" artifacts/*.apk --clobber
+            gh release edit "$TAG" --notes-file notes.md
           else
-            gh release create "$GITHUB_REF_NAME" artifacts/*.apk \
-              --title "TeleVip $GITHUB_REF_NAME" --notes-file notes.md --latest
+            gh release create "$TAG" artifacts/*.apk --target "$GITHUB_SHA" \
+              --title "TeleVip $TAG" --notes-file notes.md --latest
           fi

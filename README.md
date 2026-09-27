@@ -59,7 +59,7 @@ off rather than guessed. Details are in the [changelog](CHANGELOG.md).
 ```
 
 JDK 17 and Android SDK 36. Pushing to `main` builds APKs in [Actions](../../actions/workflows/build-apk.yml).
-Pushing a `v*` tag publishes a release.
+Bumping `versionName` on `main` publishes a release.
 
 ## Credits
 
