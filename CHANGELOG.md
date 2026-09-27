@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3 — release safeguard
+
+- A release is never published without the signed APK: if the signing secrets are missing or
+  stop working, the release fails instead of shipping only the debug build.
+- Installs over 1.0.2 directly (same signing key).
+
 ## 1.0.2 — signed release APK
 
 - **The release APK is now signed**, so it installs directly. Builds read the key from the
