@@ -117,7 +117,8 @@ jobs:
           OPEN_ISSUES: ${{ matrix.issue }}
         run: |
           [ -f report.md ] || echo "The check produced no report; see the \"Check the hook points\" log." > report.md
-          { echo "## $CLIENT $VERSION"; echo; cat report.md; } | tee -a "$GITHUB_STEP_SUMMARY" > body.md
+          { echo "## $CLIENT $VERSION"; echo; cat report.md; } > body.md
+          cat body.md | tee -a "$GITHUB_STEP_SUMMARY"
           # Issues are off by default on forks; the failed run and this summary still report it.
           [ "$OPEN_ISSUES" = "true" ] || exit 0
           [ "$(gh api "repos/$GITHUB_REPOSITORY" --jq .has_issues)" = "true" ] || exit 0
