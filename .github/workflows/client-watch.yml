@@ -1,0 +1,130 @@
+name: Client watch
+
+# Every week, downloads the latest Telegram, Nekogram and Cherrygram and checks that every
+# TeleVip feature's hook points still resolve in them (ClientApkTest). A client release that
+# breaks something opens an issue naming the affected features; a later release that works
+# again closes it. Run it by hand with an APK URL (e.g. a direct APKPure download) to check any
+# other build.
+on:
+  schedule:
+    - cron: '23 5 * * 1'
+  workflow_dispatch:
+    inputs:
+      apk_url:
+        description: 'Check only this APK (direct download URL; .apk or .xapk)'
+        required: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  clients:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - id: matrix
+        env:
+          APK_URL: ${{ inputs.apk_url }}
+        run: |
+          if [ -n "$APK_URL" ]; then
+            matrix=$(jq -nc --arg u "$APK_URL" '{include: [{client: "Manual check", url: $u}]}')
+          else
+            matrix='{"include":[
+              {"client":"Telegram","url":"https://telegram.org/dl/android/apk","issue":true},
+              {"client":"Nekogram","repo":"Nekogram/Nekogram","asset":"arm64-v8a","issue":true},
+              {"client":"Cherrygram","repo":"arsLan4k1390/Cherrygram","asset":"arm64","issue":true}]}'
+          fi
+          echo "matrix=$(echo "$matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
+
+  check:
+    name: ${{ matrix.client }}
+    needs: clients
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.clients.outputs.matrix) }}
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CLIENT: ${{ matrix.client }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platforms;android-36 build-tools;36.0.0'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Download the latest build
+        id: apk
+        env:
+          REPO: ${{ matrix.repo }}
+          URL: ${{ matrix.url }}
+          ASSET: ${{ matrix.asset }}
+        run: |
+          if [ -n "$REPO" ]; then
+            names=$(gh release view --repo "$REPO" --json assets --jq '.assets[].name' | grep -i '\.apk$' || true)
+            name=$(echo "$names" | grep -i -- "$ASSET" | head -n1)
+            [ -n "$name" ] || name=$(echo "$names" | head -n1)
+            [ -n "$name" ] || { echo "::error::No APK in the latest $REPO release."; exit 1; }
+            gh release download --repo "$REPO" --pattern "$name" --output client.apk
+          else
+            curl -fsSL --retry 3 -o client.apk "$URL"
+          fi
+
+          # An .xapk (APKPure) is a zip of split APKs: the code lives in the largest one.
+          if unzip -l client.apk manifest.json >/dev/null 2>&1; then
+            inner=$(unzip -Z1 client.apk '*.apk' | while read -r f; do
+              echo "$(unzip -Zl client.apk "$f" | awk 'NR==1{print $4}') $f"; done | sort -rn | head -n1 | cut -d' ' -f2-)
+            unzip -p client.apk "$inner" > base.apk && mv base.apk client.apk
+          fi
+
+          aapt2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | tail -n1)
+          badging=$("$aapt2" dump badging client.apk | head -n1)
+          version=$(echo "$badging" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p")
+          code=$(echo "$badging" | sed -n "s/.*versionCode='\([^']*\)'.*/\1/p")
+          echo "VERSION=$version ($code)" >> "$GITHUB_ENV"
+
+      - name: Check the hook points
+        id: check
+        continue-on-error: true
+        env:
+          TELEVIP_CLIENT_APK: ${{ github.workspace }}/client.apk
+          TELEVIP_CLIENT_REPORT: ${{ github.workspace }}/report.md
+        run: >-
+          ./gradlew :app:testDebugUnitTest --rerun
+          --tests 'com.my.televip.obfuscate.resolve.ClientApkTest' --stacktrace
+
+      - name: Report
+        env:
+          OUTCOME: ${{ steps.check.outcome }}
+          OPEN_ISSUES: ${{ matrix.issue }}
+        run: |
+          [ -f report.md ] || echo "The check produced no report; see the \"Check the hook points\" log." > report.md
+          { echo "## $CLIENT $VERSION"; echo; cat report.md; } | tee -a "$GITHUB_STEP_SUMMARY" > body.md
+          [ "$OPEN_ISSUES" = "true" ] || exit 0
+
+          title="Client watch: $CLIENT"
+          number=$(gh issue list --state open --search "\"$title\" in:title" --json number,title \
+              --jq ".[] | select(.title == \"$title\") | .number" | head -n1)
+          if [ "$OUTCOME" = "success" ]; then
+            [ -z "$number" ] || gh issue close "$number" --comment "Every hook point resolves again on $CLIENT $VERSION."
+          elif [ -z "$number" ]; then
+            gh issue create --title "$title" --body-file body.md
+          elif ! gh issue view "$number" --json body,comments --jq '.body, .comments[].body' | grep -qF "$CLIENT $VERSION"; then
+            gh issue comment "$number" --body-file body.md
+          fi
+
+      - name: Fail when a feature broke
+        if: steps.check.outcome != 'success'
+        run: exit 1
