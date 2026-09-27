@@ -41,8 +41,12 @@ public class PreventMedia {
                         @Override
                         protected void beforeMethod(MethodHookParam param) {
                             if (ConfigManager.preventMedia.isEnable()) {
-                                Object thisObject = param.thisObject;
-                                XReflect.setObjectField(thisObject, AutomationResolver.resolve("SecretMediaViewer", "onClose", AutomationResolver.ResolverType.Field), null);
+                                // Belt and braces: the read/delete requests are already blocked
+                                // above, so a build where onClose is renamed loses nothing.
+                                try {
+                                    XReflect.setObjectField(param.thisObject, AutomationResolver.resolve("SecretMediaViewer", "onClose", AutomationResolver.ResolverType.Field), null);
+                                } catch (Throwable ignored) {
+                                }
                             }
                         }
                     }));

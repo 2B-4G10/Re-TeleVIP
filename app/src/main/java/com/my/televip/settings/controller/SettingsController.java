@@ -2,6 +2,7 @@ package com.my.televip.settings.controller;
 
 import android.content.Context;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import com.my.televip.Configs.ConfigPreferences;
@@ -51,7 +52,11 @@ public class SettingsController {
                 alertDialog.setMessage(Translator.get(Keys.JoinTeleVip));
 
                 alertDialog.setPositiveButton(Translator.get(Keys.Join), AlertDialog.click(() -> {
-                    Browser.openUrl(context, "https://t.me/t_l0_e");
+                    try {
+                        Browser.openUrl(context, "https://t.me/t_l0_e");
+                    } catch (Throwable t) {
+                        Logger.e(t);
+                    }
                     hide();
                 }));
 
@@ -65,30 +70,46 @@ public class SettingsController {
     }
 
     public void show(View target) {
-        LaunchActivity launchActivity = new LaunchActivity(context);
-        if (target.getParent() == null) {
-            launchActivity.frameLayout.addView(target);
-        }
+        try {
+            FrameLayout root = new LaunchActivity(context).frameLayout;
+            if (root == null) {
+                Logger.e(new IllegalStateException("LaunchActivity content view not found"));
+                return;
+            }
+            if (target.getParent() == null) {
+                root.addView(target);
+            }
 
-        for (int i = 0; i < launchActivity.frameLayout.getChildCount(); i++) {
-            View child = launchActivity.frameLayout.getChildAt(i);
-            child.setVisibility(child == target ? View.VISIBLE : View.GONE);
-        }
+            for (int i = 0; i < root.getChildCount(); i++) {
+                View child = root.getChildAt(i);
+                child.setVisibility(child == target ? View.VISIBLE : View.GONE);
+            }
 
-        target.bringToFront();
+            target.bringToFront();
+        } catch (Throwable e) {
+            Logger.e(e);
+        }
     }
 
     public void hide() {
-        LaunchActivity launchActivity = new LaunchActivity(settingsView.getContext());
-        for (int i = 0; i < launchActivity.frameLayout.getChildCount(); i++) {
-            View child = launchActivity.frameLayout.getChildAt(i);
-            child.setVisibility(child == settingsView ? View.GONE : View.VISIBLE);
-        }
-
-        if (settingsView != null && settingsView.getParent() != null) {
-            launchActivity.frameLayout.removeView(settingsView);
-        }
         SettingsActivity.isSettings = false;
+        if (settingsView == null) return;
+        try {
+            // Where the view actually is beats where we think it went.
+            ViewGroup parent = settingsView.getParent() instanceof ViewGroup ? (ViewGroup) settingsView.getParent() : null;
+            if (parent == null) parent = new LaunchActivity(settingsView.getContext()).frameLayout;
+            if (parent == null) return;
+
+            for (int i = 0; i < parent.getChildCount(); i++) {
+                View child = parent.getChildAt(i);
+                child.setVisibility(child == settingsView ? View.GONE : View.VISIBLE);
+            }
+            if (settingsView.getParent() == parent) {
+                parent.removeView(settingsView);
+            }
+        } catch (Throwable e) {
+            Logger.e(e);
+        }
     }
 
     public Context getContext() {

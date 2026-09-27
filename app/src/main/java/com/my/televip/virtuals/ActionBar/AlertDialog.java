@@ -157,10 +157,21 @@ public class AlertDialog {
         final OnClick action = ((Click) click).action;
         Class<?> listenerClass = ClassLoad.getClass(ClassNames.ALERT_DIALOG_BUTTON_CLICK);
         if (listenerClass == null) return null;
-        final String onClick = AutomationResolver.resolve("AlertDialog$OnButtonClickListener", "onClick",
-                AutomationResolver.ResolverType.Method);
+        // The listener interface has a single method, so any non-Object call is the click - no
+        // need for its (possibly renamed) name. Object's own methods must still answer properly:
+        // returning null from hashCode or equals throws inside the client.
         return Proxy.newProxyInstance(Utils.classLoader, new Class[]{listenerClass}, (proxy, method, args) -> {
-            if (method.getName().equals(onClick)) action.onClick();
+            if (method.getDeclaringClass() == Object.class) {
+                switch (method.getName()) {
+                    case "equals":
+                        return args != null && args.length == 1 && proxy == args[0];
+                    case "hashCode":
+                        return System.identityHashCode(proxy);
+                    default:
+                        return "TeleVip click listener";
+                }
+            }
+            run(action);
             return null;
         });
     }
@@ -168,6 +179,15 @@ public class AlertDialog {
     private static DialogInterface.OnClickListener platformListener(Object click) {
         if (!(click instanceof Click)) return null;
         final OnClick action = ((Click) click).action;
-        return (dialog, which) -> action.onClick();
+        return (dialog, which) -> run(action);
+    }
+
+    /** A button action must never take the client down with it. */
+    private static void run(OnClick action) {
+        try {
+            action.onClick();
+        } catch (Throwable t) {
+            Logger.e(t);
+        }
     }
 }

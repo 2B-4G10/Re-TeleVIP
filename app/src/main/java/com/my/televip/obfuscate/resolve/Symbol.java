@@ -1,6 +1,8 @@
 package com.my.televip.obfuscate.resolve;
 
+import com.my.televip.obfuscate.dex.CodeScanner;
 import com.my.televip.obfuscate.dex.DexClass;
+import com.my.televip.obfuscate.dex.DexFile;
 import com.my.televip.obfuscate.dex.DexNames;
 
 import java.util.ArrayList;
@@ -130,7 +132,7 @@ public abstract class Symbol {
         String[] params;
         Boolean isStatic;
         int[] readPositions;
-        boolean voidable, narrowedStrings, narrowedReturn;
+        boolean voidable, narrowedStrings, narrowedReturn, anyOrder;
         final List<Body> facts = new ArrayList<>();
 
         MethodSymbol(String owner, String key) {
@@ -198,6 +200,16 @@ public abstract class Symbol {
             return this;
         }
 
+        /**
+         * R8 can reorder a private method's parameters. Accept the source parameters in any
+         * order; the build's real order is published for the call site, which must then look its
+         * parameter types up (AutomationResolver.resolveObject) rather than hard-code them.
+         */
+        public MethodSymbol anyOrder() {
+            this.anyOrder = true;
+            return this;
+        }
+
         public MethodSymbol where(Body... facts) {
             for (Body f : facts) this.facts.add(f);
             return this;
@@ -232,7 +244,17 @@ public abstract class Symbol {
             // something R8 generated, so for those the signature has to agree as well.
             List<DexClass.Method> named = cls.methodsNamed(name);
             if (!named.isEmpty()) {
-                if (want == null) {
+                if (want == null && !facts.isEmpty()) {
+                    // Overloads of a kept name (e.g. constructors): the facts pick one.
+                    List<DexClass.Method> fitting = new ArrayList<>();
+                    for (DexClass.Method m : named) {
+                        Boolean ok = holds(r, m);
+                        if (ok == null) return Resolver.Attempt.waiting();
+                        if (ok) fitting.add(m);
+                    }
+                    if (fitting.size() == 1) return Resolver.Attempt.of(fitting.get(0), true);
+                    if (name.length() > 3) return Resolver.Attempt.of(named.get(0), true);
+                } else if (want == null) {
                     if (name.length() > 3) return Resolver.Attempt.of(named.get(0), true);
                 } else {
                     for (DexClass.Method m : named) {
@@ -263,10 +285,11 @@ public abstract class Symbol {
                     && !(narrowedReturn && isSubtype(r, m.returnType(), ret))) return false;
             String[] actual = m.parameterTypes();
             if (actual.length == want.length) {
-                for (int i = 0; i < want.length; i++) {
-                    if (!paramFits(want[i], actual[i])) return false;
+                boolean inOrder = true;
+                for (int i = 0; i < want.length && inOrder; i++) {
+                    if (!paramFits(want[i], actual[i])) inOrder = false;
                 }
-                return true;
+                return inOrder || (anyOrder && isPermutation(want, actual));
             }
             if (readPositions == null || actual.length > want.length) return false;
             // Greedy subsequence alignment: actual[j] is source parameter kept[j].
@@ -278,6 +301,18 @@ public abstract class Symbol {
             if (j != actual.length) return false;
             for (int p : readPositions) {
                 if (p >= actual.length || kept[p] != p) return false;
+            }
+            return true;
+        }
+
+        private boolean isPermutation(String[] want, String[] actual) {
+            boolean[] used = new boolean[actual.length];
+            for (String w : want) {
+                boolean matched = false;
+                for (int j = 0; j < actual.length && !matched; j++) {
+                    if (!used[j] && paramFits(w, actual[j])) used[j] = matched = true;
+                }
+                if (!matched) return false;
             }
             return true;
         }
@@ -308,13 +343,22 @@ public abstract class Symbol {
             return true;
         }
 
+        private boolean reordered(Resolver r, DexClass.Method m) {
+            if (!anyOrder) return false;
+            String[] actual = m.parameterTypes();
+            for (int i = 0; i < actual.length; i++) {
+                if (!paramFits(r.descriptor(params[i]), actual[i])) return true;
+            }
+            return false;
+        }
+
         @Override
         void store(Resolver r, Resolver.Attempt attempt, Mapping mapping) {
             DexClass.Method m = (DexClass.Method) attempt.found;
             r.methods.put(id(), m);
             mapping.methods.put(Mapping.memberKey(owner, key), m.name());
             // Deleted parameters: the call site asks for the source list, so hand it the real one.
-            if (params != null && m.parameterTypes().length != params.length) {
+            if (params != null && (m.parameterTypes().length != params.length || reordered(r, m))) {
                 String[] actual = m.parameterTypes();
                 String[] names = new String[actual.length];
                 for (int i = 0; i < actual.length; i++) names[i] = javaName(actual[i]);
@@ -338,6 +382,8 @@ public abstract class Symbol {
         String writtenBy;
         int writeOrdinal;
         boolean ordinalOfReads;
+        String handedIn, handedTo;
+        boolean narrowed;
 
         FieldSymbol(String owner, String name) {
             this.owner = owner;
@@ -382,6 +428,29 @@ public abstract class Symbol {
             return this;
         }
 
+        /**
+         * Renamed field: the field (of this type or a subclass of it) that {@code hostMethod} reads
+         * last before calling a method named {@code calledName} - e.g. the view an Activity's
+         * onCreate hands to setContentView. R8 narrows such fields to their anonymous subclass and
+         * adds look-alikes of the same base type, so neither the type nor uniqueness pins them.
+         * The host must be a framework override, whose name R8 keeps.
+         */
+        public FieldSymbol handedTo(String hostMethod, String calledName) {
+            this.handedIn = hostMethod;
+            this.handedTo = calledName;
+            return this;
+        }
+
+        /**
+         * R8 narrows a field's declared type to the one class ever stored in it - an anonymous
+         * {@code new FrameLayout(ctx) { ... }} field ends up typed as that subclass. Accept any
+         * subclass of the source type (for writtenBy / readBy).
+         */
+        public FieldSymbol narrowed() {
+            this.narrowed = true;
+            return this;
+        }
+
         /** Renamed field: the one of this type that the given (resolved) method touches. */
         public FieldSymbol accessedBy(String methodSymbolId) {
             this.accessedBy = methodSymbolId;
@@ -407,6 +476,38 @@ public abstract class Symbol {
             if (kept != null && (name.length() > 3 || typeDesc == null || typeDesc.equals(kept.type()))) {
                 return Resolver.Attempt.of(kept, true);
             }
+            if (typeDesc != null && handedIn != null) {
+                final List<String> handed = new ArrayList<>();
+                final String owner = cls.descriptor;
+                final String base = typeDesc;
+                final Resolver resolver = r;
+                for (DexClass.Method host : cls.methodsNamed(handedIn)) {
+                    if (!host.hasCode()) continue;
+                    final DexFile dex = host.owner.dex;
+                    final String[] lastRead = new String[1];
+                    host.scan(new CodeScanner.Visitor() {
+                        @Override
+                        public void field(int opcode, int i, boolean write) {
+                            if (!write && dex.fieldClass(i).equals(owner)
+                                    && resolver.index.extendsClass(dex.fieldType(i), base)) {
+                                lastRead[0] = dex.fieldName(i);
+                            }
+                        }
+
+                        @Override
+                        public void invoke(int opcode, int i) {
+                            if (dex.methodName(i).equals(handedTo) && lastRead[0] != null
+                                    && !handed.contains(lastRead[0])) handed.add(lastRead[0]);
+                        }
+                    });
+                }
+                List<DexClass.Field> found = new ArrayList<>();
+                for (String n : handed) {
+                    DexClass.Field f = cls.fieldNamed(n);
+                    if (f != null) found.add(f);
+                }
+                return Resolver.Attempt.single(found);
+            }
             if (typeDesc != null && uniqueOfType) {
                 List<DexClass.Field> ofType = new ArrayList<>();
                 for (DexClass.Field f : cls.fields) {
@@ -420,7 +521,8 @@ public abstract class Symbol {
                         ? Resolver.Attempt.waiting() : Resolver.Attempt.notFound();
                 List<String> order = new ArrayList<>();
                 for (Body.Refs.FieldRef f : Body.Refs.of(r, writer).fields) {
-                    if (f.write != ordinalOfReads && f.owner.equals(cls.descriptor) && f.type.equals(typeDesc)
+                    boolean typeFits = f.type.equals(typeDesc) || (narrowed && r.index.extendsClass(f.type, typeDesc));
+                    if (f.write != ordinalOfReads && f.owner.equals(cls.descriptor) && typeFits
                             && !order.contains(f.name)) order.add(f.name);
                 }
                 if (writeOrdinal >= order.size()) return Resolver.Attempt.notFound();

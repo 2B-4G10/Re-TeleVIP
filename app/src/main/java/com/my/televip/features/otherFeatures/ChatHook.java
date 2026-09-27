@@ -16,6 +16,7 @@ import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.AutomationResolver;
 import com.my.televip.virtuals.ActionBar.ActionBarMenuItem;
 import com.my.televip.virtuals.ActionBar.AlertDialog;
+import com.my.televip.virtuals.Drawables;
 import com.my.televip.virtuals.Theme;
 import com.my.televip.virtuals.ui.ChatActivity;
 
@@ -25,11 +26,9 @@ public class ChatHook {
 
     private static boolean initialized = false;
 
-    public static void init(Context context, String className) {
+    public static void init(Context context) {
         if (initialized || ClientChecker.check(ClientChecker.ClientType.Nagram) || ClientChecker.check(ClientChecker.ClientType.TelegramPlus)) return;
 
-        Class<?> clazz = ClassLoad.getClass(className);
-        if (clazz == null) FeatureStateManager.reset(context);
         try {
             initialized = true;
             HMethod.hookMethod(ClassLoad.getClass(ClassNames.CHAT_ACTIVITY), AutomationResolver.resolve("ChatActivity", "createView", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("createView", new Class[]{Context.class}), new AbstractMethodHook() {
@@ -41,15 +40,16 @@ public class ChatHook {
                         ActionBarMenuItem headerItem = chatActivity.getHeaderItem();
                         if (headerItem.getActionBarMenuItem() != null) {
 
-                            int drawableResource = XReflect.getStaticIntField(ClassLoad.getClass(ClassNames.DRAWABLE), "msg_go_up");
+                            int drawableResource = Drawables.id(context, "msg_go_up");
 
                             if (!ClientChecker.check(ClientChecker.ClientType.iMe) && !ClientChecker.check(ClientChecker.ClientType.iMeWeb) && !ClientChecker.check(ClientChecker.ClientType.TelegramPlus) && !ClientChecker.check(ClientChecker.ClientType.XPlus) && !ClientChecker.check(ClientChecker.ClientType.forkgram) && !ClientChecker.check(ClientChecker.ClientType.forkgramBeta)) {
                                 headerItem.lazilyAddSubItem(8353847, drawableResource, Translator.get(Keys.ToTheBeginning));
                             }
-                            drawableResource = XReflect.getStaticIntField(ClassLoad.getClass(ClassNames.DRAWABLE), "player_new_order");
+                            drawableResource = Drawables.id(context, "player_new_order");
 
                             headerItem.lazilyAddSubItem(8353848, drawableResource, Translator.get(Keys.ToTheMessage));
 
+                            MenuClicks.attach(param.thisObject, (fragment, id) -> onItemClick(context, fragment, id));
                         }
                     } catch (Throwable t){
                         Logger.e(t);
@@ -58,64 +58,59 @@ public class ChatHook {
                 }
             }));
 
-            HMethod.hookMethod(clazz, "onItemClick", int.class, new AbstractMethodHook() {
-                @Override
-                protected void afterMethod(MethodHookParam param) {
-                    try {
-                        int id = (int) param.args[0];
-
-                        final Object thisClass = XReflect.getObjectField(param.thisObject, AutomationResolver.resolve("ChatActivity", "this$0", AutomationResolver.ResolverType.Field));
-                        ChatActivity chat = new ChatActivity(thisClass);
-
-                        if (id == 8353847) {
-                            chat.scrollToMessageId(1, 0, true, 0, true, 0);
-                        } else if (id == 8353848) {
-
-                            AlertDialog dialog = new AlertDialog(context);
-                            dialog.setTitle(Translator.get(Keys.InputMessageId));
-
-                            EditText input = new EditText(context);
-                            input.setInputType(InputType.TYPE_CLASS_NUMBER);
-                            if (Theme.isLight()) {
-                                input.setTextColor(0xFF000000);
-                                input.setHintTextColor(0xFF424242);
-                            } else {
-                                input.setTextColor(0xFFFFFFFF);
-                                input.setHintTextColor(0xFFBDBDBD);
-                            }
-                            input.setTextSize(18);
-                            input.setPadding(20, 20, 20, 20);
-
-                            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                                    LinearLayout.LayoutParams.MATCH_PARENT,
-                                    LinearLayout.LayoutParams.WRAP_CONTENT
-                            );
-                            params.setMargins(20, 20, 20, 20);
-                            input.setLayoutParams(params);
-
-                            LinearLayout layout = new LinearLayout(context);
-                            layout.setOrientation(LinearLayout.VERTICAL);
-                            layout.addView(input);
-
-                            dialog.setView(layout);
-
-                            dialog.setPositiveButton(Translator.get(Keys.Done), AlertDialog.click(() -> {
-                                String text = input.getText().toString().trim();
-                                if (!text.isEmpty()) {
-                                    int msgId = Integer.parseInt(text);
-                                    chat.scrollToMessageId(msgId, 0, true, 0, true, 0);
-                                }
-                            }));
-
-                            dialog.show();
-                        }
-                    } catch (Throwable t) {
-                        Logger.e(t);
-                    }
-                }
-            });
         } catch (Throwable t){
-            FeatureStateManager.reset(context);
+            Logger.e(t);
+        }
+    }
+
+    private static void onItemClick(Context context, Object fragment, int id) {
+        try {
+            ChatActivity chat = new ChatActivity(fragment);
+
+            if (id == 8353847) {
+                chat.scrollToMessageId(1, 0, true, 0, true, 0);
+            } else if (id == 8353848) {
+
+                AlertDialog dialog = new AlertDialog(context);
+                dialog.setTitle(Translator.get(Keys.InputMessageId));
+
+                EditText input = new EditText(context);
+                input.setInputType(InputType.TYPE_CLASS_NUMBER);
+                if (Theme.isLight()) {
+                    input.setTextColor(0xFF000000);
+                    input.setHintTextColor(0xFF424242);
+                } else {
+                    input.setTextColor(0xFFFFFFFF);
+                    input.setHintTextColor(0xFFBDBDBD);
+                }
+                input.setTextSize(18);
+                input.setPadding(20, 20, 20, 20);
+
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                );
+                params.setMargins(20, 20, 20, 20);
+                input.setLayoutParams(params);
+
+                LinearLayout layout = new LinearLayout(context);
+                layout.setOrientation(LinearLayout.VERTICAL);
+                layout.addView(input);
+
+                dialog.setView(layout);
+
+                dialog.setPositiveButton(Translator.get(Keys.Done), AlertDialog.click(() -> {
+                    String text = input.getText().toString().trim();
+                    if (!text.isEmpty()) {
+                        int msgId = Integer.parseInt(text);
+                        chat.scrollToMessageId(msgId, 0, true, 0, true, 0);
+                    }
+                }));
+
+                dialog.show();
+            }
+        } catch (Throwable t) {
+            Logger.e(t);
         }
     }
 }

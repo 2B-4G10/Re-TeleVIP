@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public final class TelegramFingerprints {
 
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
 
     private TelegramFingerprints() {
     }
@@ -67,6 +67,8 @@ public final class TelegramFingerprints {
         o.put("PhotoViewer$PhotoViewerProvider", "org.telegram.ui.PhotoViewer$PhotoViewerProvider");
         o.put("PhotoViewer$PlaceProviderObject", "org.telegram.ui.PhotoViewer$PlaceProviderObject");
         o.put("ProfileActivity", "org.telegram.ui.ProfileActivity");
+        o.put("PeerStoriesView$StoryItemHolder", "org.telegram.ui.Stories.PeerStoriesView$StoryItemHolder");
+        o.put("SimpleTextView", "org.telegram.ui.ActionBar.SimpleTextView");
         o.put("QuickAckDelegate", "org.telegram.tgnet.QuickAckDelegate");
         o.put("RequestDelegateTimestamp", "org.telegram.tgnet.RequestDelegateTimestamp");
         o.put("SQLiteCursor", "org.telegram.SQLite.SQLiteCursor");
@@ -130,6 +132,7 @@ public final class TelegramFingerprints {
         alertDialog(s);
         cells(s);
         chat(s);
+        profile(s);
         photoViewer(s);
         stories(s);
         misc(s);
@@ -395,15 +398,20 @@ public final class TelegramFingerprints {
         s.add(method("ActionBar", "setActionBarMenuOnItemClick")
                 .sig("void", "org.telegram.ui.ActionBar.ActionBar$ActionBarMenuOnItemClick"));
 
+        // The menu button tells accessibility it is an ImageButton (icon) or a Button (text).
+        // Its old helper overloads (addSubItem(int, CharSequence), ...) are gone in newer builds.
         s.add(cls(ami)
-                .from(subclassesOf("android.widget.FrameLayout"))
-                .where(hasMethod(false, "android.widget.TextView", "int", "java.lang.CharSequence"),
-                        hasMethod(false, "void", "android.view.View", "int", "int")));
+                .from(declaringStrings("android.widget.ImageButton", "android.widget.Button"))
+                .where(inherits("android.widget.FrameLayout"), loadsString("android.widget.ImageButton"),
+                        loadsString("android.widget.Button")));
         s.add(cls(sub)
                 .from(returnTypeWhere(ami, "int", "int", "java.lang.CharSequence"))
                 .where(extendsType("android.widget.FrameLayout")));
+        // lazilyAddSubItem(int, int, CharSequence); R8 narrows the text to String when only
+        // strings are passed.
         s.add(cls(item)
-                .from(returnTypeWhere(ami, "int", "int", "java.lang.CharSequence"))
+                .from(returnTypeWhere(ami, "int", "int", "java.lang.CharSequence"),
+                        returnTypeWhere(ami, "int", "int", "java.lang.String"))
                 .where(extendsType("java.lang.Object")));
 
         s.add(method("ActionBarMenuItem", "addSubItemIC").named("addSubItem").sig("android.widget.TextView", "int", "java.lang.CharSequence"));
@@ -418,7 +426,11 @@ public final class TelegramFingerprints {
         s.add(method("ActionBarMenuItem", "addSubItemIVII").named("addSubItem").sig("void", "int", "android.view.View", "int", "int"));
         s.add(method("ActionBarMenuItem", "addSubItemVII").named("addSubItem").sig("void", "android.view.View", "int", "int"));
         s.add(method("ActionBarMenuItem", "lazilyAddSubItemIDC").named("lazilyAddSubItem").sig(item, "int", drawable, "java.lang.CharSequence"));
-        s.add(method("ActionBarMenuItem", "lazilyAddSubItemIIC").named("lazilyAddSubItem").sig(item, "int", "int", "java.lang.CharSequence"));
+        s.add(method("ActionBarMenuItem", "addSubItem").sig(sub, "int", "int", "java.lang.CharSequence"));
+        s.add(method("ActionBarMenuItem", "lazilyAddSubItem").sig(item, "int", "int", "java.lang.CharSequence")
+                .narrowedStrings());
+        s.add(method("ActionBarMenuItem", "lazilyAddSubItemIIC").named("lazilyAddSubItem").sig(item, "int", "int", "java.lang.CharSequence")
+                .narrowedStrings());
         s.add(method("ActionBarMenuItem", "lazilyAddSubItemIIDCZZ").named("lazilyAddSubItem")
                 .sig(item, "int", "int", drawable, "java.lang.CharSequence", "boolean", "boolean"));
     }
@@ -508,6 +520,39 @@ public final class TelegramFingerprints {
 
     // --------------------------------------------------------------------- chat
 
+    private static void profile(List<Symbol> s) {
+        String p = "org.telegram.ui.ProfileActivity";
+        String stv = "org.telegram.ui.ActionBar.SimpleTextView";
+
+        // A View with setText(CharSequence) / setText(CharSequence, boolean) both returning
+        // whether the text changed - the shape no other view has.
+        s.add(cls(stv)
+                .from(returnTypeWhere(p, "boolean"), subclassesOf("android.view.View"))
+                .where(extendsType("android.view.View"),
+                        hasMethod(false, "boolean", "java.lang.CharSequence"),
+                        hasMethod(false, "boolean", "java.lang.CharSequence", "boolean"),
+                        hasMethod(false, "java.lang.CharSequence")));
+        s.add(method("SimpleTextView", "setText").sig("boolean", "java.lang.CharSequence"));
+        s.add(method("SimpleTextView", "getText").sig("java.lang.CharSequence"));
+
+        // onFragmentCreate: userId = arguments.getLong("user_id"); chatId = ...("chat_id").
+        s.add(method("ProfileActivity", "onFragmentCreate"));
+        s.add(field("ProfileActivity", "userId").type("long").writtenBy("ProfileActivity#onFragmentCreate", 0));
+        s.add(field("ProfileActivity", "chatId").type("long").writtenBy("ProfileActivity#onFragmentCreate", 1));
+        // Field initialisers: nameTextView = new SimpleTextView[2]; onlineTextView = new SimpleTextView[4].
+        // (Bundle) only delegates to (Bundle, SharedMediaPreloader), which runs the initialisers.
+        s.add(method("ProfileActivity", "<init>").where(usesOpcode(0x23)));
+        s.add(field("ProfileActivity", "nameTextView").type(stv + "[]").writtenBy("ProfileActivity#<init>", 0));
+        s.add(field("ProfileActivity", "onlineTextView").type(stv + "[]").writtenBy("ProfileActivity#<init>", 1));
+
+        // Rebuilds the three-dot menu; the only (boolean) method offering "delete topics".
+        s.add(method("ProfileActivity", "createActionBarMenu").sig("void", "boolean").where(string("DeleteTopics")));
+        s.add(field("ProfileActivity", "otherItem").type("org.telegram.ui.ActionBar.ActionBarMenuItem")
+                .readBy("ProfileActivity#createActionBarMenu", 0));
+        // Fills in name, status and avatar; the only (boolean) method counting bot users.
+        s.add(method("ProfileActivity", "updateProfileData").sig("void", "boolean").where(string("BotUsers")));
+    }
+
     private static void chat(List<Symbol> s) {
         String cell = "org.telegram.ui.Cells.ChatMessageCell";
         String mo = "org.telegram.messenger.MessageObject";
@@ -518,11 +563,39 @@ public final class TelegramFingerprints {
                 .from(fieldTypesOf("org.telegram.ui.Cells.ChatMessageCell$MessageAccessibilityNodeProvider"))
                 .where(implementsType("org.telegram.messenger.ImageReceiver$ImageReceiverDelegate")));
         s.add(method("ChatMessageCell", "getMessageObject").sig(mo).where(callsNothing()));
-        s.add(method("ChatMessageCell", "measureTime").sig("void", mo));
+        // The only (MessageObject) method that labels imported messages.
+        s.add(method("ChatMessageCell", "measureTime").sig("void", mo).where(string("ImportedMessage")));
+        // measureTime builds currentTimeString first, then measures it:
+        // timeTextWidth = timeWidth = ceil(chat_timePaint.measureText(currentTimeString)).
+        s.add(field("ChatMessageCell", "currentTimeString").type("android.text.SpannableStringBuilder")
+                .writtenBy("ChatMessageCell#measureTime", 0));
+        s.add(field("ChatMessageCell", "timeWidth").type("int").writtenBy("ChatMessageCell#measureTime", 0));
+        s.add(field("ChatMessageCell", "timeTextWidth").type("int").writtenBy("ChatMessageCell#measureTime", 1));
 
-        s.add(method("ChatActivity", "createPinnedMessageView").sig("void"));
-        s.add(method("ChatActivity", "hasSelectedNoforwardsMessage").sig("boolean"));
-        s.add(method("ChatActivity", "processSelectedOption").sig("void", "int"));
+        // Call sites ask for these by their plain names.
+        s.add(method("ChatActivity", "fillMessageMenu")
+                .sig("void", mo, "java.util.ArrayList", "java.util.ArrayList", "java.util.ArrayList"));
+        s.add(method("ChatActivity", "scrollToMessageId").sig("void", "int", "int", "boolean", "int", "boolean", "int"));
+        // processSelectedOption starts with "if (selectedObject == null ...) return".
+        s.add(field("ChatActivity", "selectedObject").type(mo).readBy("ChatActivity#processSelectedOption", 0));
+        // updatePinnedMessageView toggles the "show pinned" entry of the header (three-dot) menu.
+        s.add(field("ChatActivity", "headerItem").type("org.telegram.ui.ActionBar.ActionBarMenuItem")
+                .readBy("ChatActivity#updatePinnedMessageViewZI", 0));
+
+        // Builds the pinned bar lazily for updatePinnedMessageView: the one void() helper it calls
+        // that stores a new anonymous FrameLayout in a field (its debug-name literal is stripped).
+        s.add(method("ChatActivity", "createPinnedMessageView").sig("void")
+                .where(calledBy("ChatActivity#updatePinnedMessageViewZI"),
+                        storesNewSubclassOf("org.telegram.ui.ChatActivity", "android.widget.FrameLayout")));
+        s.add(field("ChatActivity", "pinnedMessageView").type("android.widget.FrameLayout").narrowed()
+                .writtenBy("ChatActivity#createPinnedMessageView", 0));
+        // The one boolean query over the selection that reads a message's noforwards flag.
+        s.add(method("ChatActivity", "hasSelectedNoforwardsMessage").sig("boolean")
+                .where(touchesField("org.telegram.tgnet.TLRPC$Message", "noforwards")));
+        // The context-menu dispatcher: one switch over the OPTION_* constants, including ones
+        // (open-in, speed promo, revenue-sharing ads) no other int handler switches on.
+        s.add(method("ChatActivity", "processSelectedOption").sig("void", "int")
+                .where(switchKey(33), switchKey(83), switchKey(103)));
         s.add(method("ChatActivity", "scrollToMessageIdIIZIZI").named("scrollToMessageId")
                 .sig("void", "int", "int", "boolean", "int", "boolean", "int"));
         s.add(method("ChatActivity", "scrollToMessageIdIIZIZIIR").named("scrollToMessageId")
@@ -535,13 +608,26 @@ public final class TelegramFingerprints {
                 .where(callsNamed("org.telegram.messenger.MessagesController", "createDeleteShowOnceTask")));
         s.add(method("ChatActivity", "sendSecretMessageRead").sig("java.lang.Runnable", mo, "boolean").narrowedReturn()
                 .where(callsNamed("org.telegram.messenger.MessagesController", "markMessageAsRead2")));
-        s.add(method("ChatActivity", "updatePinnedMessageViewZ").named("updatePinnedMessageView").sig("void", "boolean"));
-        s.add(method("ChatActivity", "updatePinnedMessageViewZI").named("updatePinnedMessageView").sig("void", "boolean", "int"));
+        // (boolean, int) compares the top pin against the dismissed one saved under "pin_<dialog>".
+        // 12.10.3 has it as (int, boolean).
+        s.add(method("ChatActivity", "updatePinnedMessageViewZI").named("updatePinnedMessageView")
+                .sig("void", "boolean", "int").anyOrder()
+                .where(string("pin_"), callsNamed("org.telegram.messenger.MessagesController", "getNotificationsSettings")));
+        // (boolean) only forwards to it; R8 may inline it, in which case hooking (boolean, int) is enough.
+        s.add(method("ChatActivity", "updatePinnedMessageViewZ").named("updatePinnedMessageView").sig("void", "boolean")
+                .where(callsSymbol("ChatActivity#updatePinnedMessageViewZI"), callCount(1)));
 
+        // ChatActivity's cell delegate. Many screens implement the delegate interface; this one
+        // holds its ChatActivity, and its didPressImage flags media for the downloads list.
+        // R8 may drop didPressImage's fullPreview flag, so look for both shapes.
+        Body pressesImage = touchesField("org.telegram.messenger.MessageObject", "putInDownloadsStore");
         s.add(cls("org.telegram.ui.ChatActivity$ChatMessageCellDelegate")
-                .from(declaringMethod("void", cell, "float", "float", "boolean"))
-                .where(hasField(false, "org.telegram.ui.ChatActivity")));
-        s.add(method("ChatActivity$ChatMessageCellDelegate", "didPressImage").sig("void", cell, "float", "float", "boolean"));
+                .from(declaringMethod("void", cell, "float", "float", "boolean"),
+                        declaringMethod("void", cell, "float", "float"))
+                .where(hasField(false, "org.telegram.ui.ChatActivity"), someMethod(pressesImage)));
+        // The hook reads only the cell (args[0]); the real parameter list is published for it.
+        s.add(method("ChatActivity$ChatMessageCellDelegate", "didPressImage")
+                .sig("void", cell, "float", "float", "boolean").reads(0).where(pressesImage));
     }
 
     // ------------------------------------------------------------- photo viewer
@@ -563,8 +649,13 @@ public final class TelegramFingerprints {
                 .where(isInterface()));
         s.add(cls(place).from(returnTypeWhere(provider, mo, loc, "int", "boolean", "boolean")));
         s.add(method("PhotoViewer$PhotoViewerProvider", "getPlaceForPhoto").sig(place, mo, loc, "int", "boolean", "boolean"));
+        // Named by openPhoto(int, PageBlocksAdapter, provider) - or, once R8 has inlined that
+        // overload, by the one openPhoto every overload funnels into.
         s.add(cls(blocks)
-                .from(paramTypeWhere(pv, "boolean", "int", null, provider))
+                .from(paramTypeWhere(pv, "boolean", "int", null, provider),
+                        paramTypeWhere(pv, "boolean", mo, loc, imgLoc, imgLoc, "java.util.ArrayList",
+                                "java.util.ArrayList", "java.util.ArrayList", "int", provider, chat,
+                                "long", "long", "long", "boolean", null, "java.lang.Integer"))
                 .where(isInterface()));
 
         s.add(method("PhotoViewer", "getInstance").isStatic(true).sig(pv));
@@ -585,16 +676,23 @@ public final class TelegramFingerprints {
                         "int", provider, chat, "long", "long", "long", "boolean", blocks, "java.lang.Integer"));
         s.add(method("PhotoViewer", "setIsAboutToSwitchToIndexIZZ").named("setIsAboutToSwitchToIndex")
                 .sig("void", "int", "boolean", "boolean"));
+        // A look-alike (int, boolean, boolean, boolean) exists; only this one names YouTube videos.
         s.add(method("PhotoViewer", "setIsAboutToSwitchToIndexIZZZ").named("setIsAboutToSwitchToIndex")
-                .sig("void", "int", "boolean", "boolean", "boolean"));
+                .sig("void", "int", "boolean", "boolean", "boolean").where(string("YouTube")));
         s.add(method("PhotoViewer", "setParentActivityA").named("setParentActivity").sig("void", "android.app.Activity"));
         s.add(method("PhotoViewer", "setParentActivityAO").named("setParentActivity").sig("void", "android.app.Activity", rp));
         s.add(method("PhotoViewer", "setParentActivityAOO").named("setParentActivity")
                 .sig("void", "android.app.Activity", fragment, rp));
+        // setParentActivity builds the menus in a fixed order: loop, cast, gallery, pip, all media, QR.
+        s.add(field("PhotoViewer", "galleryButton").type("org.telegram.ui.ActionBar.ActionBarMenuSubItem")
+                .writtenBy("PhotoViewer#setParentActivityAOO", 2));
         s.add(method("PhotoViewer", "setParentActivityO").named("setParentActivity").sig("void", fragment));
         s.add(method("PhotoViewer", "setParentActivityOO").named("setParentActivity").sig("void", fragment, rp));
 
-        s.add(field("LaunchActivity", "frameLayout").type("android.widget.FrameLayout").onlyOneOfType());
+        // The Activity's content view. Not "the only FrameLayout field": R8 narrows it to its
+        // anonymous subclass, leaving the tablet-only shadowTablet as the sole plain FrameLayout.
+        s.add(field("LaunchActivity", "frameLayout").type("android.widget.FrameLayout")
+                .handedTo("onCreate", "setContentView"));
 
         s.add(method("SecretMediaViewer", "closePhoto").sig("boolean", "boolean", "boolean"));
         s.add(method("SecretMediaViewer", "openMedia")
@@ -604,6 +702,14 @@ public final class TelegramFingerprints {
     // ------------------------------------------------------------------ stories
 
     private static void stories(List<Symbol> s) {
+
+        // allowScreenshots(): false for noforwards stories, and for pinned ones of a noforwards
+        // chat - the only boolean() in the app reading both flags of a story item.
+        Body screenshots = Body.all(touchesField("org.telegram.tgnet.tl.TL_stories$StoryItem", "noforwards"),
+                touchesField("org.telegram.tgnet.tl.TL_stories$StoryItem", "pinned"));
+        s.add(cls("org.telegram.ui.Stories.PeerStoriesView$StoryItemHolder")
+                .from(declaringMethodWhere(screenshots, "boolean")));
+        s.add(method("PeerStoriesView$StoryItemHolder", "allowScreenshots").sig("boolean").where(screenshots));
         String peerStories = "org.telegram.tgnet.tl.TL_stories$PeerStories";
         s.add(method("StoriesController", "hasStoriesJ").named("hasStories").sig("boolean", "long")
                 .where(callsSibling(peerStories, "long"), callsSibling("boolean", "long"),
@@ -649,7 +755,8 @@ public final class TelegramFingerprints {
         // call negated (xor-int/lit8 ..., 1), or two calls where getActiveTheme() is not inlined.
         s.add(method("Theme", "isCurrentThemeDark").isStatic(true).sig("boolean")
                 .where(callCount(1), not(usesOpcode(0xdf))));
+        // measureTime also touches chat_unlockExtendedMediaTextPaint, but reads chat_timePaint first.
         s.add(field("Theme", "chat_timePaint").isStatic(true).type("android.text.TextPaint")
-                .accessedBy("ChatMessageCell#measureTime"));
+                .readBy("ChatMessageCell#measureTime", 0));
     }
 }

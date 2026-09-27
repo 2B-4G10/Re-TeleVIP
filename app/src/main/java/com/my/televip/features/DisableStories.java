@@ -35,15 +35,16 @@ public class DisableStories {
                 }
 
                 if (ClassLoad.getClass(ClassNames.STORIES_CONTROLLER) != null) {
-                    if (ClientChecker.check(ClientChecker.ClientType.NagramX)) {
-                        HMethod.hookMethod(ClassLoad.getClass(ClassNames.STORIES_CONTROLLER), AutomationResolver.resolve("StoriesController", "hasStories2", AutomationResolver.ResolverType.Method), long.class, new AbstractMethodHook() {
-                            @Override
-                            protected void beforeMethod(MethodHookParam param) {
-                                if (ConfigManager.disableStories.isEnable())
-                                    param.setResult(false);
-                            }
-                        });
-                    } else {
+                    // hasStories(long) marks a dialog as having stories; hasStories() is the
+                    // list-wide check, which some builds inline away. Hook whichever exist.
+                    HMethod.hookMethod(ClassLoad.getClass(ClassNames.STORIES_CONTROLLER), AutomationResolver.resolve("StoriesController", "hasStories2", AutomationResolver.ResolverType.Method), long.class, new AbstractMethodHook() {
+                        @Override
+                        protected void beforeMethod(MethodHookParam param) {
+                            if (ConfigManager.disableStories.isEnable())
+                                param.setResult(false);
+                        }
+                    });
+                    if (!ClientChecker.check(ClientChecker.ClientType.NagramX)) {
                         HMethod.hookMethod(ClassLoad.getClass(ClassNames.STORIES_CONTROLLER), AutomationResolver.resolve("StoriesController", "hasStories", AutomationResolver.ResolverType.Method), new AbstractMethodHook() {
                             @Override
                             protected void beforeMethod(MethodHookParam param) {

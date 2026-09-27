@@ -226,6 +226,38 @@ public interface Body {
         };
     }
 
+    /** Is itself called by another (resolved) method - to pick one of look-alike helpers. */
+    static Body calledBy(final String methodSymbolId) {
+        return (r, m) -> {
+            DexClass.Method caller = r.methods.get(methodSymbolId);
+            if (caller == null) return null;
+            String proto = Resolver.protoOf(m);
+            for (Refs.Call c : Refs.of(r, caller).calls) {
+                if (c.owner.equals(m.owner.descriptor) && c.name.equals(m.name()) && c.proto.equals(proto)) return true;
+            }
+            return false;
+        };
+    }
+
+    /**
+     * Creates a view of a subclass of {@code base} and stores it in a field of {@code owner}
+     * declared with that same subclass - how R8 leaves a lazily built
+     * {@code field = new FrameLayout(context) { ... }} once it has narrowed the field's type.
+     */
+    static Body storesNewSubclassOf(final String owner, final String base) {
+        return (r, m) -> {
+            String ownerDesc = r.descriptor(owner);
+            String baseDesc = r.descriptor(base);
+            if (ownerDesc == null || baseDesc == null) return null;
+            Refs refs = Refs.of(r, m);
+            for (Refs.FieldRef f : refs.fields) {
+                if (f.write && f.owner.equals(ownerDesc) && !f.type.equals(baseDesc)
+                        && refs.newInstances.contains(f.type) && r.index.extendsClass(f.type, baseDesc)) return true;
+            }
+            return false;
+        };
+    }
+
     /** new-instance, check-cast, instance-of or const-class of the given type. */
     static Body usesType(final String type) {
         return (r, m) -> {

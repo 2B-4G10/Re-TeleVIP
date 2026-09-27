@@ -55,6 +55,7 @@ public class ClassNames {
     public static final String HEADER_CELL = "org.telegram.ui.Cells.HeaderCell";
     public static final String FAST_DATE_FORMAT = "org.telegram.messenger.time.FastDateFormat";
     public static final String BROWSER = "org.telegram.messenger.browser.Browser";
+    public static final String ACTION_BAR = "org.telegram.ui.ActionBar.ActionBar";
     public static final String ACTION_BAR_MENU_ON_ITEM_CLICK = "org.telegram.ui.ActionBar.ActionBar$ActionBarMenuOnItemClick";
     public static final String UITEM = "org.telegram.ui.Components.UItem";
     public static final String SETTINGS_ACTIVITY_SETTING_CELL = "org.telegram.ui.SettingsActivity$SettingCell";

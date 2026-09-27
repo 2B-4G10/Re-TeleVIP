@@ -9,6 +9,7 @@ import com.my.televip.obfuscate.AutomationResolver;
 import com.my.televip.virtuals.messenger.ImageReceiver;
 import com.my.televip.virtuals.messenger.MessageObject;
 
+import com.my.televip.logging.Logger;
 import com.my.televip.reflect.XReflect;
 
 public class PhotoViewer {
@@ -24,11 +25,44 @@ public class PhotoViewer {
     }
 
     public void setParentActivity(Activity activity){
-        XReflect.callMethod(photoViewer,  AutomationResolver.resolve("PhotoViewer", "setParentActivity", AutomationResolver.ResolverType.Method), activity);
+        try {
+            XReflect.callMethod(photoViewer, AutomationResolver.resolve("PhotoViewer", "setParentActivity", AutomationResolver.ResolverType.Method), activity);
+            return;
+        } catch (Throwable ignored) {
+            // R8 inlines the one-argument overload into setParentActivity(activity, null, null).
+        }
+        callMaster("setParentActivityAOO", "setParentActivity", 3, activity, null, null);
     }
 
     public void openPhoto(MessageObject messageObject, long l, long l2, long l3, PhotoViewerProvider provider, boolean b){
-        XReflect.callMethod(photoViewer,  AutomationResolver.resolve("PhotoViewer", "openPhoto", AutomationResolver.ResolverType.Method), messageObject.getMessageObject(),l, l2, l3, provider.getPhotoViewerProvider(), b);
+        try {
+            XReflect.callMethod(photoViewer,  AutomationResolver.resolve("PhotoViewer", "openPhoto", AutomationResolver.ResolverType.Method), messageObject.getMessageObject(),l, l2, l3, provider.getPhotoViewerProvider(), b);
+            return;
+        } catch (Throwable ignored) {
+            // R8 inlines every openPhoto overload into the sixteen-argument one they all call.
+        }
+        callMaster("openPhotoOOOOAAAIOOJJJZOI", "openPhoto", 16, messageObject.getMessageObject(), null, null, null,
+                null, null, null, 0, provider.getPhotoViewerProvider(), null, l, l2, l3, b, null, null);
+    }
+
+    /** Calls the overload every other one delegates to, by its mapped name and arity. */
+    private void callMaster(String key, String realName, int arity, Object... args) {
+        String name = AutomationResolver.resolve("PhotoViewer", key, AutomationResolver.ResolverType.Method);
+        if (name == null || name.equals(key)) name = realName;
+        for (Class<?> c = photoViewer.getClass(); c != null; c = c.getSuperclass()) {
+            for (java.lang.reflect.Method m : c.getDeclaredMethods()) {
+                if (!m.getName().equals(name) || m.getParameterTypes().length != arity) continue;
+                try {
+                    m.setAccessible(true);
+                    m.invoke(photoViewer, args);
+                    return;
+                } catch (Throwable t) {
+                    Logger.e(t);
+                    return;
+                }
+            }
+        }
+        Logger.e(new NoSuchMethodException("PhotoViewer#" + name + "/" + arity));
     }
 
     public View getGalleryButton(){

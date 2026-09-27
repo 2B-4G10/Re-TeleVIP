@@ -254,6 +254,35 @@ public final class Classes {
         }
     }
 
+    /**
+     * Classes declaring a method of this signature whose body satisfies {@code fact} - for a
+     * class known only by one distinctive method. Walks the method tables for the signature
+     * first, so only bodies of that exact shape are scanned.
+     */
+    public static Symbol.ClassSource declaringMethodWhere(final Body fact, final String returnType,
+                                                          final String... params) {
+        return r -> {
+            String ret = r.descriptor(returnType);
+            if (ret == null) return null;
+            String[] want = new String[params.length];
+            for (int i = 0; i < params.length; i++) {
+                want[i] = r.descriptor(params[i]);
+                if (want[i] == null) return null;
+            }
+            java.util.Set<DexClass> out = new java.util.LinkedHashSet<>();
+            for (DexClass c : r.index.classesDeclaring(ret, want)) {
+                for (DexClass.Method m : c.methods) {
+                    if (!m.hasCode() || !m.returnType().equals(ret)
+                            || !java.util.Arrays.equals(m.parameterTypes(), want)) continue;
+                    Boolean ok = fact.test(r, m);
+                    if (ok == null) return null;
+                    if (ok) out.add(c);
+                }
+            }
+            return out;
+        };
+    }
+
     /** The class that declares a method symbol resolved elsewhere. */
     public static Symbol.ClassSource ownerOfSymbol(final String methodSymbolId) {
         return r -> {
@@ -365,6 +394,20 @@ public final class Classes {
                 if (Body.Refs.of(r, m).strings.contains(value)) return true;
             }
             return false;
+        };
+    }
+
+    /** Some method of the class that has code satisfies this body fact. */
+    public static Symbol.ClassFact someMethod(final Body fact) {
+        return (r, c) -> {
+            boolean undecided = false;
+            for (DexClass.Method m : c.methods) {
+                if (!m.hasCode()) continue;
+                Boolean b = fact.test(r, m);
+                if (b == null) undecided = true;
+                else if (b) return true;
+            }
+            return undecided ? null : false;
         };
     }
 

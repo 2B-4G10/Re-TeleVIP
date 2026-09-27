@@ -13,6 +13,7 @@ import com.my.televip.obfuscate.AutomationResolver;
 import com.my.televip.utils.IdDateEstimator;
 import com.my.televip.virtuals.ActionBar.ActionBarMenuItem;
 import com.my.televip.virtuals.ActionBar.AlertDialog;
+import com.my.televip.virtuals.Drawables;
 import com.my.televip.virtuals.ui.ProfileActivity;
 
 import com.my.televip.reflect.XReflect;
@@ -21,12 +22,8 @@ public class ProfileHook {
 
     private static boolean initialized = false;
 
-    public static void init(Context context, String className) {
-        if (initialized || className == null) return;
-
-        Class<?> clazz = ClassLoad.getClass(className);
-        if (clazz == null) FeatureStateManager.reset(context);
-
+    public static void init(Context context) {
+        if (initialized) return;
         initialized = true;
 
         HMethod.hookMethod(ClassLoad.getClass(ClassNames.PROFILE_ACTIVITY), AutomationResolver.resolve("ProfileActivity", "createActionBarMenu", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("createActionBarMenu", new Class[]{boolean.class}), new AbstractMethodHook() {
@@ -39,42 +36,34 @@ public class ProfileHook {
 
                     if (otherItem.getActionBarMenuItem() != null) {
 
-                        int drawableResource = 0x7f0806d3;
-
-                        if (!ClientChecker.check(ClientChecker.ClientType.Nagram) && !ClientChecker.check(ClientChecker.ClientType.Momogram)) {
-                            drawableResource = XReflect.getStaticIntField(ClassLoad.getClass(ClassNames.DRAWABLE), "msg_filled_menu_users");
+                        int drawableResource = Drawables.id(context, "msg_filled_menu_users");
+                        if (drawableResource == 0 && (ClientChecker.check(ClientChecker.ClientType.Nagram) || ClientChecker.check(ClientChecker.ClientType.Momogram))) {
+                            drawableResource = 0x7f0806d3;
                         }
 
                         otherItem.addSubItem(8353847, drawableResource, Translator.get(Keys.ApproximateCreationDate));
+                        MenuClicks.attach(param.thisObject, (fragment, id) -> onItemClick(context, fragment, id));
                     }
                 }
             }
         }));
+    }
 
-        HMethod.hookMethod(clazz, "onItemClick", int.class, new AbstractMethodHook() {
-            @Override
-            protected void afterMethod(MethodHookParam param) {
+    private static void onItemClick(Context context, Object fragment, int id) {
+        if (id != 8353847) return;
+        ProfileActivity profile = new ProfileActivity(fragment);
 
-                int id = (int) param.args[0];
-
-                if (id == 8353847) {
-                    final Object thisClass = XReflect.getObjectField(param.thisObject, AutomationResolver.resolve("ProfileActivity", "this$0", AutomationResolver.ResolverType.Field));
-                    ProfileActivity profile = new ProfileActivity(thisClass);
-
-                    AlertDialog alertDialog = new AlertDialog(context);
-                    alertDialog.setTitle(Translator.get(Keys.TeleVip));
-                    alertDialog.setMessage("\n" +
-                            Translator.get(Keys.ApproximateCreationDate) + " : " +
-                                    IdDateEstimator.getYearAndMethod(getUserID(profile)) + "\n\n" +
-                                    Translator.get(Keys.Age) + " : " +
-                                    IdDateEstimator.getAge(getUserID(profile)) + "\n\n" +
-                                    Translator.get(Keys.ApproximateCreationDateNotice)
-                    );
-                    alertDialog.setPositiveButton(Translator.get(Keys.Done), null);
-                    alertDialog.show();
-                }
-            }
-        });
+        AlertDialog alertDialog = new AlertDialog(context);
+        alertDialog.setTitle(Translator.get(Keys.TeleVip));
+        alertDialog.setMessage("\n" +
+                Translator.get(Keys.ApproximateCreationDate) + " : " +
+                        IdDateEstimator.getYearAndMethod(getUserID(profile)) + "\n\n" +
+                        Translator.get(Keys.Age) + " : " +
+                        IdDateEstimator.getAge(getUserID(profile)) + "\n\n" +
+                        Translator.get(Keys.ApproximateCreationDateNotice)
+        );
+        alertDialog.setPositiveButton(Translator.get(Keys.Done), null);
+        alertDialog.show();
     }
 
     private static long getUserID(ProfileActivity profile) {

@@ -69,7 +69,8 @@ public class NekogramApkTest {
     @Test
     public void theSettingsPageResolves() {
         requireApk();
-        assertEquals("I0", mapping.resolveField("LaunchActivity", "frameLayout"));
+        // K0 is the content view handed to setContentView; I0 is the tablet-only shadowTablet.
+        assertEquals("K0", mapping.resolveField("LaunchActivity", "frameLayout"));
         assertEquals("wka", mapping.resolveClass("org.telegram.ui.Cells.TextCheckCell"));
         assertEquals("h", mapping.resolveMethod("TextCheckCell", "setTextAndCheck"));
         assertEquals("d", mapping.resolveMethod("TextCheckCell", "setChecked"));
@@ -98,6 +99,54 @@ public class NekogramApkTest {
         // narrowed their Runnable returns to the lambda classes.
         assertEquals("Ua", mapping.resolveMethod("ChatActivity", "sendSecretMediaDelete"));
         assertEquals("Va", mapping.resolveMethod("ChatActivity", "sendSecretMessageRead"));
+    }
+
+    /** The hook points of the features that were dark on 12.10.3, each checked against the bytecode. */
+    @Test
+    public void featureHookPointsResolve() {
+        requireApk();
+        // Hide Pinned Messages. R8 reordered updatePinnedMessageView(boolean, int) to (int, boolean),
+        // so the real parameter order is published for the hook.
+        assertEquals("vc", mapping.resolveMethod("ChatActivity", "updatePinnedMessageViewZI"));
+        assertArrayEquals(new String[]{"I", "Z"}, mapping.resolveParameters("updatePinnedMessageView"));
+        assertEquals("Q5", mapping.resolveMethod("ChatActivity", "createPinnedMessageView"));
+        assertEquals("J2", mapping.resolveField("ChatActivity", "pinnedMessageView"));
+        // Removes Content Saving, Save Edits History.
+        assertEquals("e7", mapping.resolveMethod("ChatActivity", "hasSelectedNoforwardsMessage"));
+        assertEquals("pa", mapping.resolveMethod("ChatActivity", "processSelectedOption"));
+        assertEquals("t6", mapping.resolveMethod("ChatActivity", "fillMessageMenu"));
+        assertEquals("s5", mapping.resolveField("ChatActivity", "selectedObject"));
+        // Show Deleted Messages' time label.
+        assertEquals("w3", mapping.resolveMethod("ChatMessageCell", "measureTime"));
+        assertEquals("Ab", mapping.resolveField("ChatMessageCell", "currentTimeString"));
+        assertEquals("wb", mapping.resolveField("ChatMessageCell", "timeWidth"));
+        assertEquals("xb", mapping.resolveField("ChatMessageCell", "timeTextWidth"));
+        assertEquals("U2", mapping.resolveField("Theme", "chat_timePaint"));
+        // Secret Media Save: didPressImage lost its fullPreview flag; the hook reads only the cell.
+        assertEquals("R", mapping.resolveMethod("ChatActivity$ChatMessageCellDelegate", "didPressImage"));
+        assertArrayEquals(new String[]{"w32", "F", "F"}, mapping.resolveParameters("didPressImage"));
+        // Save Protected Stories.
+        assertEquals("a", mapping.resolveMethod("PeerStoriesView$StoryItemHolder", "allowScreenshots"));
+        // Always Save Media.
+        assertEquals("P1", mapping.resolveMethod("PhotoViewer", "setIsAboutToSwitchToIndexIZZZ"));
+        assertEquals("F0", mapping.resolveField("PhotoViewer", "galleryButton"));
+        assertEquals("l1", mapping.resolveMethod("PhotoViewer", "openPhotoOOOOAAAIOOJJJZOI"));
+        // Chat and profile menu entries, profile ID / online text.
+        assertEquals("u7", simple(mapping.resolveClass("org.telegram.ui.ActionBar.ActionBarMenuItem")));
+        assertEquals("y", mapping.resolveMethod("ActionBarMenuItem", "lazilyAddSubItem"));
+        assertEquals("g", mapping.resolveMethod("ActionBarMenuItem", "addSubItem"));
+        assertEquals("t0", mapping.resolveField("ChatActivity", "headerItem"));
+        assertEquals("g1", mapping.resolveField("ProfileActivity", "otherItem"));
+        assertEquals("F1", mapping.resolveMethod("ProfileActivity", "createActionBarMenu"));
+        assertEquals("G3", mapping.resolveMethod("ProfileActivity", "updateProfileData"));
+        assertEquals("q1", mapping.resolveField("ProfileActivity", "userId"));
+        assertEquals("r1", mapping.resolveField("ProfileActivity", "chatId"));
+        assertEquals("s", mapping.resolveField("ProfileActivity", "nameTextView"));
+        assertEquals("x", mapping.resolveField("ProfileActivity", "onlineTextView"));
+    }
+
+    private static String simple(String name) {
+        return name == null ? null : name.substring(name.lastIndexOf('.') + 1);
     }
 
     /** What cannot be pinned down must stay unresolved - these are the ones that would be guesses. */
