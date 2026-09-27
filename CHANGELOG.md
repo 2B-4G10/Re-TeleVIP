@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.2 — signed release APK
+
+- **The release APK is now signed**, so it installs directly. Builds read the key from the
+  `KEYSTORE_*` repository secrets (or a local `keystore.properties`); nothing secret is kept in
+  the repository. Because it is signed with a different key than the debug APK, uninstall a debug
+  build once before installing the release one.
+- Hooking several methods at once no longer skips the rest when one of them is missing.
+- Mapping caches of earlier client builds are deleted when a new one is written.
+- Removed unused code, resources and template files; Android Gradle Plugin 9.4.1.
+
 ## 1.0.1 — works on renamed builds, Ghost Mode dialog fixed
 
 Version numbering restarts at 1.0.1 (versionCode 341, so it still installs over 3.7.0).

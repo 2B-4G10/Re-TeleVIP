@@ -97,7 +97,7 @@ jobs:
 
           ### Install
 
-          1. Download **TeleVip-…-debug.apk** below and install it.
+          1. Download **TeleVip-…-release.apk** below and install it (uninstall a debug build first).
           2. In **LSPosed 1.10+** or **Vector 2.2+**: **Modules** → enable **TeleVip** → tick your Telegram clients.
           3. **Force stop** the client and reopen it.
           EOF
