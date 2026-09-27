@@ -61,7 +61,7 @@ off rather than guessed. Details are in the [changelog](CHANGELOG.md).
 JDK 17 and Android SDK 36. Pushing to `main` builds APKs in [Actions](../../actions/workflows/build-apk.yml).
 Bumping `versionName` on `main` publishes a release.
 Every Monday, [Client watch](../../actions/workflows/client-watch.yml) checks the latest Telegram,
-Nekogram and Cherrygram against every feature's hook points and opens an issue if a release breaks one.
+Nekogram and Cherrygram against every feature's hook points and fails (emailing you) if a release breaks one.
 
 ## Credits
 

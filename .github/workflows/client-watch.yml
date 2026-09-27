@@ -2,8 +2,9 @@ name: Client watch
 
 # Every week, downloads the latest Telegram, Nekogram and Cherrygram and checks that every
 # TeleVip feature's hook points still resolve in them (ClientApkTest). A client release that
-# breaks something opens an issue naming the affected features; a later release that works
-# again closes it. Run it by hand with an APK URL (e.g. a direct APKPure download) to check any
+# breaks something fails the run (GitHub emails you) with the affected features in its summary,
+# and opens an issue if the repository has issues enabled; a release that works again closes it.
+# Run it by hand with an APK URL (e.g. a direct APKPure download) to check any
 # other build.
 on:
   schedule:
@@ -79,7 +80,12 @@ jobs:
             [ -n "$name" ] || { echo "::error::No APK in the latest $REPO release."; exit 1; }
             gh release download --repo "$REPO" --pattern "$name" --output client.apk
           else
-            curl -fsSL --retry 3 -o client.apk "$URL"
+            # Big downloads from some servers drop mid-transfer: resume until complete.
+            for attempt in 1 2 3 4 5; do
+              curl -fsSL --retry 3 --retry-all-errors -C - -o client.apk "$URL" && break
+              [ "$attempt" = 5 ] && { echo "::error::Could not download $URL."; exit 1; }
+              sleep 10
+            done
           fi
 
           # An .xapk (APKPure) is a zip of split APKs: the code lives in the largest one.
@@ -112,7 +118,9 @@ jobs:
         run: |
           [ -f report.md ] || echo "The check produced no report; see the \"Check the hook points\" log." > report.md
           { echo "## $CLIENT $VERSION"; echo; cat report.md; } | tee -a "$GITHUB_STEP_SUMMARY" > body.md
+          # Issues are off by default on forks; the failed run and this summary still report it.
           [ "$OPEN_ISSUES" = "true" ] || exit 0
+          [ "$(gh api "repos/$GITHUB_REPOSITORY" --jq .has_issues)" = "true" ] || exit 0
 
           title="Client watch: $CLIENT"
           number=$(gh issue list --state open --search "\"$title\" in:title" --json number,title \
