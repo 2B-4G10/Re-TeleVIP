@@ -81,7 +81,9 @@ jobs:
           cp app/build/outputs/apk/debug/app-debug.apk "artifacts/TeleVip-$VERSION-debug.apk"
           release_apk=$(find app/build/outputs/apk/release -name '*.apk' | head -n 1)
           case "$release_apk" in
-            *unsigned*) echo "::warning::No signing secrets set; only the debug APK is attached." ;;
+            ""|*unsigned*)
+              echo "::error::The release APK is not signed - check the KEYSTORE_* secrets. Nothing was published."
+              exit 1 ;;
             *) cp "$release_apk" "artifacts/TeleVip-$VERSION-release.apk" ;;
           esac
 
