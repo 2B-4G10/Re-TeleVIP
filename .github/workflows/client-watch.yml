@@ -1,6 +1,7 @@
 name: Client watch
 
-# Every week, downloads the latest Telegram, Nekogram and Cherrygram and checks that every
+# Every week, downloads the latest Telegram, Nekogram, Cherrygram, Nagram, NagramX and Forkgram
+# (the last three only when their latest GitHub release carries an APK) and checks that every
 # TeleVip feature's hook points still resolve in them (ClientApkTest). A client release that
 # breaks something fails the run (GitHub emails you) with the affected features in its summary,
 # and opens an issue if the repository has issues enabled; a release that works again closes it.
@@ -35,7 +36,10 @@ jobs:
             matrix='{"include":[
               {"client":"Telegram","url":"https://telegram.org/dl/android/apk","issue":true},
               {"client":"Nekogram","repo":"Nekogram/Nekogram","asset":"arm64-v8a","issue":true},
-              {"client":"Cherrygram","repo":"arsLan4k1390/Cherrygram","asset":"arm64","issue":true}]}'
+              {"client":"Cherrygram","repo":"arsLan4k1390/Cherrygram","asset":"arm64","issue":true},
+              {"client":"Nagram","repo":"NextAlone/Nagram","asset":"arm64","issue":true,"optional":true},
+              {"client":"NagramX","repo":"risin42/NagramX","asset":"arm64","issue":true,"optional":true},
+              {"client":"Forkgram","repo":"forkgram/TelegramAndroid","asset":"arm64","issue":true,"optional":true}]}'
           fi
           echo "matrix=$(echo "$matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
 
@@ -72,12 +76,17 @@ jobs:
           REPO: ${{ matrix.repo }}
           URL: ${{ matrix.url }}
           ASSET: ${{ matrix.asset }}
+          OPTIONAL: ${{ matrix.optional }}
         run: |
           if [ -n "$REPO" ]; then
             names=$(gh release view --repo "$REPO" --json assets --jq '.assets[].name' | grep -i '\.apk$' || true)
             name=$(echo "$names" | grep -i -- "$ASSET" | head -n1)
             [ -n "$name" ] || name=$(echo "$names" | head -n1)
-            [ -n "$name" ] || { echo "::error::No APK in the latest $REPO release."; exit 1; }
+            if [ -z "$name" ]; then
+              # Variants that do not attach an APK to every release are skipped, not failed.
+              [ "$OPTIONAL" = "true" ] && { echo "::notice::No APK in the latest $REPO release; skipped."; echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0; }
+              echo "::error::No APK in the latest $REPO release."; exit 1
+            fi
             gh release download --repo "$REPO" --pattern "$name" --output client.apk
           else
             # Big downloads from some servers drop mid-transfer: resume until complete.
@@ -103,6 +112,7 @@ jobs:
 
       - name: Check the hook points
         id: check
+        if: steps.apk.outputs.skip != 'true'
         continue-on-error: true
         env:
           TELEVIP_CLIENT_APK: ${{ github.workspace }}/client.apk
@@ -112,6 +122,7 @@ jobs:
           --tests 'com.my.televip.obfuscate.resolve.ClientApkTest' --stacktrace
 
       - name: Report
+        if: steps.apk.outputs.skip != 'true'
         env:
           OUTCOME: ${{ steps.check.outcome }}
           OPEN_ISSUES: ${{ matrix.issue }}
@@ -135,5 +146,5 @@ jobs:
           fi
 
       - name: Fail when a feature broke
-        if: steps.check.outcome != 'success'
+        if: steps.apk.outputs.skip != 'true' && steps.check.outcome != 'success'
         run: exit 1
