@@ -80,11 +80,8 @@ public final class ModuleEntry {
                 return;
             }
 
-            // The client does not have the class under the name we expect. Rather than give up -
-            // which used to mean the module did nothing whatsoever and said nothing about it -
-            // bootstrap off Activity#onCreate, which is a framework class and always resolves.
-            // startHook only ever wanted a Context, so any activity in the target process will do,
-            // and the guard above keeps it to the first one.
+            // LaunchActivity did not resolve: start from the first Activity#onCreate instead.
+            // startHook only needs a Context, and the guard above keeps it to one call.
             Logger.w(ClassNames.LAUNCH_ACTIVITY + " did not resolve in " + packageName
                     + ", starting from the first activity instead. Features that depend on renamed"
                     + " symbols will still be inactive - see the hook health line below. "

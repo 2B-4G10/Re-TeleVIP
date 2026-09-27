@@ -11,19 +11,7 @@
         android:supportsRtl="true"
         tools:ignore="UnusedAttribute">
 
-        <!--
-          This is a libxposed API 102 module only. Everything the framework needs to load it
-          lives in java resources, not here:
-
-            META-INF/xposed/module.prop      minApiVersion / targetApiVersion = 102
-            META-INF/xposed/java_init.list   com.my.televip.xposed.TeleVipModule
-            META-INF/xposed/scope.list       default scope
-
-          The legacy API 93 descriptor (xposedmodule / xposedminversion / xposedscope
-          meta-data plus assets/xposed_init) was deliberately removed. Leaving it in place
-          would make pre-1.10 LSPosed and EdXposed advertise the module and then fail at
-          load time, because there is no longer a de.robv entry class for them to find.
-        -->
+        <!-- libxposed API 102 module: its descriptors live in src/main/resources/META-INF/xposed. -->
 
     </application>
 

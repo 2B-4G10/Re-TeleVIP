@@ -29,10 +29,8 @@ public class ClientChecker {
     /**
      * Client build each resolver table was generated against.
      *
-     * <p>The obfuscated clients (Nekogram, Cherrygram) map every class, field and method by its
-     * R8 name, and those names change on every client release. When the installed build differs
-     * from the one below, the module used to fail silently with a stream of "Not found ..." lines;
-     * {@link #checkClientVersion} now says so once, up front.</p>
+     * <p>For the obfuscated clients (Nekogram, Cherrygram) a static table is only used on exactly
+     * this build; any other build is resolved from its own APK (see RuntimeMappings).</p>
      *
      * <p>The number in brackets is {@code PackageInfo.versionCode}. Telegram encodes its build
      * code and distribution channel in it as {@code code * 10 + channel}, where 1 and 2 are the

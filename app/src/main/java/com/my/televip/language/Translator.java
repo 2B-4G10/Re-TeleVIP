@@ -39,14 +39,9 @@ public class Translator {
     }
 
     /**
-     * Loads the bundled language packs.
-     *
-     * <p>They used to be read by opening the module APK at {@code Utils.modulePath}, which came from
-     * the legacy {@code initZygote} callback. The modern libxposed API has no such callback, and
-     * under Zygisk Next the module APK path is not always readable from inside the hooked app, so
-     * the packs now live in {@code src/main/resources/lang/} and are read straight off our own class
-     * loader. The old APK scan is kept as a fallback (and still auto-discovers files the index does
-     * not list).</p>
+     * Loads the language packs from {@code src/main/resources/lang/} through the module class
+     * loader, falling back to scanning the module APK (whose path is not always readable from the
+     * hooked app under Zygisk Next).
      */
     private static void loadAllLanguages() {
         int loaded = loadFromClassLoader();

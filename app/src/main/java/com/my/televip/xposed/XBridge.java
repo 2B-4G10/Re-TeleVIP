@@ -13,17 +13,9 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 
 /**
- * The single seam between TeleVip and the Xposed implementation hosting it.
- *
- * <p>The only supported backend is {@link ModernBackend} — the libxposed API 102 interceptor
- * model used by LSPosed 1.10+ and Vector 2.2 (JingMatrix), which is what runs under Zygisk Next
- * and NeoZygisk. The classic {@code de.robv.android.xposed} API 93 backend was removed; this
- * module no longer references {@code de.robv.*} anywhere and will not load on EdXposed, LSPatch
- * or LSPosed 1.9.x.</p>
- *
- * <p>The {@link Backend} indirection is kept deliberately: it is the seam that let the legacy API
- * be deleted without touching a single feature class, and it is what a future API revision would
- * plug into. Exactly one backend is installed per process and the first one to arrive wins.</p>
+ * The single seam between TeleVip and the Xposed implementation hosting it. The backend is
+ * {@link ModernBackend} (libxposed API 102: LSPosed 1.10+, Vector 2.2+); one is installed per
+ * process and the first to arrive wins.
  */
 public final class XBridge {
 
@@ -65,10 +57,6 @@ public final class XBridge {
         }
         backend = candidate;
         return true;
-    }
-
-    public static boolean isInstalled() {
-        return backend != null;
     }
 
     public static String backendId() {

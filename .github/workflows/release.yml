@@ -1,13 +1,7 @@
 name: Release
 
-# Publishes a GitHub release "v<versionName>" with the APKs attached. It runs when:
-#
-#   - a commit to main changes app/build.gradle (a version bump) and that release does not exist
-#     yet - so bumping versionName is all it takes to ship;
-#   - a v* tag is pushed (the tag must match versionName);
-#   - it is started by hand from the Actions tab.
-#
-# The release notes are the matching "## <version>" section of CHANGELOG.md.
+# Publishes release v<versionName> with the APKs attached, when versionName changes on main,
+# when a matching v* tag is pushed, or by hand. Notes come from CHANGELOG.md.
 on:
   push:
     branches: [main]
@@ -25,28 +19,51 @@ jobs:
     timeout-minutes: 30
 
     env:
+      GH_TOKEN: ${{ github.token }}
       KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
 
     steps:
-      - name: Check out
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v6
+      # On main, an existing release means build.gradle changed without a version bump.
+      - name: Work out the version
+        id: version
+        run: |
+          version=$(grep -m1 'versionName' app/build.gradle | cut -d'"' -f2)
+          tag="v$version"
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            if [ "$GITHUB_REF_NAME" != "$tag" ] && [ "$GITHUB_REF_NAME" != "V$version" ]; then
+              echo "::error::Tag $GITHUB_REF_NAME does not match versionName $version."
+              exit 1
+            fi
+            tag="$GITHUB_REF_NAME"
+          fi
+          publish=true
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "$GITHUB_REF_TYPE" = "branch" ] \
+              && gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists."
+            publish=false
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v6
+        if: steps.version.outputs.publish == 'true'
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up the Android SDK
-        uses: android-actions/setup-android@v4
+      - uses: android-actions/setup-android@v4
+        if: steps.version.outputs.publish == 'true'
         with:
           packages: 'platforms;android-36 build-tools;36.0.0'
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6
+      - uses: gradle/actions/setup-gradle@v6
+        if: steps.version.outputs.publish == 'true'
 
       - name: Restore the signing keystore
-        if: env.KEYSTORE_BASE64 != ''
+        if: steps.version.outputs.publish == 'true' && env.KEYSTORE_BASE64 != ''
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -60,44 +77,10 @@ jobs:
             echo "keyPassword=$KEY_PASSWORD"
           } > keystore.properties
 
-      # A tag that disagrees with the app's own version would publish an APK that reports a
-      # different version than the release it hangs under. On main, an existing release for this
-      # version means the push changed something else in build.gradle: nothing to publish.
-      - name: Work out the version
-        id: version
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          version=$(grep -m1 'versionName' app/build.gradle | cut -d'"' -f2)
-          tag="v$version"
-          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
-            if [ "$GITHUB_REF_NAME" != "$tag" ] && [ "$GITHUB_REF_NAME" != "V$version" ]; then
-              echo "::error::Tag $GITHUB_REF_NAME does not match versionName $version in app/build.gradle."
-              exit 1
-            fi
-            tag="$GITHUB_REF_NAME"
-          fi
-          publish=true
-          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "$GITHUB_REF_TYPE" = "branch" ] \
-              && gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release $tag already exists; nothing to publish."
-            publish=false
-          fi
-          echo "VERSION=$version" >> "$GITHUB_ENV"
-          echo "TAG=$tag" >> "$GITHUB_ENV"
-          echo "publish=$publish" >> "$GITHUB_OUTPUT"
-
-      - name: Run the unit tests
+      - name: Test and build
         if: steps.version.outputs.publish == 'true'
-        timeout-minutes: 12
-        run: ./gradlew :app:testDebugUnitTest --stacktrace
+        run: ./gradlew :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease --stacktrace
 
-      - name: Build the APKs
-        if: steps.version.outputs.publish == 'true'
-        run: ./gradlew :app:assembleDebug :app:assembleRelease --stacktrace
-
-      # Same rule as the Build APK workflow: an unsigned release APK cannot be installed, so it
-      # is only attached when the signing secrets made it a signed one.
       - name: Collect the APKs
         if: steps.version.outputs.publish == 'true'
         run: |
@@ -105,10 +88,9 @@ jobs:
           cp app/build/outputs/apk/debug/app-debug.apk "artifacts/TeleVip-$VERSION-debug.apk"
           release_apk=$(find app/build/outputs/apk/release -name '*.apk' | head -n 1)
           case "$release_apk" in
-            *unsigned*) echo "::warning::No signing secrets are set; only the debug APK is attached." ;;
+            *unsigned*) echo "::warning::No signing secrets set; only the debug APK is attached." ;;
             *) cp "$release_apk" "artifacts/TeleVip-$VERSION-release.apk" ;;
           esac
-          ls -lh artifacts
 
       - name: Write the release notes
         if: steps.version.outputs.publish == 'true'
@@ -122,19 +104,15 @@ jobs:
 
           ### Install
 
-          1. Download **TeleVip-…-debug.apk** below (the release APK is only attached when it is signed) and install it.
+          1. Download **TeleVip-…-debug.apk** below and install it.
           2. In **LSPosed 1.10+** or **Vector 2.2+**: **Modules** → enable **TeleVip** → tick your Telegram clients.
           3. **Force stop** the client and reopen it.
           EOF
-          cat notes.md
 
-      # gh ships on the runner image; GITHUB_TOKEN with contents: write is all it needs.
+      # gh creates the tag on this commit if it does not exist yet.
       - name: Publish the release
         if: steps.version.outputs.publish == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          # gh creates the tag on this commit when it does not exist yet.
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" artifacts/*.apk --clobber
             gh release edit "$TAG" --notes-file notes.md

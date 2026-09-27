@@ -153,12 +153,25 @@ public final class RuntimeMappings {
         if (cache != null) {
             try {
                 File dir = cache.getParentFile();
-                if (dir != null && (dir.isDirectory() || dir.mkdirs())) writeText(cache, mapping.serialize());
+                if (dir != null && (dir.isDirectory() || dir.mkdirs())) {
+                    writeText(cache, mapping.serialize());
+                    deleteStale(dir, cache);
+                }
             } catch (Throwable ignored) {
                 // Not being able to cache only costs the next launch a rescan.
             }
         }
         return mapping;
+    }
+
+    /** Mappings of earlier client builds (or fingerprint versions) are never read again. */
+    private static void deleteStale(File dir, File current) {
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        for (File f : files) {
+            String name = f.getName();
+            if (!f.equals(current) && name.startsWith("mapping-") && name.endsWith(".txt")) f.delete();
+        }
     }
 
     private static String describe(Resolver.Report report) {

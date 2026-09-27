@@ -32,15 +32,15 @@ public class HMethod {
     }
 
     public static void hookMethod(Class<?> cls, String className, String[] names, Object... args) {
-        try {
-            if (cls != null) {
-                for (String name : names) {
-                    if (ClientChecker.check(ClientChecker.ClientType.Nagram) && name.equals("formatPmEditedDate")) continue;
-                    XBridge.findAndHookMethod(cls, AutomationResolver.resolve(className, name, AutomationResolver.ResolverType.Method), args);
-                }
+        if (cls == null) return;
+        // Each name on its own, so one that is missing does not cost the rest their hook.
+        for (String name : names) {
+            if (ClientChecker.check(ClientChecker.ClientType.Nagram) && name.equals("formatPmEditedDate")) continue;
+            try {
+                XBridge.findAndHookMethod(cls, AutomationResolver.resolve(className, name, AutomationResolver.ResolverType.Method), args);
+            } catch (Throwable t) {
+                Logger.e(t);
             }
-        } catch (Throwable t) {
-            Logger.e(t);
         }
     }
 

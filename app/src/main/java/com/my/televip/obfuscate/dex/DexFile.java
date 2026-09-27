@@ -66,18 +66,6 @@ public final class DexFile {
 
     // ------------------------------------------------------------------ sizes
 
-    public int stringCount() {
-        return stringIdsSize;
-    }
-
-    public int typeCount() {
-        return typeIdsSize;
-    }
-
-    public int fieldCount() {
-        return fieldIdsSize;
-    }
-
     public int methodCount() {
         return methodIdsSize;
     }
@@ -144,10 +132,6 @@ public final class DexFile {
             params[i] = type(u2(data, paramsOff + 4 + i * 2));
         }
         return params;
-    }
-
-    public int protoCount() {
-        return protoIdsSize;
     }
 
     /** Index into the proto table, or -1 if this dex has no such signature. {@code ret} null = any. */

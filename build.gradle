@@ -1,9 +1,3 @@
-// Top-level build file. Shared configuration only - application dependencies belong in the
-// individual module build scripts.
-//
-// Repositories are declared in settings.gradle under dependencyResolutionManagement, and the
-// Xposed maven (api.xposed.info) was dropped along with the legacy de.robv API dependency.
-
 plugins {
     alias(libs.plugins.android.application) apply false
 }

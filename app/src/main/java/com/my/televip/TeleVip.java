@@ -36,10 +36,7 @@ public class TeleVip {
         } catch (Throwable e){
             Logger.e(e);
         } finally {
-            // In a finally block on purpose. This one line is how anyone finds out whether this
-            // client release still looks the way the hooks expect, and it is needed most when
-            // something above threw part way through - which is exactly when it used to be
-            // skipped, leaving a silent module and no clue why.
+            // Reported even when setup threw part way through - that is when it matters most.
             HookHealth.logReport();
         }
 

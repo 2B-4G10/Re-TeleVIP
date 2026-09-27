@@ -1,5 +1,4 @@
-// Built as an application rather than a library on purpose: only an APK gives us a dex file,
-// and :app embeds that dex as a byte[] (see the generateDexHolder task in app/build.gradle).
+// An application, not a library: only an APK yields the dex that :app embeds (generateDexHolder).
 plugins {
     alias(libs.plugins.android.application)
 }
@@ -15,7 +14,6 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
@@ -24,8 +22,7 @@ android {
     }
 }
 
-// Must match :app - this module's dex is embedded into :app, so both are compiled by the
-// same JDK regardless of what runs Gradle. See the note in app/build.gradle.
+// Same JDK as :app, which embeds this module's dex.
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
@@ -33,8 +30,7 @@ java {
 }
 
 dependencies {
-    // compileOnly on purpose: these classes are provided by the *target* Telegram client at
-    // runtime, not by this APK. Only the dex is extracted and injected, never the dependencies.
+    // Provided by the target client at runtime; only this module's own dex is injected.
     compileOnly libs.appcompat
     compileOnly libs.material
 }

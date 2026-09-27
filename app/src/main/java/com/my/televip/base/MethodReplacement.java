@@ -28,12 +28,4 @@ public abstract class MethodReplacement extends AbstractMethodHook {
         }
     };
 
-    public static MethodReplacement returnConstant(final Object value) {
-        return new MethodReplacement() {
-            @Override
-            protected Object replaceHookedMethod(MethodHookParam param) {
-                return value;
-            }
-        };
-    }
 }

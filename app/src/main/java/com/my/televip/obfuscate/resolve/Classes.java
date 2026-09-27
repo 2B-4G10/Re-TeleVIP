@@ -45,25 +45,6 @@ public final class Classes {
         };
     }
 
-    /** The return type of a method symbol resolved elsewhere. */
-    public static Symbol.ClassSource returnTypeOfSymbol(final String methodSymbolId) {
-        return r -> {
-            DexClass.Method m = r.methods.get(methodSymbolId);
-            return m == null ? null : single(r.index.byDescriptor(m.returnType()));
-        };
-    }
-
-    /** One parameter type of a method symbol resolved elsewhere. */
-    public static Symbol.ClassSource paramTypeOfSymbol(final String methodSymbolId, final int index) {
-        return r -> {
-            DexClass.Method m = r.methods.get(methodSymbolId);
-            if (m == null) return null;
-            String[] params = m.parameterTypes();
-            return index < params.length ? single(r.index.byDescriptor(params[index]))
-                    : Collections.<DexClass>emptyList();
-        };
-    }
-
     /**
      * Parameter types of methods of {@code owner} whose other parameters are the given source
      * types; {@code null} marks the unknown position. Lets a kept or already-resolved owner name
@@ -102,20 +83,6 @@ public final class Classes {
         };
     }
 
-    /** Classes nested in {@code outer} (named {@code outer$...}), for when the outer name is kept. */
-    public static Symbol.ClassSource innerClassesOf(final String outer) {
-        return r -> {
-            DexClass cls = r.cls(outer);
-            if (cls == null) return null;
-            String prefix = cls.descriptor.substring(0, cls.descriptor.length() - 1) + "$";
-            List<DexClass> out = new ArrayList<>();
-            for (String d : r.index.descriptors()) {
-                if (d.startsWith(prefix)) out.add(r.index.byDescriptor(d));
-            }
-            return out;
-        };
-    }
-
     /** Direct subclasses of a class. */
     public static Symbol.ClassSource subclassesOf(final String superclass) {
         return r -> {
@@ -134,18 +101,6 @@ public final class Classes {
                 DexClass c = r.index.byDescriptor(t);
                 if (c != null) out.add(c);
             }
-            return out;
-        };
-    }
-
-    /**
-     * Every class in the APK, narrowed by the facts. The last resort, for classes nothing kept
-     * points at; the facts have to be specific enough to leave one.
-     */
-    public static Symbol.ClassSource anyClass() {
-        return r -> {
-            List<DexClass> out = new ArrayList<>();
-            for (String d : r.index.descriptors()) out.add(r.index.byDescriptor(d));
             return out;
         };
     }
@@ -280,14 +235,6 @@ public final class Classes {
                 }
             }
             return out;
-        };
-    }
-
-    /** The class that declares a method symbol resolved elsewhere. */
-    public static Symbol.ClassSource ownerOfSymbol(final String methodSymbolId) {
-        return r -> {
-            DexClass.Method m = r.methods.get(methodSymbolId);
-            return m == null ? null : single(m.owner);
         };
     }
 

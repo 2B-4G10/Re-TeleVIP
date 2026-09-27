@@ -10,14 +10,11 @@ plugins {
 }
 
 dependencyResolutionManagement {
-    // Repositories live here rather than in an allprojects{} block in the root build script.
-    // FAIL_ON_PROJECT_REPOS makes that a hard rule, so a module cannot quietly reintroduce a
-    // repository of its own and change what the build resolves.
     repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
     repositories {
         google()
         mavenCentral()
-        // ir.huri:JalaliCalendar is only published here.
+        // ir.huri:JalaliCalendar
         maven { url = uri('https://jitpack.io') }
     }
 }

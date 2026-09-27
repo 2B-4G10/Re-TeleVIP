@@ -4,15 +4,10 @@ import io.github.libxposed.api.XposedModule;
 import io.github.libxposed.api.XposedModuleInterface;
 
 /**
- * Modern entry point (libxposed API 102).
- *
- * <p>Registered through {@code META-INF/xposed/java_init.list}. Used by current LSPosed and by
- * Vector 2.2 running on Zygisk Next / NeoZygisk. This is the module's only entry point — the
- * legacy {@code assets/xposed_init} path was removed — and it lands in
- * {@link ModuleEntry#attach}.</p>
- *
- * <p>Per the API contract nothing is initialised in the constructor — the framework attaches itself
- * first and then calls {@link #onModuleLoaded}.</p>
+ * The module's entry point (libxposed API 102), registered in
+ * {@code META-INF/xposed/java_init.list}. Nothing is initialised in the constructor: the framework
+ * attaches first and then calls {@link #onModuleLoaded}, which hands over to
+ * {@link ModuleEntry#attach}.
  */
 public class TeleVipModule extends XposedModule {
 

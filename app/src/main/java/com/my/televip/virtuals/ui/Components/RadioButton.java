@@ -16,7 +16,6 @@ import androidx.core.graphics.ColorUtils;
 
 import com.my.televip.application.AndroidUtilities;
 
-
 public class RadioButton extends View {
     private static Paint paint;
     private static Paint eraser;
@@ -61,11 +60,6 @@ public class RadioButton extends View {
         invalidate();
     }
 
-    @Keep
-    public float getProgress() {
-        return progress;
-    }
-
     public void setSize(int value) {
         if (size == value) {
             return;
@@ -76,16 +70,6 @@ public class RadioButton extends View {
     private int iconColor;
     private Drawable icon;
 
-    public void setIcon(Drawable drawable) {
-        iconColor = 0;
-        icon = drawable;
-        invalidate();
-    }
-
-    public int getColor() {
-        return color;
-    }
-
     public void setColor(int color1, int color2) {
         color = color1;
         checkedColor = color2;
@@ -94,11 +78,6 @@ public class RadioButton extends View {
 
     public void setBackgroundColor(int color1) {
         color = color1;
-        invalidate();
-    }
-
-    public void setCheckedColor(int color2) {
-        checkedColor = color2;
         invalidate();
     }
 

@@ -14,16 +14,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Reflection helpers that used to come from {@code de.robv.android.xposed.XposedHelpers}.
- *
- * <p>The legacy helper class only exists inside a process when the framework decided to inject the
- * legacy Xposed bridge. A module that is loaded through the modern libxposed API (100/102) — which
- * is how LSPosed 1.10+/Vector load us now — gets no {@code de.robv.*} classes at all, so relying on
- * {@code XposedHelpers} for plain reflection would blow up with {@code NoClassDefFoundError}.</p>
- *
- * <p>Nothing here touches the Xposed framework: it is ordinary JVM reflection with the same
- * signatures, the same best-match argument resolution and the same unchecked-error behaviour the
- * call sites were written against.</p>
+ * Plain-reflection equivalents of XposedHelpers (whose classes the modern libxposed API does not
+ * provide), with the same signatures, best-match argument resolution and unchecked errors.
  */
 public final class XReflect {
 
@@ -83,10 +75,8 @@ public final class XReflect {
         for (int i = 0; i < types.length; i++) {
             Object spec = specs[i];
             if (spec == null || spec instanceof Class) {
-                // A null spec means the call site resolved this parameter type against the client
-                // and came back empty, so the class has been renamed or removed. Keeping the
-                // position null marks it as a wildcard for findMethodCompatibleIfExists instead of
-                // failing the whole hook here, which is all that used to happen.
+                // null: the type did not resolve in the client. It stays a wildcard for
+                // findMethodCompatibleIfExists rather than failing the whole hook.
                 types[i] = (Class<?>) spec;
             } else if (spec instanceof String) {
                 types[i] = findClassIfExists((String) spec, classLoader);
@@ -355,14 +345,6 @@ public final class XReflect {
         }
     }
 
-    public static boolean getBooleanField(Object obj, String fieldName) {
-        try {
-            return instanceField(obj, fieldName).getBoolean(obj);
-        } catch (Throwable t) {
-            throw unwrap(t);
-        }
-    }
-
     public static void setBooleanField(Object obj, String fieldName, boolean value) {
         try {
             instanceField(obj, fieldName).setBoolean(obj, value);
@@ -395,41 +377,9 @@ public final class XReflect {
         }
     }
 
-    public static void setLongField(Object obj, String fieldName, long value) {
-        try {
-            instanceField(obj, fieldName).setLong(obj, value);
-        } catch (Throwable t) {
-            throw unwrap(t);
-        }
-    }
-
-    public static float getFloatField(Object obj, String fieldName) {
-        try {
-            return instanceField(obj, fieldName).getFloat(obj);
-        } catch (Throwable t) {
-            throw unwrap(t);
-        }
-    }
-
-    public static void setFloatField(Object obj, String fieldName, float value) {
-        try {
-            instanceField(obj, fieldName).setFloat(obj, value);
-        } catch (Throwable t) {
-            throw unwrap(t);
-        }
-    }
-
     public static Object getStaticObjectField(Class<?> clazz, String fieldName) {
         try {
             return findField(clazz, fieldName).get(null);
-        } catch (Throwable t) {
-            throw unwrap(t);
-        }
-    }
-
-    public static void setStaticObjectField(Class<?> clazz, String fieldName, Object value) {
-        try {
-            findField(clazz, fieldName).set(null, value);
         } catch (Throwable t) {
             throw unwrap(t);
         }
@@ -443,41 +393,9 @@ public final class XReflect {
         }
     }
 
-    public static void setStaticBooleanField(Class<?> clazz, String fieldName, boolean value) {
-        try {
-            findField(clazz, fieldName).setBoolean(null, value);
-        } catch (Throwable t) {
-            throw unwrap(t);
-        }
-    }
-
     public static int getStaticIntField(Class<?> clazz, String fieldName) {
         try {
             return findField(clazz, fieldName).getInt(null);
-        } catch (Throwable t) {
-            throw unwrap(t);
-        }
-    }
-
-    public static void setStaticIntField(Class<?> clazz, String fieldName, int value) {
-        try {
-            findField(clazz, fieldName).setInt(null, value);
-        } catch (Throwable t) {
-            throw unwrap(t);
-        }
-    }
-
-    public static long getStaticLongField(Class<?> clazz, String fieldName) {
-        try {
-            return findField(clazz, fieldName).getLong(null);
-        } catch (Throwable t) {
-            throw unwrap(t);
-        }
-    }
-
-    public static void setStaticLongField(Class<?> clazz, String fieldName, long value) {
-        try {
-            findField(clazz, fieldName).setLong(null, value);
         } catch (Throwable t) {
             throw unwrap(t);
         }

@@ -167,7 +167,7 @@ public class NekogramApkTest {
     public void nothingResolvesToAStaleOldName() {
         requireApk();
         // 12.8.1 called MessagesController "org.telegram.messenger.n0"; that class still exists in
-        // 12.10.3 as something else, which is exactly why an old table must never be applied.
+        // 12.10.3 as something else, which is why an old table is never applied.
         assertEquals("org.telegram.messenger.MessagesController",
                 mapping.resolveClass("org.telegram.messenger.MessagesController"));
     }

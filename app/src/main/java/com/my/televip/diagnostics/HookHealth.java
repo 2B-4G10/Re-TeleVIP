@@ -9,17 +9,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Records how each hook landed so a Telegram update that moves things is visible at a glance.
- *
- * <p>Hooks address Telegram by plain name, so a client release that renames or reshapes something
- * takes the matching feature out silently: the hook is skipped, the app behaves normally, and the
- * only evidence is one warning buried in a log that nobody reads until something is obviously
- * wrong. That is the real cost of a Telegram update — not that a feature breaks, but that nobody
- * can tell which one.</p>
- *
- * <p>The counters below turn that into a single line at startup: how many hooks resolved, how many
- * were recovered after their signature drifted, and exactly which ones could not be found at all.
- * A bug report can then name the broken symbol instead of "stories stopped working".</p>
+ * Records how each hook landed and logs one line at startup: how many resolved, how many were
+ * recovered after their signature drifted, and which could not be found at all.
  */
 public final class HookHealth {
 
@@ -33,8 +24,7 @@ public final class HookHealth {
     private static final AtomicInteger driftedCount = new AtomicInteger();
     private static final AtomicInteger missingCount = new AtomicInteger();
 
-    // The counters above stay exact; these only hold the names the report has room to print, so
-    // a client that moved hundreds of symbols still reports how many rather than how many fitted.
+    // Counters stay exact; these sets only hold the names the report has room to print.
     private static final Set<String> drifted =
             Collections.synchronizedSet(new LinkedHashSet<String>());
     private static final Set<String> missingMembers =

@@ -5,15 +5,9 @@ import com.my.televip.logging.Logger;
 import java.lang.reflect.Member;
 
 /**
- * Framework-agnostic method hook callback.
- *
- * <p>This class used to extend {@code de.robv.android.xposed.XC_MethodHook}. It no longer does,
- * so that the very same hook objects can be dispatched by either the legacy Xposed API (93) or the
- * modern libxposed API (100/102) backend. See {@code com.my.televip.xposed.XBridge}.</p>
- *
- * <p>The nested {@link MethodHookParam} intentionally mirrors the legacy
- * {@code AbstractMethodHook.MethodHookParam} surface (public {@code args} / {@code thisObject} fields,
- * {@code getResult()} / {@code setResult()}), so existing feature code keeps compiling unchanged.</p>
+ * Framework-agnostic method hook callback, dispatched by {@code com.my.televip.xposed.XBridge}.
+ * {@link MethodHookParam} keeps the familiar XC_MethodHook surface ({@code args},
+ * {@code thisObject}, {@code getResult()} / {@code setResult()}).
  */
 public abstract class AbstractMethodHook {
 

@@ -87,10 +87,6 @@ public final class DexIndex {
         return dexFiles;
     }
 
-    public int classCount() {
-        return byDescriptor.size();
-    }
-
     // ---------------------------------------------------------------- lookup
 
     public boolean hasClass(String javaName) {
@@ -229,8 +225,4 @@ public final class DexIndex {
         if (list.isEmpty() || list.get(list.size() - 1) != method) list.add(method);
     }
 
-    /** Releases decoded classes. The dex bytes go when the index itself is dropped. */
-    public void trimCache() {
-        decoded.clear();
-    }
 }

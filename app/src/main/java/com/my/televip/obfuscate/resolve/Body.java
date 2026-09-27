@@ -118,19 +118,6 @@ public interface Body {
         };
     }
 
-    /** Reads or writes some field of {@code owner} whose type is {@code type}. */
-    static Body touchesFieldOfType(final String owner, final String type) {
-        return (r, m) -> {
-            String ownerDesc = r.descriptor(owner);
-            String typeDesc = r.descriptor(type);
-            if (ownerDesc == null || typeDesc == null) return null;
-            for (Refs.FieldRef f : Refs.of(r, m).fields) {
-                if (f.owner.equals(ownerDesc) && f.type.equals(typeDesc)) return true;
-            }
-            return false;
-        };
-    }
-
     /** Calls any method with this name, on any class - for names the platform fixes. */
     static Body callsAnyNamed(final String name) {
         return (r, m) -> {
@@ -255,15 +242,6 @@ public interface Body {
                         && refs.newInstances.contains(f.type) && r.index.extendsClass(f.type, baseDesc)) return true;
             }
             return false;
-        };
-    }
-
-    /** new-instance, check-cast, instance-of or const-class of the given type. */
-    static Body usesType(final String type) {
-        return (r, m) -> {
-            String desc = r.descriptor(type);
-            if (desc == null) return null;
-            return Refs.of(r, m).types.contains(desc);
         };
     }
 

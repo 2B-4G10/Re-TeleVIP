@@ -2,20 +2,14 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
-// Release signing credentials, kept out of git. Android refuses to install an unsigned APK,
-// so without this the release variant produces app-release-unsigned.apk and the module cannot
-// be installed at all - which is exactly what "App not installed" means here.
-//
-// The build still works on a machine that has no keystore.properties (a fresh clone, CI): the
-// release variant simply goes back to being unsigned, and the warning below says so.
+// Release signing credentials, kept out of git. Without keystore.properties the release APK is
+// unsigned (and cannot be installed); the debug APK always can be.
 def keystorePropertiesFile = rootProject.file("keystore.properties")
 def keystoreProperties = new Properties()
 if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
 }
 
-// Property assignment uses 'name = value' throughout. The bare 'name value' Groovy space
-// syntax is deprecated in Gradle 9 and removed in Gradle 10.
 android {
     namespace = 'com.my.televip'
     compileSdk = 36
@@ -27,7 +21,6 @@ android {
         versionCode = 341
         versionName = "1.0.1"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -41,11 +34,7 @@ android {
                 keyAlias = keystoreProperties["keyAlias"]
                 keyPassword = keystoreProperties["keyPassword"]
 
-                // v1 (JAR signing) is only required below API 24 and minSdk here is 27, so it
-                // is left at AGP's default and carries no weight here. What matters is that both
-                // v2 and v3 are on: v3 is not optional-but-nice, it is the scheme modern Android
-                // reads first, and AGP leaves it OFF unless asked. An APK with v2 alone is a
-                // needlessly narrow target on new releases.
+                // minSdk 27 needs no v1; v3 is off unless asked for.
                 enableV2Signing = true
                 enableV3Signing = true
             }
@@ -54,18 +43,14 @@ android {
 
     buildTypes {
         release {
-            // Left off deliberately. R8 would rename the hook entry classes that the framework
-            // looks up by name from META-INF/xposed/java_init.list, and the reflective client
-            // resolvers in com.my.televip.Clients address the target app by string anyway.
+            // Off: the framework and the client resolvers look classes up by name.
             minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 
             if (keystoreProperties.containsKey("storeFile")) {
                 signingConfig = signingConfigs.release
             } else {
-                logger.warn("TeleVip: keystore.properties not found, the release APK will be "
-                        + "unsigned and Android will refuse to install it. See keystore.properties "
-                        + "in the repository root for how to generate one.")
+                logger.warn("TeleVip: keystore.properties not found, the release APK will be unsigned.")
             }
         }
     }
@@ -74,16 +59,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
-    // src/main/resources is packaged as java resources, which is where the modern Xposed
-    // entry descriptors (META-INF/xposed/*) and the language packs (lang/*) live. They are
-    // reached through the module class loader, so no APK path lookup is needed at runtime.
 }
 
-// Pin the compiler itself, not just the bytecode level. Without this the build compiles with
-// whatever JDK happens to run Gradle - Android Studio uses its bundled JDK 25, CI uses Temurin 17 -
-// and the two can disagree. The foojay resolver in settings.gradle downloads this toolchain when
-// no matching JDK is installed, so a clean checkout builds without any local JDK setup.
+// Compile with JDK 17 whatever JDK runs Gradle (foojay downloads it if missing).
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
@@ -93,46 +71,19 @@ java {
 dependencies {
     implementation libs.jcal
 
-    // Modern libxposed API (102) - the only entry point, com.my.televip.xposed.TeleVipModule,
-    // registered through META-INF/xposed/java_init.list. compileOnly: the framework that loads
-    // us provides the implementation. The legacy de.robv (module API 93) path was removed.
+    // Provided at runtime by the framework.
     compileOnly libs.libxposed
 
     implementation libs.gson
     implementation libs.appcompat
     implementation libs.material
 
-    // The test source sets existed with no test dependencies declared, so 'gradle build'
-    // failed on 'package org.junit does not exist' while 'assembleRelease' passed.
     testImplementation libs.junit
-    androidTestImplementation libs.androidx.test.junit
-    androidTestImplementation libs.androidx.test.espresso.core
 }
-// ---------------------------------------------------------------------------
-// DexHolder code generation
-//
-// :settingsadapter is built as a separate APK whose classes are loaded at runtime
-// through InMemoryDexClassLoader (see com.my.televip.dex.DexInjector). Its dex is
-// embedded here as a byte[] constant so nothing has to be read from disk inside the
-// hooked process - under Zygisk Next the module class loader is sandboxed and the
-// module APK path is not reliably reachable from the target process.
-//
-// Why this is not the original one-liner doLast block:
-//
-//  * Output goes to build/generated, never into src/. The old task wrote
-//    DexHolder.java into src/main/java, which meant every build mutated a source
-//    directory and the file had to be gitignored to keep the tree clean.
-//  * Inputs and outputs are declared, so the task is incremental and cacheable
-//    instead of re-serialising the whole dex on every single build.
-//  * The dex is read straight out of the APK with ZipFile - no temp extract dir.
-//  * The hex payload is emitted in chunks. A Java string *constant* is capped at
-//    64 KB of UTF-8 in the class file, so one big literal would hard-fail the
-//    build as soon as the adapter dex grew past ~32 KB.
-//  * The APK is located under build/outputs/apk, which is AGP's stable published
-//    location. The old path (build/intermediates/apk) has not existed since AGP 4
-//    and made a clean build fail outright.
-// ---------------------------------------------------------------------------
-
+// :settingsadapter is a separate APK whose dex is embedded in the module as a byte[]
+// (DexHolder) and loaded in memory by DexInjector, so nothing is read from disk inside the
+// hooked process. The hex payload is split into chunks because a Java string constant is
+// capped at 64 KB.
 abstract class GenerateDexHolder extends DefaultTask {
 
     /** Directory AGP publishes the :settingsadapter APK into. */
@@ -230,15 +181,7 @@ def generateDexHolder = tasks.register("generateDexHolder", GenerateDexHolder) {
     apkDirectory.from(project(":settingsadapter").layout.buildDirectory.dir("outputs/apk/debug"))
 }
 
-// Generated sources have to go through the variant API, not android.sourceSets.
-//
-// android.sourceSets.main.java.srcDir(provider) does NOT work here: AGP reads the source
-// set eagerly while configuring the variant, so the generated directory is only picked up
-// if it already happens to exist on disk. That makes incremental builds look fine and any
-// clean build fail with "cannot find symbol: DexHolder".
-//
-// addGeneratedSourceDirectory registers the task as the producer of a source directory, so
-// AGP both wires the javac task dependency and owns the output location.
+// Registered through the variant API so a clean build knows the generated directory.
 androidComponents {
     onVariants(selector().all()) { variant ->
         variant.sources.java.addGeneratedSourceDirectory(
