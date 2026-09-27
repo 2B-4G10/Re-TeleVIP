@@ -2,7 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
-// Release signing credentials, kept out of git. Without keystore.properties the release APK is
+// Release signing reads keystore.properties, which is never committed: CI writes it from the
+// KEYSTORE_* secrets, and locally it sits next to your .jks. Without it the release APK is
 // unsigned (and cannot be installed); the debug APK always can be.
 def keystorePropertiesFile = rootProject.file("keystore.properties")
 def keystoreProperties = new Properties()
@@ -13,6 +14,19 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = 'com.my.televip'
     compileSdk = 36
+
+    signingConfigs {
+        release {
+            if (keystoreProperties.containsKey("storeFile")) {
+                storeFile = rootProject.file(keystoreProperties["storeFile"])
+                storePassword = keystoreProperties["storePassword"]
+                keyAlias = keystoreProperties["keyAlias"]
+                keyPassword = keystoreProperties["keyPassword"]
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "com.my.televip"
@@ -26,27 +40,11 @@ android {
         }
     }
 
-    signingConfigs {
-        release {
-            if (keystoreProperties.containsKey("storeFile")) {
-                storeFile = rootProject.file(keystoreProperties["storeFile"])
-                storePassword = keystoreProperties["storePassword"]
-                keyAlias = keystoreProperties["keyAlias"]
-                keyPassword = keystoreProperties["keyPassword"]
-
-                // minSdk 27 needs no v1; v3 is off unless asked for.
-                enableV2Signing = true
-                enableV3Signing = true
-            }
-        }
-    }
-
     buildTypes {
         release {
             // Off: the framework and the client resolvers look classes up by name.
             minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-
             if (keystoreProperties.containsKey("storeFile")) {
                 signingConfig = signingConfigs.release
             } else {

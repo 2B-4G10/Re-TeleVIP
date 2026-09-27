@@ -1,5 +1,5 @@
 [versions]
-agp = "9.4.0"
+agp = "9.4.1"
 
 # libxposed API level this module targets. Must stay in sync with
 # app/src/main/resources/META-INF/xposed/module.prop (minApiVersion / targetApiVersion).
