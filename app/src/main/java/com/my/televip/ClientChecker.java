@@ -110,32 +110,37 @@ public class ClientChecker {
     }
 
     public enum ClientType {
-        Telegram("org.telegram.messenger", com.my.televip.Clients.Telegram.class),
-        TelegramWeb("org.telegram.messenger.web", com.my.televip.Clients.TelegramWeb.class),
-        TelegramPlus("org.telegram.plus", com.my.televip.Clients.TelegramPlus.class),
-        TGConnect("com.tgconnect.android", com.my.televip.Clients.TGConnect.class),
+        Telegram("org.telegram.messenger"),
+        TelegramWeb("org.telegram.messenger.web"),
+        TelegramPlus("org.telegram.plus"),
+        TGConnect("com.tgconnect.android"),
         Nagram("xyz.nextalone.nagram", com.my.televip.Clients.Nagram.class),
         Nicegram("app.nicegram", com.my.televip.Clients.Nicegram.class),
-        TelegramBeta("org.telegram.messenger.beta", com.my.televip.Clients.TelegramBeta.class),
-        NagramX("nu.gpu.nagram", com.my.televip.Clients.NagramX.class),
-        XPlus("com.xplus.messenger", com.my.televip.Clients.XPlus.class),
-        iMe("com.iMe.android", com.my.televip.Clients.iMe.class),
-        iMeWeb("com.iMe.android.web", com.my.televip.Clients.iMeWeb.class),
-        forkgram("org.forkgram.messenger", com.my.televip.Clients.forkgram.class),
-        forkgramBeta("org.forkclient.messenger.beta", com.my.televip.Clients.forkgramBeta.class),
+        TelegramBeta("org.telegram.messenger.beta"),
+        NagramX("nu.gpu.nagram"),
+        XPlus("com.xplus.messenger"),
+        iMe("com.iMe.android"),
+        iMeWeb("com.iMe.android.web"),
+        forkgram("org.forkgram.messenger"),
+        forkgramBeta("org.forkclient.messenger.beta"),
         Telegraph("ir.ilmili.telegraph", com.my.televip.Clients.Telegraph.class),
-        Telega("ru.dahl.messenger", com.my.televip.Clients.Telega.class),
+        Telega("ru.dahl.messenger"),
         Momogram(new String[]{"nekox.messenger.broken", "momo.gram"}, com.my.televip.Clients.Momogram.class),
         Nekogram("tw.nekomimi.nekogram", com.my.televip.Clients.Nekogram.class, true),
         NekogramX("nekox.messenger", com.my.televip.Clients.NekogramX.class),
         Cherrygram("uz.unnarsx.cherrygram", com.my.televip.Clients.Cherrygram.class, true),
-        ForkgramClassic("org.forkgram.classic", com.my.televip.Clients.ForkgramClassic.class),
+        ForkgramClassic("org.forkgram.classic"),
         Turrit("org.telegram.group", com.my.televip.Clients.Turrit.class),
-        NagramXF("fork.risin42.nagramx", com.my.televip.Clients.NagramXF.class);
+        NagramXF("fork.risin42.nagramx");
 
         private final String[] packageNames;
         private final Class<?> resolverClass;
         private final boolean tgnetObfuscated;
+
+        /** A client without a table of its own: everything is resolved from its APK. */
+        ClientType(String packageName) {
+            this(packageName, null);
+        }
 
         ClientType(String packageName, Class<?> resolverClass) {
             this.packageNames = new String[]{packageName};
