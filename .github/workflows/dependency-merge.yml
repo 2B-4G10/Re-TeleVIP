@@ -1,0 +1,34 @@
+name: Dependency merge
+
+# Merges Dependabot's weekly update once Build APK (unit tests plus debug and release builds)
+# has passed on it. A failing update stays open for a look.
+on:
+  workflow_run:
+    workflows: [Build APK]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge:
+    if: >-
+      github.event.workflow_run.event == 'pull_request'
+      && github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.actor.login == 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BRANCH: ${{ github.event.workflow_run.head_branch }}
+      SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Merge the update
+        run: |
+          number=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --state open \
+              --json number,headRefOid --jq ".[] | select(.headRefOid == \"$SHA\") | .number" | head -n1)
+          if [ -z "$number" ]; then
+            echo "No open pull request for $BRANCH at $SHA (already merged or updated since)."
+            exit 0
+          fi
+          gh pr merge "$number" --repo "$GITHUB_REPOSITORY" --squash --delete-branch

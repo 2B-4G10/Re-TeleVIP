@@ -1,0 +1,31 @@
+# Weekly dependency updates, opened on Monday morning before the Client watch run.
+# Each pull request is merged automatically once Build APK passes on it (dependency-merge.yml);
+# the Client watch run then releases the result if every client still checks out.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "02:00"
+    groups:
+      gradle:
+        patterns: ["*"]
+    ignore:
+      # Tied to the Xposed API level in META-INF/xposed/module.prop; bumped by hand with it.
+      - dependency-name: io.github.libxposed:api
+    commit-message:
+      prefix: Build
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "02:00"
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: CI

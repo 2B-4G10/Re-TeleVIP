@@ -7,6 +7,10 @@ name: Client watch
 # and opens an issue if the repository has issues enabled; a release that works again closes it.
 # Run it by hand with an APK URL (e.g. a direct APKPure download) to check any
 # other build.
+#
+# When every client checks out on the weekly run, anything merged since the last release -
+# Dependabot's Monday updates, fingerprint fixes - is released: the patch version and
+# versionCode are bumped, the commits are listed in CHANGELOG.md, and Release publishes it.
 on:
   schedule:
     - cron: '23 5 * * 1'
@@ -148,3 +152,62 @@ jobs:
       - name: Fail when a feature broke
         if: steps.apk.outputs.skip != 'true' && steps.check.outcome != 'success'
         run: exit 1
+
+  release:
+    name: Release pending changes
+    needs: check
+    # Weekly runs only, and only when every client passed: a broken client comes first.
+    if: github.event_name == 'schedule' && needs.check.result == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Bump the version if anything changed since the last release
+        id: bump
+        run: |
+          version=$(grep -m1 'versionName' app/build.gradle | cut -d'"' -f2)
+          code=$(grep -m1 'versionCode' app/build.gradle | tr -dc '0-9')
+          last="v$version"
+          if ! git rev-parse -q --verify "refs/tags/$last" >/dev/null; then
+            echo "::notice::$last has not been released yet; Release will publish it on its own."
+            exit 0
+          fi
+          # Only what ends up in the APK counts; README, workflow or test-only changes do not.
+          if git diff --quiet "$last" HEAD -- app/src/main app/build.gradle build.gradle settings.gradle \
+              gradle.properties gradle; then
+            echo "Nothing to release since $last."
+            exit 0
+          fi
+
+          next="${version%.*}.$(( ${version##*.} + 1 ))"
+          sed -i "s/versionCode = $code/versionCode = $((code + 1))/; s/versionName = \"$version\"/versionName = \"$next\"/" \
+              app/build.gradle
+          {
+            echo "# Changelog"
+            echo
+            echo "## $next — weekly update"
+            echo
+            git log --no-merges --format='- %s' "$last"..HEAD -- app/src/main app/build.gradle build.gradle \
+                settings.gradle gradle.properties gradle
+            echo
+            tail -n +3 CHANGELOG.md
+          } > CHANGELOG.new && mv CHANGELOG.new CHANGELOG.md
+
+          git config user.name mustafa
+          git config user.email mmuasfa@gmail.com
+          git commit -qam "Release $next"
+          git push origin HEAD:main
+          echo "released=$next" >> "$GITHUB_OUTPUT"
+
+      # A push made with this workflow's token starts no workflows, so start Release directly.
+      - name: Publish it
+        if: steps.bump.outputs.released != ''
+        run: gh workflow run release.yml --ref main
+
