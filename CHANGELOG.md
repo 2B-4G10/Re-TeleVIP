@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.0.4 — official Telegram and Cherrygram
+
+- **Official Telegram, Forkgram and the other unobfuscated forks now get the same runtime
+  resolution as Nekogram.** Telegram renames its UI classes (ChatActivity, SettingsActivity,
+  PhotoViewer's menus, ...) in every release, and TeleVip looked them up by their source names
+  there, so the features that hook them stayed off. Every client is now resolved from its own
+  APK, keeping a hand-made name table only on the exact build it was made for. Every feature hook
+  point resolves on Telegram 12.10.5.
+- **Cherrygram 12.10.1 is supported again.** It renames even the core `org.telegram.messenger`
+  and TL classes and nearly all of their methods. These are now found by strings only they load,
+  TL constructor ids, and the names that native code forces every build to keep. Every feature
+  hook point resolves on it.
+- Fingerprints follow more of R8's rewrites: methods turned static, narrowed field and return
+  types, and fields that are no longer narrowed.
+- The weekly Client watch also checks that no fingerprint ever picks a different symbol than the
+  real name, wherever a build keeps it.
+
 ## 1.0.3 — release safeguard
 
 - A release is never published without the signed APK: if the signing secrets are missing or

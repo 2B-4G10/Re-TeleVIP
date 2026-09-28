@@ -47,8 +47,8 @@ Telegram, Telegram Beta and Web, Plus Messenger, Nagram, NagramX, Nagram XF, **N
 Nekogram X, **Cherrygram**, Nicegram, iMe, X Plus, ForkClient, Forkgram, Skygram, Teegra,
 Telegraph, Telega, Momogram, Turrit and TG Connect.
 
-Obfuscated forks such as Nekogram and Cherrygram rename their code on every release. TeleVip
-doesn't depend on a name table for a single version. It reads the running client's own APK once
+Telegram and its forks rename their code on every release, some (Nekogram, Cherrygram) almost
+all of it. TeleVip doesn't depend on a name table for a single version. It reads the running client's own APK once
 per update and finds each hook by what the code does. Anything it can't pin down exactly is left
 off rather than guessed. Details are in the [changelog](CHANGELOG.md).
 
