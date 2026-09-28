@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public final class TelegramFingerprints {
 
-    public static final int VERSION = 5;
+    public static final int VERSION = 6;
 
     private TelegramFingerprints() {
     }
@@ -686,7 +686,10 @@ public final class TelegramFingerprints {
         s.add(cls("org.telegram.ui.Cells.TextCheckCell")
                 .from(subclassesOf("android.widget.FrameLayout"))
                 .where(hasConstructor("android.content.Context"),
-                        hasMethod(false, "void", "java.lang.CharSequence", "java.lang.CharSequence", "boolean", "boolean", "boolean")));
+                        hasMethod(false, "void", "java.lang.CharSequence", "java.lang.CharSequence", "boolean", "boolean", "boolean"),
+                        // Forks' look-alikes (TextCheckCell2, NagramX's TextSettingsCell) lack
+                        // the switch or the circular reveal animation.
+                        hasField(false, "org.telegram.ui.Components.Switch"), loadsString("animationProgress")));
         s.add(method("TextCheckCell", "isChecked").sig("boolean"));
         s.add(method("TextCheckCell", "setChecked").sig("void", "boolean")
                 .where(calls("org.telegram.ui.Components.Switch", "void", "boolean", "boolean")));
@@ -770,10 +773,10 @@ public final class TelegramFingerprints {
         s.add(method("ChatActivity", "scrollToMessageId").sig("void", "int", "int", "boolean", "int", "boolean", "int"));
         // processSelectedOption starts with "if (selectedObject == null ...) return".
         s.add(field("ChatActivity", "selectedObject").type(mo).readBy("ChatActivity#processSelectedOption", 0));
-        // createView adds the action bar items in a fixed order: topic create, search icon, search,
-        // then the header (three-dot) menu.
+        // The three-dot menu is the item createView fills with lazily added entries; forks add
+        // action bar items of their own, so the order they are created in says nothing.
         s.add(field("ChatActivity", "headerItem").type("org.telegram.ui.ActionBar.ActionBarMenuItem")
-                .writtenBy("ChatActivity#createView", 3));
+                .handedTo("createView", "ActionBarMenuItem#lazilyAddSubItem"));
 
         // Builds the pinned bar lazily for updatePinnedMessageView: the one void() helper it calls
         // that stores a new anonymous FrameLayout in a field (its debug-name literal is stripped).

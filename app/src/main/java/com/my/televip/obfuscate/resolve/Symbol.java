@@ -473,7 +473,8 @@ public abstract class Symbol {
          * last before calling a method named {@code calledName} - e.g. the view an Activity's
          * onCreate hands to setContentView. R8 narrows such fields to their anonymous subclass and
          * adds look-alikes of the same base type, so neither the type nor uniqueness pins them.
-         * The host must be a framework override, whose name R8 keeps.
+         * The host must be a name the build keeps; the called method can instead be a method
+         * symbol id ({@code "Owner#key"}), matched by what it resolved to.
          */
         public FieldSymbol handedTo(String hostMethod, String calledName) {
             this.handedIn = hostMethod;
@@ -534,6 +535,11 @@ public abstract class Symbol {
                 return Resolver.Attempt.of(kept, true);
             }
             if (typeDesc != null && handedIn != null) {
+                // A symbol id ("Owner#key") names the called method by what it resolved to.
+                final DexClass.Method target = handedTo.contains("#") ? r.methods.get(handedTo) : null;
+                if (handedTo.contains("#") && target == null) {
+                    return r.isResolvedOrPending(handedTo) ? Resolver.Attempt.waiting() : Resolver.Attempt.notFound();
+                }
                 final List<String> handed = new ArrayList<>();
                 final String owner = cls.descriptor;
                 final String base = typeDesc;
@@ -553,7 +559,10 @@ public abstract class Symbol {
 
                         @Override
                         public void invoke(int opcode, int i) {
-                            if (dex.methodName(i).equals(handedTo) && lastRead[0] != null
+                            boolean called = target == null ? dex.methodName(i).equals(handedTo)
+                                    : dex.methodName(i).equals(target.name())
+                                    && dex.methodClass(i).equals(target.owner.descriptor);
+                            if (called && lastRead[0] != null
                                     && !handed.contains(lastRead[0])) handed.add(lastRead[0]);
                         }
                     });
