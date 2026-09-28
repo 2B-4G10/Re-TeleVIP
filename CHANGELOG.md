@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.5 — every feature reaches its code
+
+Every feature's lookups were replayed against Telegram 12.10.5, Nekogram 12.10.3 and
+Cherrygram 12.10.1, and the ones that pointed at nothing were fixed:
+
+- **TeleVip's entry in Settings is back on official Telegram**, which made the methods it hooks
+  static and dropped their unused parameters.
+- **TeleVip's settings page no longer fails on Telegram and Cherrygram**: the switch rows it is
+  built from are found there again.
+- **Nicegram, Nagram, Turrit, Momogram and NekoX**: the parameter lists these forks changed are
+  honoured again (1.0.4 ignored them, which silently disabled some hooks there).
+- *Jump to message* works where Telegram inlined the overload it called; *Hide seen* finds
+  the channel lookup on renamed builds.
+- Found on more builds: the photo viewer, a viewer's image, the local file path of media and the
+  settings adapter.
+- Fingerprints hold on Nagram and NagramX too, which add their own menu items and look-alike cells.
+- Weekly automation: Dependabot updates are merged once they build, and the Monday Client watch
+  releases whatever changed if every client still checks out.
+- Removed the fourteen empty per-client name tables.
+
 ## 1.0.4 — official Telegram and Cherrygram
 
 - **Official Telegram, Forkgram and the other unobfuscated forks now get the same runtime
