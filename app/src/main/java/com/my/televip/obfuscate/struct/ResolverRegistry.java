@@ -4,6 +4,7 @@ import com.my.televip.ClientChecker;
 import com.my.televip.Class.ClassLoad;
 import com.my.televip.obfuscate.RuntimeMappings;
 import com.my.televip.obfuscate.resolve.Mapping;
+import com.my.televip.obfuscate.resolve.TelegramFingerprints;
 import com.my.televip.utils.Utils;
 
 public class ResolverRegistry {
@@ -37,6 +38,7 @@ public class ResolverRegistry {
     }
 
     public String resolveMethodName(String className, String name) {
+        if (RuntimeMappings.active() != null) return TelegramFingerprints.methodKey(className, name);
         try {
             return (String) clazz.getMethod("resolveMethodName", String.class, String.class).invoke(null, className, name);
         } catch (Throwable e){

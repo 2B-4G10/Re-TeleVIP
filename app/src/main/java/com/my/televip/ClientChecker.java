@@ -29,8 +29,9 @@ public class ClientChecker {
     /**
      * Client build each resolver table was generated against.
      *
-     * <p>For the obfuscated clients (Nekogram, Cherrygram) a static table is only used on exactly
-     * this build; any other build is resolved from its own APK (see RuntimeMappings).</p>
+     * <p>A client's static table (Nekogram, Cherrygram, Telegraph) is only used on exactly this
+     * build; any other build, and any client without a table, is resolved from its own APK (see
+     * RuntimeMappings).</p>
      *
      * <p>The number in brackets is {@code PackageInfo.versionCode}. Telegram encodes its build
      * code and distribution channel in it as {@code code * 10 + channel}, where 1 and 2 are the
@@ -80,11 +81,7 @@ public class ClientChecker {
         }
     }
 
-    /**
-     * Logs the running client build, and warns when it is not the one the resolver tables were
-     * generated from. Obfuscated clients get a louder warning because every hook depends on the
-     * mapping table matching that exact build.
-     */
+    /** Logs the running client build against the one TeleVip was last verified on. */
     public static void checkClientVersion(android.content.Context context) {
         try {
             if (context == null) return;
@@ -104,15 +101,10 @@ public class ClientChecker {
                 Logger.l("client " + client.name() + " " + running + " matches the verified build");
                 return;
             }
-            if (client.isTgnetObfuscated()) {
-                // Not a failure any more: RuntimeMappings resolves this build from its own APK
-                // instead of applying a table made for another one. See its line in the log.
-                Logger.l("client " + client.name() + " is " + running + ", the static table is for "
-                        + verified + " - names are being resolved from the running APK instead");
-            } else {
-                Logger.w("client " + client.name() + " is " + running + ", verified build is "
-                        + verified + ". Some hooks may not apply.");
-            }
+            // Not a failure: RuntimeMappings resolves this build from its own APK. See its line
+            // in the log for how much of it was found.
+            Logger.l("client " + client.name() + " is " + running + ", verified build is " + verified
+                    + " - names are being resolved from the running APK");
         } catch (Throwable ignored) {
         }
     }
@@ -166,6 +158,11 @@ public class ClientChecker {
         public String[] getPackageNames() { return packageNames; }
         public Class<?> getResolverClass() { return resolverClass; }
         public boolean isTgnetObfuscated() { return tgnetObfuscated; }
+
+        /** Whether a hand-made name table exists for this client's verified build. */
+        public boolean hasStaticTable() {
+            return this == Nekogram || this == Cherrygram || this == Telegraph;
+        }
 
         public static ClientType fromPackage(String pkg){
             for (ClientType type: ClientType.values()){

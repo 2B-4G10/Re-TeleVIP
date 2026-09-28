@@ -1,7 +1,6 @@
 package com.my.televip.obfuscate;
 
 
-import com.my.televip.ClientChecker;
 import com.my.televip.base.AbstractMethodHook;
 import com.my.televip.obfuscate.struct.ResolverRegistry;
 
@@ -53,7 +52,7 @@ public class AutomationResolver {
         String nameMethod = resolverRegistry.resolveMethodName(className, name);
         if (type == ResolverType.Method && resolverRegistry.hasMethod(className, nameMethod)) {
             String resolved = resolverRegistry.resolveMethod(className, nameMethod);
-            if (resolved != null && !resolved.equals(name) && ClientChecker.isTgnetObfuscated()) {
+            if (resolved != null && !resolved.equals(name)) {
                 OBFUSCATED_NAMES.add(resolved);
             }
             return resolved;

@@ -32,6 +32,41 @@ public final class TelegramFingerprints {
     private TelegramFingerprints() {
     }
 
+    /**
+     * Call sites name some overloaded methods by their plain name; this is the overload they mean,
+     * as a member key.
+     */
+    private static final Map<String, String> METHOD_KEYS = new HashMap<>();
+
+    static {
+        METHOD_KEYS.put("Browser#openUrl", "openUrlCS");
+        METHOD_KEYS.put("MessagesController#storyEntitiesAllowed2", "storyEntitiesAllowedO");
+        METHOD_KEYS.put("StoriesController#hasStories2", "hasStoriesJ");
+        METHOD_KEYS.put("PhotoViewer#setIsAboutToSwitchToIndex", "setIsAboutToSwitchToIndexIZZZ");
+        METHOD_KEYS.put("MessagesStorage#markMessagesAsDeleted", "markMessagesAsDeletedJAZZII");
+        METHOD_KEYS.put("MessagesController#deleteMessages", "deleteMessagesAAOJZIZJOIZI");
+        METHOD_KEYS.put("MessageObject#getDialogId", "getDialogIdO");
+        METHOD_KEYS.put("TextSettingsCell#setTextAndValue", "setTextAndValueCCZZ");
+        METHOD_KEYS.put("MessagesStorage#putMessages", "putMessagesOJIIZIJ");
+        METHOD_KEYS.put("MessagesController#isChatNoForwards", "isChatNoForwardsO");
+        METHOD_KEYS.put("ChatActivity#updatePinnedMessageView", "updatePinnedMessageViewZI");
+        METHOD_KEYS.put("PhotoViewer#openPhoto", "openPhotoOJJJOZ");
+        METHOD_KEYS.put("SettingsActivity$SettingCell$Factory#of", "ofIIIICC");
+        METHOD_KEYS.put("HeaderCell#setText", "setTextC");
+        METHOD_KEYS.put("DispatchQueue#postRunnable", "postRunnableR");
+        METHOD_KEYS.put("SQLitePreparedStatement#bindByteBuffer", "bindByteBufferIO");
+        METHOD_KEYS.put("SQLitePreparedStatement#bindLong", "bindLongIJ");
+        METHOD_KEYS.put("LongSparseArray#get", "getJ");
+        METHOD_KEYS.put("AlertDialog$Builder#setView", "setViewV");
+        METHOD_KEYS.put("FileLoader#getPathToMessage", "getPathToMessageO");
+    }
+
+    /** The member key a call site means by {@code owner#name}: the name itself unless overloaded. */
+    public static String methodKey(String owner, String name) {
+        String key = METHOD_KEYS.get(owner + "#" + name);
+        return key == null ? name : key;
+    }
+
     /** Owner simple names as the call sites write them, to full original names. */
     public static Map<String, String> owners() {
         Map<String, String> o = new HashMap<>();

@@ -22,12 +22,14 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Keeps an obfuscated client working across its own updates.
+ * Keeps every client working across its own updates, whatever R8 renamed in it.
  *
- * <p>The static per-client tables name what one specific build called each class. Run against any
- * other build of that client, they are not merely out of date - most of those names still exist,
- * attached to different classes, so hooks land on the wrong code. So when the running build is not
- * the one the table was made from, the table is not used at all. Instead every symbol is resolved
+ * <p>Even official Telegram renames its UI classes (ChatActivity, SettingsActivity, ...) in each
+ * release, and obfuscated forks rename nearly everything. The static per-client tables name what
+ * one specific build called each class. Run against any other build of that client, they are not
+ * merely out of date - most of those names still exist, attached to different classes, so hooks
+ * land on the wrong code. So a table is only used on exactly the build it was made from. On every
+ * other build, and for clients without a table, every symbol is resolved
  * against the running APK itself: by its real name where the build kept it, by fingerprint where it
  * was renamed. What cannot be pinned down unambiguously is left unresolved and shows up as missing
  * in the hook health report, rather than being guessed.</p>
@@ -48,7 +50,7 @@ public final class RuntimeMappings {
     private RuntimeMappings() {
     }
 
-    /** The mapping in force, or null when the static table (or no table) is being used. */
+    /** The mapping in force, or null when the static table is being used. */
     public static Mapping active() {
         return active;
     }
@@ -60,13 +62,13 @@ public final class RuntimeMappings {
     // ------------------------------------------------------------ prefetch
 
     /**
-     * Starts resolving in the background for an obfuscated client. Called when the client's class
-     * loader is ready, well before any activity; costs nothing for other clients.
+     * Starts resolving in the background. Called when the client's class loader is ready, well
+     * before any activity.
      */
     public static void prefetch(String packageName, ClassLoader classLoader) {
         try {
             ClientChecker.ClientType client = ClientChecker.ClientType.fromPackage(packageName);
-            if (client == null || !client.isTgnetObfuscated()) return;
+            if (client == null) return;
             final String apk = apkPathOf(classLoader);
             if (apk == null) return;
             final File cache = cacheFile(defaultCacheDir(packageName), packageName, new File(apk));
@@ -94,10 +96,10 @@ public final class RuntimeMappings {
     public static void activate(Context context, String packageName) {
         try {
             ClientChecker.ClientType client = ClientChecker.ClientType.fromPackage(packageName);
-            if (client == null || !client.isTgnetObfuscated()) return;
+            if (client == null) return;
 
             long running = versionCode(context);
-            Long verified = ClientChecker.verifiedVersionCode(client);
+            Long verified = client.hasStaticTable() ? ClientChecker.verifiedVersionCode(client) : null;
             if (verified != null && verified == running) {
                 summary = "static table matches this build (" + running + ")";
                 Logger.l("obfuscation: " + summary);
@@ -120,7 +122,8 @@ public final class RuntimeMappings {
             }
             active = mapping;
             long ms = (System.nanoTime() - start) / 1_000_000;
-            summary = "running build " + running + " is not the table's (" + verified + "), resolved "
+            summary = "build " + running + (verified == null ? " has no static table" : " is not the table's ("
+                    + verified + ")") + ", resolved "
                     + mapping.size() + " symbols from the APK in " + ms + " ms"
                     + (lastReport == null ? " (cached)" : " - " + describe(lastReport));
             Logger.l("obfuscation: " + summary);

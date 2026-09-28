@@ -1,5 +1,6 @@
 package com.my.televip.Clients;
 
+import com.my.televip.obfuscate.resolve.TelegramFingerprints;
 import com.my.televip.obfuscate.struct.ClassInfo;
 import com.my.televip.obfuscate.struct.FieldInfo;
 import com.my.televip.obfuscate.struct.MethodInfo;
@@ -13,10 +14,9 @@ public class Nekogram {
     private static final List<ClassInfo> classList = new ArrayList<>();
     private static final List<FieldInfo> fieldList = new ArrayList<>();
     private static final List<MethodInfo> methodList = new ArrayList<>();
-    private static final Map<String, String> methodAlias = new HashMap<>();
 
     public static String resolveMethodName(String className, String name) {
-        return methodAlias.getOrDefault(className + "#" + name, name);
+        return TelegramFingerprints.methodKey(className, name);
     }
 
     public static class ClassResolver
@@ -391,26 +391,5 @@ public class Nekogram {
 
 
         fieldList.add(new FieldInfo("MessagesController","dialogMessage", "Q"));
-
-        methodAlias.put("Browser#openUrl", "openUrlCS");
-        methodAlias.put("MessagesController#storyEntitiesAllowed2", "storyEntitiesAllowedO");
-        methodAlias.put("StoriesController#hasStories2", "hasStoriesJ");
-        methodAlias.put("PhotoViewer#setIsAboutToSwitchToIndex", "setIsAboutToSwitchToIndexIZZZ");
-        methodAlias.put("MessagesStorage#markMessagesAsDeleted", "markMessagesAsDeletedJAZZII");
-        methodAlias.put("MessagesController#deleteMessages", "deleteMessagesAAOJZIZJOIZI");
-        methodAlias.put("MessageObject#getDialogId", "getDialogIdO");
-        methodAlias.put("TextSettingsCell#setTextAndValue", "setTextAndValueCCZZ");
-        methodAlias.put("MessagesStorage#putMessages", "putMessagesOJIIZIJ");
-        methodAlias.put("MessagesController#isChatNoForwards", "isChatNoForwardsO");
-        methodAlias.put("ChatActivity#updatePinnedMessageView", "updatePinnedMessageViewZI");
-        methodAlias.put("PhotoViewer#openPhoto", "openPhotoOJJJOZ");
-        methodAlias.put("SettingsActivity$SettingCell$Factory#of", "ofIIIICC");
-        methodAlias.put("HeaderCell#setText", "setTextC");
-        methodAlias.put("DispatchQueue#postRunnable", "postRunnableR");
-        methodAlias.put("SQLitePreparedStatement#bindByteBuffer", "bindByteBufferIO");
-        methodAlias.put("SQLitePreparedStatement#bindLong", "bindLongIJ");
-        methodAlias.put("LongSparseArray#get", "getJ");
-        methodAlias.put("AlertDialog$Builder#setView", "setViewV");
-        methodAlias.put("FileLoader#getPathToMessage", "getPathToMessageO");
     }
 }
