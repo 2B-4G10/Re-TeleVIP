@@ -1,0 +1,65 @@
+name: Toolchain update
+
+# Every Monday, before Dependabot and Client watch: moves the build to the latest stable Android
+# Gradle Plugin, Gradle and libxposed API (keeping module.prop's targetApiVersion in step), and
+# pushes the change to main only if the unit tests and both APK builds pass with it. A bump that
+# breaks the build is not pushed; the run fails and says which one it was. Client watch releases
+# whatever landed if every client still checks out.
+on:
+  schedule:
+    - cron: '37 1 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Look for newer versions
+        id: check
+        run: |
+          summary=$(.github/scripts/update-toolchain.sh)
+          echo "summary=$summary" >> "$GITHUB_OUTPUT"
+          echo "${summary:-Everything is current.}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-java@v6
+        if: steps.check.outputs.summary != ''
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v4
+        if: steps.check.outputs.summary != ''
+        with:
+          packages: 'platforms;android-36 build-tools;36.0.0'
+
+      - uses: gradle/actions/setup-gradle@v6
+        if: steps.check.outputs.summary != ''
+
+      - name: Build and test with the new versions
+        id: build
+        if: steps.check.outputs.summary != ''
+        run: ./gradlew :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease --stacktrace
+
+      - name: Push the update
+        if: steps.check.outputs.summary != '' && steps.build.outcome == 'success'
+        env:
+          SUMMARY: ${{ steps.check.outputs.summary }}
+        run: |
+          git config user.name mustafa
+          git config user.email mmuasfa@gmail.com
+          git commit -qam "Build: $SUMMARY"
+          git push origin HEAD:main
+
+      - name: Report a bump that breaks the build
+        if: failure() && steps.check.outputs.summary != ''
+        env:
+          SUMMARY: ${{ steps.check.outputs.summary }}
+        run: |
+          echo "::error::The build fails with: $SUMMARY. Nothing was pushed; main keeps the current versions."
+          echo "**Not pushed:** the build fails with $SUMMARY." >> "$GITHUB_STEP_SUMMARY"

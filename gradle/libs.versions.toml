@@ -1,8 +1,8 @@
 [versions]
 agp = "9.4.1"
 
-# libxposed API level this module targets. Must stay in sync with
-# app/src/main/resources/META-INF/xposed/module.prop (minApiVersion / targetApiVersion).
+# libxposed API level this module targets, kept in step with targetApiVersion in
+# app/src/main/resources/META-INF/xposed/module.prop by .github/scripts/update-toolchain.sh.
 libxposed = "102.0.0"
 
 gson = "2.14.0"

@@ -13,8 +13,10 @@ updates:
       gradle:
         patterns: ["*"]
     ignore:
-      # Tied to the Xposed API level in META-INF/xposed/module.prop; bumped by hand with it.
+      # Updated by toolchain-update.yml together with the Gradle wrapper and module.prop.
       - dependency-name: io.github.libxposed:api
+      - dependency-name: com.android.application
+      - dependency-name: com.android.tools.build:gradle
     commit-message:
       prefix: Build
 
