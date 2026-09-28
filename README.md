@@ -2,7 +2,7 @@
 
 <img src=".github/assets/logo.svg" width="128" alt="TeleVip logo">
 
-# TeleVip
+# Re-TeleVip
 
 **Privacy, media and quality-of-life features for Telegram and its forks, as an Xposed module.**
 
