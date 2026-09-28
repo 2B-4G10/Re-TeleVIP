@@ -90,6 +90,38 @@ public class ClientApkTest {
         if (!broken.isEmpty()) fail("Features broken on this build:\n" + md);
     }
 
+    /**
+     * Wherever this build keeps a real name, the fingerprint alone must find the same symbol - or
+     * nothing. A fingerprint that picks another symbol here would hook the wrong code on a fork
+     * that renames it.
+     */
+    @Test
+    public void fingerprintsNeverContradictRealNames() throws Exception {
+        String path = System.getenv("TELEVIP_CLIENT_APK");
+        assumeTrue("set TELEVIP_CLIENT_APK to run", path != null && new File(path).isFile());
+
+        DexIndex index = DexIndex.fromApk(new File(path));
+        Mapping named = new Resolver(index, TelegramFingerprints.owners())
+                .resolve(TelegramFingerprints.all(), new Resolver.Report());
+        Mapping fingerprinted = new Resolver(index, TelegramFingerprints.owners()).fingerprintsOnly()
+                .resolve(TelegramFingerprints.all(), new Resolver.Report());
+
+        List<String> wrong = new ArrayList<>();
+        compare(named.classes(), fingerprinted.classes(), wrong);
+        compare(named.fields(), fingerprinted.fields(), wrong);
+        compare(named.methods(), fingerprinted.methods(), wrong);
+        if (!wrong.isEmpty()) fail("Fingerprints that find the wrong symbol:\n" + String.join("\n", wrong));
+    }
+
+    private static void compare(Map<String, String> truth, Map<String, String> found, List<String> wrong) {
+        for (Map.Entry<String, String> e : truth.entrySet()) {
+            String got = found.get(e.getKey());
+            if (got != null && !got.equals(e.getValue())) {
+                wrong.add(e.getKey() + ": " + got + " instead of " + e.getValue());
+            }
+        }
+    }
+
     private static String resolve(Mapping mapping, String point) {
         int m = point.indexOf(METHOD);
         if (m >= 0) return mapping.resolveMethod(point.substring(0, m), point.substring(m + 1));

@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public final class TelegramFingerprints {
 
-    public static final int VERSION = 4;
+    public static final int VERSION = 5;
 
     private TelegramFingerprints() {
     }
@@ -160,6 +160,7 @@ public final class TelegramFingerprints {
 
     public static List<Symbol> all() {
         List<Symbol> s = new ArrayList<>();
+        messenger(s);
         keptInRecentBuilds(s);
         classes(s);
         settings(s);
@@ -175,32 +176,69 @@ public final class TelegramFingerprints {
     }
 
     /**
-     * Symbols whose real names current builds keep. Listed without a fingerprint: if a future
-     * build renames one, it shows up as missing in the hook health report rather than guessed at.
+     * Core classes official Telegram keeps but some forks (Cherrygram) rename, found by strings
+     * only they load.
+     */
+    private static void messenger(List<Symbol> s) {
+        s.add(cls("org.telegram.messenger.AndroidUtilities")
+                .from(declaringStrings("Could not get typeface '", "sms listener registered")));
+        s.add(cls("org.telegram.messenger.ApplicationLoader")
+                .from(declaringStrings("app initied", "screen state = ")));
+        s.add(cls("org.telegram.messenger.FileLoadOperation")
+                .from(declaringStrings("unable to rename temp = ", "setIsPreloadVideoOperation ")));
+        s.add(cls("org.telegram.messenger.FileLoader")
+                .from(declaringStrings("create load operation fileName=", "fileUploadQueue")));
+        s.add(cls("org.telegram.messenger.LocaleController")
+                .from(declaringStrings("LOC_ERR: formatDateChat", "formatterBannedUntil24H")));
+        s.add(cls("org.telegram.messenger.MessageObject")
+                .from(declaringStrings("EventLogEditedGroupTitle", "ActionUserScoredInGame")));
+        s.add(cls("org.telegram.messenger.MessagesController")
+                .from(declaringStrings("inapp_update_check_delay", "saved_gifs_limit_default")));
+        s.add(cls("org.telegram.messenger.MessagesStorage")
+                .from(declaringStrings("Try create new database = ", "DELETE FROM stickers_v2")));
+        s.add(cls("org.telegram.messenger.NotificationCenter")
+                .from(declaringStrings("addObserver allowed only from MAIN thread", "postNotificationName allowed only from MAIN thread")));
+        s.add(cls("org.telegram.messenger.NotificationsController")
+                .from(declaringStrings("showExtraNotifications: [", "resetNotificationSound")));
+        s.add(cls("org.telegram.messenger.SharedConfig")
+                .from(declaringStrings("devicePerformanceClass", "forceDisableTabletMode")));
+        s.add(cls("org.telegram.messenger.UserConfig")
+                .from(declaringStrings("2dialogsLoadOffsetChatId", "sharingMyLocationUntil")));
+        s.add(cls("org.telegram.messenger.time.FastDateFormat")
+                .from(declaringStrings("FastDateFormat[")));
+        s.add(cls("org.telegram.tgnet.TLRPC$Message")
+                .from(declaringStrings("legacy_layer", "poll_with_media=")));
+    }
+
+    /**
+     * Symbols official Telegram keeps the real names of. Forks that rename them (Cherrygram) are
+     * resolved by the fingerprints; the few still without one show up as missing in the hook
+     * health report on such a fork rather than being guessed at.
      */
     private static void keptInRecentBuilds(List<Symbol> s) {
-        s.add(cls("org.telegram.messenger.AndroidUtilities"));
-        s.add(cls("org.telegram.messenger.ApplicationLoader"));
-        s.add(cls("org.telegram.messenger.DispatchQueue"));
-        s.add(cls("org.telegram.messenger.FileLoadOperation"));
-        s.add(cls("org.telegram.messenger.FileLoader"));
-        s.add(cls("org.telegram.messenger.LocaleController"));
-        s.add(cls("org.telegram.messenger.MessageObject"));
-        s.add(cls("org.telegram.messenger.MessagesController"));
-        s.add(cls("org.telegram.messenger.MessagesStorage"));
-        s.add(cls("org.telegram.messenger.NotificationCenter"));
-        s.add(cls("org.telegram.messenger.NotificationsController"));
-        s.add(cls("org.telegram.messenger.SharedConfig"));
-        s.add(cls("org.telegram.messenger.UserConfig"));
-        s.add(cls("org.telegram.messenger.time.FastDateFormat"));
-        s.add(cls("org.telegram.tgnet.QuickAckDelegate"));
-        s.add(cls("org.telegram.tgnet.RequestDelegateTimestamp"));
-        s.add(cls("org.telegram.tgnet.TLObject"));
-        s.add(cls("org.telegram.tgnet.TLRPC$Chat"));
-        s.add(cls("org.telegram.tgnet.TLRPC$EncryptedChat"));
-        s.add(cls("org.telegram.tgnet.TLRPC$InputPeer"));
-        s.add(cls("org.telegram.tgnet.TLRPC$Message"));
-        s.add(cls("org.telegram.tgnet.TLRPC$Peer"));
+        // SQLite's natives keep their names in every build, so the wrappers are known by them.
+        String cursor = "org.telegram.SQLite.SQLiteCursor", statement = "org.telegram.SQLite.SQLitePreparedStatement";
+        // ConnectionsManager's natives call back into it by name, so its members keep theirs too.
+        String connections = "org.telegram.tgnet.ConnectionsManager";
+        // A TL object writes its own constructor id; its abstract parent only compares against it.
+        Symbol.ClassFact serializes = hasMethod(false, "void", "org.telegram.tgnet.OutputSerializedData");
+        String msg = "org.telegram.tgnet.TLRPC$Message", document = "org.telegram.tgnet.TLRPC$Document";
+        // Utilities' queues are its only Thread-typed fields.
+        s.add(cls("org.telegram.messenger.DispatchQueue")
+                .from(fieldTypesOf("org.telegram.messenger.Utilities"))
+                .where(extendsType("java.lang.Thread")));
+        s.add(cls("org.telegram.tgnet.QuickAckDelegate").from(paramTypeOf(connections, "sendRequestInternal", 3))
+                .where(isInterface()));
+        s.add(cls("org.telegram.tgnet.RequestDelegateTimestamp")
+                .from(paramTypeOf(connections, "sendRequestInternal", 2)).where(isInterface()));
+        s.add(cls("org.telegram.tgnet.TLObject")
+                .from(superclassOf("org.telegram.tgnet.TLRPC$TL_messages_readHistory")));
+        s.add(cls("org.telegram.tgnet.TLRPC$Chat").from(superclassOf("org.telegram.tgnet.TLRPC$TL_chat")));
+        s.add(cls("org.telegram.tgnet.TLRPC$EncryptedChat")
+                .from(superclassOf("org.telegram.tgnet.TLRPC$TL_encryptedChat")));
+        s.add(cls("org.telegram.tgnet.TLRPC$InputPeer")
+                .from(superclassOf("org.telegram.tgnet.TLRPC$TL_inputPeerChannel")));
+        s.add(cls("org.telegram.tgnet.TLRPC$Peer").from(superclassOf("org.telegram.tgnet.TLRPC$TL_peerUser")));
         s.add(cls("org.telegram.tgnet.TLRPC$TL_channels_readHistory"));
         s.add(cls("org.telegram.tgnet.TLRPC$TL_channels_readMessageContents"));
         s.add(cls("org.telegram.tgnet.TLRPC$TL_inputPeerChannel"));
@@ -216,27 +254,49 @@ public final class TelegramFingerprints {
         s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_sendReaction"));
         s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_setEncryptedTyping"));
         s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_setTyping"));
-        s.add(cls("org.telegram.tgnet.TLRPC$User"));
-        s.add(cls("org.telegram.tgnet.TLRPC$messages_Messages"));
-        s.add(cls("org.telegram.tgnet.WriteToSocketDelegate"));
-        s.add(cls("org.telegram.tgnet.tl.TL_account$updateStatus"));
-        s.add(cls("org.telegram.tgnet.tl.TL_stories$TL_stories_incrementStoryViews"));
-        s.add(cls("org.telegram.tgnet.tl.TL_stories$TL_stories_readStories"));
-        s.add(cls("org.telegram.tgnet.tl.TL_update$TL_updateDeleteChannelMessages"));
-        s.add(cls("org.telegram.tgnet.tl.TL_update$TL_updateDeleteMessages"));
-        s.add(field("ApplicationLoader", "applicationContext"));
-        s.add(field("FileLoadOperation", "downloadChunkSizeBig"));
-        s.add(field("FileLoadOperation", "maxCdnParts"));
-        s.add(field("FileLoadOperation", "maxDownloadRequests"));
-        s.add(field("FileLoadOperation", "maxDownloadRequestsBig"));
+        s.add(cls("org.telegram.tgnet.TLRPC$User").from(superclassOf("org.telegram.tgnet.TLRPC$TL_user")));
+        s.add(cls("org.telegram.tgnet.TLRPC$messages_Messages")
+                .from(superclassOf("org.telegram.tgnet.TLRPC$TL_messages_messages")));
+        s.add(cls("org.telegram.tgnet.TLRPC$InputChannel")
+                .from(superclassOf("org.telegram.tgnet.TLRPC$TL_inputChannel")));
+        s.add(cls("org.telegram.tgnet.OutputSerializedData")
+                .from(paramTypeWhere("org.telegram.tgnet.TLObject", "void", (String) null)).where(isInterface()));
+        s.add(cls("org.telegram.tgnet.TLRPC$Dialog").from(superclassOf("org.telegram.tgnet.TLRPC$TL_dialog")));
+        s.add(cls("org.telegram.tgnet.TLRPC$Document").from(superclassOf("org.telegram.tgnet.TLRPC$TL_document")));
+        s.add(cls("org.telegram.tgnet.TLRPC$DocumentAttribute")
+                .from(superclassOf("org.telegram.tgnet.TLRPC$TL_documentAttributeAudio")));
+        s.add(cls("org.telegram.tgnet.InputSerializedData")
+                .from(paramTypeWhere("org.telegram.tgnet.TLRPC$Message", "org.telegram.tgnet.TLRPC$Message",
+                        null, "int", "boolean")));
+        s.add(cls("org.telegram.tgnet.WriteToSocketDelegate").from(paramTypeOf(connections, "sendRequestInternal", 4))
+                .where(isInterface()));
+        s.add(cls("org.telegram.tgnet.tl.TL_account$updateStatus").from(declaringConstant(1713919532))
+                .where(serializes));
+        s.add(cls("org.telegram.tgnet.tl.TL_stories$TL_stories_incrementStoryViews")
+                .from(declaringConstant(-1308456197)).where(serializes));
+        s.add(cls("org.telegram.tgnet.tl.TL_stories$TL_stories_readStories").from(declaringConstant(-1521034552))
+                .where(serializes));
+        s.add(cls("org.telegram.tgnet.tl.TL_update$TL_updateDeleteChannelMessages")
+                .from(declaringConstant(-1020437742)).where(serializes));
+        s.add(cls("org.telegram.tgnet.tl.TL_update$TL_updateDeleteMessages").from(declaringConstant(-1576161051))
+                .where(serializes));
+        s.add(field("ApplicationLoader", "applicationContext").isStatic(true)
+                .type("android.content.Context").onlyOneOfType());
+        s.add(field("FileLoadOperation", "downloadChunkSizeBig").type("int")
+                .writtenBy("FileLoadOperation#updateParams", 0));
+        s.add(field("FileLoadOperation", "maxCdnParts").type("int").writtenBy("FileLoadOperation#updateParams", 3));
+        s.add(field("FileLoadOperation", "maxDownloadRequests").type("int")
+                .writtenBy("FileLoadOperation#updateParams", 1));
+        s.add(field("FileLoadOperation", "maxDownloadRequestsBig").type("int")
+                .writtenBy("FileLoadOperation#updateParams", 2));
         s.add(field("LocaleController", "currentLocale"));
-        s.add(field("LocaleController", "isRTL"));
+        s.add(field("LocaleController", "isRTL").keyedBy("LocaleController#recreateFormatters", "iw_"));
         s.add(field("MessagesController", "dialogMessagesByIds"));
         s.add(field("NotificationCenter", "messagesDeleted"));
         s.add(field("NotificationCenter", "tlSchemeParseException"));
-        s.add(field("UserConfig", "clientUserId"));
-        s.add(field("UserConfig", "selectedAccount"));
-        s.add(field("Utilities", "stageQueue"));
+        s.add(field("UserConfig", "clientUserId").type("long").writtenBy("UserConfig#setCurrentUser", 0));
+        s.add(field("UserConfig", "selectedAccount").keyedBy("UserConfig#loadConfig", "selectedAccount"));
+        s.add(field("Utilities", "stageQueue").keyedBy("Utilities#<clinit>", "stageQueue"));
         s.add(field("TLRPC$InputPeer", "channel_id"));
         s.add(field("TLRPC$InputPeer", "chat_id"));
         s.add(field("TLRPC$InputPeer", "user_id"));
@@ -262,83 +322,167 @@ public final class TelegramFingerprints {
         s.add(field("TLRPC$TL_messages_sendReaction", "peer"));
         s.add(field("TLRPC$User", "phone"));
         s.add(field("TLRPC$messages_Messages", "messages"));
-        s.add(field("TL_account$updateStatus", "offline"));
-        s.add(field("TL_update$TL_updateDeleteChannelMessages", "channel_id"));
-        s.add(field("TL_update$TL_updateDeleteChannelMessages", "messages"));
-        s.add(field("TL_update$TL_updateDeleteMessages", "messages"));
+        s.add(field("TL_account$updateStatus", "offline").type("boolean").onlyOneOfType());
+        s.add(field("TL_update$TL_updateDeleteChannelMessages", "channel_id").type("long").onlyOneOfType());
+        s.add(field("TL_update$TL_updateDeleteChannelMessages", "messages")
+                .type("java.util.ArrayList").onlyOneOfType());
+        s.add(field("TL_update$TL_updateDeleteMessages", "messages").type("java.util.ArrayList").onlyOneOfType());
         s.add(field("MessagesController", "dialogMessage"));
-        s.add(method("SQLiteCursor", "byteBufferValue"));
-        s.add(method("SQLiteCursor", "dispose"));
-        s.add(method("SQLiteCursor", "intValue"));
-        s.add(method("SQLiteCursor", "longValue"));
-        s.add(method("SQLiteCursor", "next"));
-        s.add(method("SQLiteDatabase", "executeFast"));
-        s.add(method("SQLiteDatabase", "queryFinalized"));
-        s.add(method("SQLitePreparedStatement", "bindByteBufferIB").named("bindByteBuffer"));
-        s.add(method("SQLitePreparedStatement", "bindByteBufferIO").named("bindByteBuffer"));
+        s.add(method("SQLiteCursor", "byteBufferValue").sig("org.telegram.tgnet.NativeByteBuffer", "int"));
+        s.add(method("SQLiteCursor", "dispose").sig("void").where(callsSymbol("SQLitePreparedStatement#dispose")));
+        s.add(method("SQLiteCursor", "intValue").sig("int", "int").where(callsNamed(cursor, "columnIntValue")));
+        s.add(method("SQLiteCursor", "longValue").sig("long", "int").where(callsNamed(cursor, "columnLongValue")));
+        s.add(method("SQLiteCursor", "next").sig("boolean").where(string("sqlite busy")));
+        s.add(method("SQLiteDatabase", "executeFast").sig(statement, "java.lang.String"));
+        s.add(method("SQLiteDatabase", "queryFinalized").sig(cursor, "java.lang.String", "java.lang.Object[]"));
+        s.add(method("SQLitePreparedStatement", "bindByteBufferIB").named("bindByteBuffer")
+                .sig("void", "int", "java.nio.ByteBuffer").where(callsNamed(statement, "bindByteBuffer")));
+        s.add(method("SQLitePreparedStatement", "bindByteBufferIO").named("bindByteBuffer")
+                .sig("void", "int", "org.telegram.tgnet.NativeByteBuffer").where(callsNamed(statement, "bindByteBuffer")));
         s.add(method("SQLitePreparedStatement", "bindByteBufferJIBI").named("bindByteBuffer"));
-        s.add(method("SQLitePreparedStatement", "bindInteger"));
-        s.add(method("SQLitePreparedStatement", "bindLongIJ").named("bindLong"));
+        s.add(method("SQLitePreparedStatement", "bindInteger").sig("void", "int", "int")
+                .where(callsNamed(statement, "bindInt")));
+        s.add(method("SQLitePreparedStatement", "bindLongIJ").named("bindLong")
+                .sig("void", "int", "long").where(callsNamed(statement, "bindLong")));
         s.add(method("SQLitePreparedStatement", "bindLongJIJ").named("bindLong"));
-        s.add(method("SQLitePreparedStatement", "dispose"));
-        s.add(method("SQLitePreparedStatement", "requery"));
-        s.add(method("SQLitePreparedStatement", "step"));
+        s.add(method("SQLitePreparedStatement", "finalizeQuery").sig("void").where(string("sqlite query ")));
+        s.add(method("SQLitePreparedStatement", "dispose").sig("void")
+                .where(callsSymbol("SQLitePreparedStatement#finalizeQuery"), callCount(1)));
+        s.add(method("SQLitePreparedStatement", "requery").sig("void").where(callsNamed(statement, "reset")));
+        s.add(method("SQLitePreparedStatement", "step").sig("int").where(callsNamed(statement, "step")));
         s.add(method("SQLitePreparedStatement", "stepJ").named("step"));
-        s.add(method("AndroidUtilities", "isTabletInternal"));
-        s.add(method("DispatchQueue", "postRunnableR").named("postRunnable"));
-        s.add(method("DispatchQueue", "postRunnableRJ").named("postRunnable"));
-        s.add(method("FileLoadOperation", "updateParams"));
-        s.add(method("FileLoader", "getInstance"));
-        s.add(method("FileLoader", "getPathToMessageO").named("getPathToMessage"));
-        s.add(method("FileLoader", "getPathToMessageOZ").named("getPathToMessage"));
-        s.add(method("FileLoader", "getPathToMessageOZZ").named("getPathToMessage"));
-        s.add(method("ImageReceiver", "getImageLocation"));
-        s.add(method("LocaleController", "formatShortNumber"));
-        s.add(method("LocaleController", "formatYearMont"));
-        s.add(method("LocaleController", "getInstance"));
-        s.add(method("MessageObject", "canForwardMessage"));
-        s.add(method("MessageObject", "getDialogId"));
-        s.add(method("MessageObject", "getDialogIdO").named("getDialogId"));
-        s.add(method("MessageObject", "isMusic"));
-        s.add(method("MessageObject", "isSecret"));
-        s.add(method("MessageObject", "isVoice"));
-        s.add(method("MessagesController", "checkPromoInfoInternal"));
-        s.add(method("MessagesController", "deleteMessagesAAOJIZI").named("deleteMessages"));
-        s.add(method("MessagesController", "deleteMessagesAAOJIZIZ").named("deleteMessages"));
-        s.add(method("MessagesController", "deleteMessagesAAOJZIZJOI").named("deleteMessages"));
-        s.add(method("MessagesController", "deleteMessagesAAOJZIZJOIZI").named("deleteMessages"));
-        s.add(method("MessagesController", "getGlobalMainSettings"));
-        s.add(method("MessagesController", "getInputChannelJ").named("getInputChannel"));
-        s.add(method("MessagesController", "getInputChannelO").named("getInputChannel"));
-        s.add(method("MessagesController", "getInputChannelO2").named("getInputChannel"));
-        s.add(method("MessagesController", "getInstance"));
-        s.add(method("MessagesController", "isChatNoForwardsJ").named("isChatNoForwards"));
-        s.add(method("MessagesController", "isChatNoForwardsO").named("isChatNoForwards"));
-        s.add(method("MessagesController", "processNewDifferenceParams"));
-        s.add(method("MessagesController", "removePromoDialog"));
-        s.add(method("MessagesController", "storiesEnabled"));
-        s.add(method("MessagesController", "storyEntitiesAllowed"));
-        s.add(method("MessagesController", "storyEntitiesAllowedO").named("storyEntitiesAllowed"));
-        s.add(method("MessagesStorage", "getDatabase"));
-        s.add(method("MessagesStorage", "getInstance"));
-        s.add(method("MessagesStorage", "getStorageQueue"));
-        s.add(method("MessagesStorage", "markMessagesAsDeletedJAZZII").named("markMessagesAsDeleted"));
-        s.add(method("MessagesStorage", "markMessagesAsDeletedJIZZ").named("markMessagesAsDeleted"));
-        s.add(method("MessagesStorage", "putMessagesAZZZIIJ").named("putMessages"));
-        s.add(method("MessagesStorage", "putMessagesAZZZIZIJ").named("putMessages"));
-        s.add(method("MessagesStorage", "putMessagesOJIIZIJ").named("putMessages"));
-        s.add(method("NotificationCenter", "postNotificationName"));
-        s.add(method("NotificationsController", "removeDeletedMessagesFromNotifications"));
-        s.add(method("SharedConfig", "isAppUpdateAvailable"));
-        s.add(method("SharedConfig", "setNewAppVersionAvailable"));
-        s.add(method("UserConfig", "getClientUserId"));
-        s.add(method("UserConfig", "getCurrentUser"));
-        s.add(method("UserConfig", "isPremium"));
-        s.add(method("FastDateFormat", "formatD").named("format"));
-        s.add(method("FastDateFormat", "formatJ").named("format"));
-        s.add(method("FastDateFormat", "formatOSF").named("format"));
-        s.add(method("TLRPC$Message", "TLdeserialize"));
-        s.add(method("TLRPC$Message", "readAttachPath"));
+        s.add(method("AndroidUtilities", "isTabletInternal").sig("boolean")
+                .where(writesFieldOfType("org.telegram.messenger.AndroidUtilities", "java.lang.Boolean"), callsSibling("boolean")));
+        s.add(method("DispatchQueue", "postRunnableR").named("postRunnable").sig("boolean", "java.lang.Runnable")
+                .where(callsSibling("boolean", "java.lang.Runnable", "long")));
+        s.add(method("DispatchQueue", "postRunnableRJ").named("postRunnable")
+                .sig("boolean", "java.lang.Runnable", "long"));
+        s.add(method("FileLoadOperation", "updateParams").sig("void")
+                .where(constant(2097152000)));
+        s.add(method("FileLoader", "getInstance").sig("org.telegram.messenger.FileLoader", "int"));
+        s.add(method("FileLoader", "getPathToMessageO").named("getPathToMessage")
+                .sig("java.io.File", "org.telegram.tgnet.TLRPC$Message"));
+        s.add(method("FileLoader", "getPathToMessageOZ").named("getPathToMessage")
+                .sig("java.io.File", "org.telegram.tgnet.TLRPC$Message", "boolean"));
+        s.add(method("FileLoader", "getPathToMessageOZZ").named("getPathToMessage")
+                .sig("java.io.File", "org.telegram.tgnet.TLRPC$Message", "boolean", "boolean"));
+        s.add(method("ImageReceiver", "getImageLocation").sig("org.telegram.messenger.ImageLocation")
+                .where(touchesField("org.telegram.messenger.ImageReceiver", "currentImageLocation"), callCount(0)));
+        s.add(method("LocaleController", "formatShortNumber").sig("java.lang.String", "int", "int[]"));
+        s.add(method("LocaleController", "formatYearMont").sig("java.lang.String", "long", "boolean")
+                .where(string("LOC_ERR"), string(" "), not(constant(5))));
+        s.add(method("LocaleController", "getInstance").sig("org.telegram.messenger.LocaleController"));
+        s.add(method("MessageObject", "canForwardMessage").sig("boolean")
+                .where(refersTo("org.telegram.tgnet.TLRPC$TL_message_secret"), touchesField("org.telegram.tgnet.TLRPC$Message", "noforwards")));
+        s.add(method("MessageObject", "getDialogId").sig("long")
+                .where(callsSymbol("MessageObject#getDialogIdO"), callCount(1)));
+        s.add(method("MessageObject", "getDialogIdO").named("getDialogId")
+                .sig("long", "org.telegram.tgnet.TLRPC$Message")
+                .where(callsSibling("boolean", "org.telegram.tgnet.TLRPC$Message")));
+        s.add(method("MessageObject", "isMusic").sig("boolean")
+                .where(callsSymbol("MessageObject#isMusicMessage")));
+        s.add(method("MessageObject", "isSecret").sig("boolean")
+                .where(refersTo("org.telegram.tgnet.TLRPC$TL_message_secret"), callCount(0)));
+        s.add(method("MessageObject", "isVoice").sig("boolean")
+                .where(callsSymbol("MessageObject#isVoiceMessage"), callCount(1)));
+        s.add(method("MessagesController", "checkPromoInfoInternal").sig("void", "boolean")
+                .where(string("proxy_enabled")));
+        s.add(method("MessagesController", "deleteMessagesAAOJIZI").named("deleteMessages")
+                .sig("void", "java.util.ArrayList", "java.util.ArrayList", "org.telegram.tgnet.TLRPC$EncryptedChat", "long", "int", "boolean", "int"));
+        s.add(method("MessagesController", "deleteMessagesAAOJIZIZ").named("deleteMessages")
+                .sig("void", "java.util.ArrayList", "java.util.ArrayList", "org.telegram.tgnet.TLRPC$EncryptedChat", "long", "int", "boolean", "int", "boolean"));
+        s.add(method("MessagesController", "deleteMessagesAAOJZIZJOI").named("deleteMessages")
+                .sig("void", "java.util.ArrayList", "java.util.ArrayList", "org.telegram.tgnet.TLRPC$EncryptedChat", "long", "boolean", "int", "boolean", "long", "org.telegram.tgnet.TLObject", "int"));
+        s.add(method("MessagesController", "deleteMessagesAAOJZIZJOIZI").named("deleteMessages")
+                .sig("void", "java.util.ArrayList", "java.util.ArrayList", "org.telegram.tgnet.TLRPC$EncryptedChat", "long", "boolean", "int", "boolean", "long", "org.telegram.tgnet.TLObject", "int", "boolean", "int"));
+        // The constructor opens the Notifications, mainconfig and emoji preferences, in that order.
+        s.add(method("MessagesController", "<init>").sig("void", "int"));
+        s.add(field("MessagesController", "notificationsPreferences").type("android.content.SharedPreferences")
+                .writtenBy("MessagesController#<init>", 0));
+        s.add(field("MessagesController", "mainPreferences").type("android.content.SharedPreferences")
+                .writtenBy("MessagesController#<init>", 1));
+        s.add(method("MessagesController", "getGlobalMainSettings").isStatic(true)
+                .sig("android.content.SharedPreferences")
+                .where(touchesFieldSymbol("MessagesController.mainPreferences")));
+        s.add(method("MessagesController", "getNotificationsSettings").sig("android.content.SharedPreferences", "int")
+                .where(touchesFieldSymbol("MessagesController.notificationsPreferences")));
+        // Queues the "delete after viewing" task: a 16-byte buffer tagged 102.
+        s.add(method("MessagesController", "createDeleteShowOnceTask").sig("long", "long", "int").where(constant(102)));
+        s.add(method("MessagesController", "markMessageAsRead2")
+                .sig("void", "long", "int", "org.telegram.tgnet.TLRPC$InputChannel", "int", "long", "boolean"));
+        s.add(method("MessagesController", "getInputChannelJ").named("getInputChannel")
+                .sig("org.telegram.tgnet.TLRPC$InputChannel", "long"));
+        s.add(method("MessagesController", "getInputChannelO").named("getInputChannel")
+                .sig("org.telegram.tgnet.TLRPC$InputChannel", "org.telegram.tgnet.TLRPC$Chat"));
+        s.add(method("MessagesController", "getInputChannelO2").named("getInputChannel")
+                .sig("org.telegram.tgnet.TLRPC$InputChannel", "org.telegram.tgnet.TLRPC$InputPeer"));
+        s.add(method("MessagesController", "getInstance").sig("org.telegram.messenger.MessagesController", "int"));
+        s.add(method("MessagesController", "isChatNoForwardsJ").named("isChatNoForwards").sig("boolean", "long")
+                .where(callsSymbol("MessagesController#isChatNoForwardsO")));
+        s.add(method("MessagesController", "isChatNoForwardsO").named("isChatNoForwards")
+                .sig("boolean", "org.telegram.tgnet.TLRPC$Chat"));
+        s.add(method("MessagesController", "processNewDifferenceParams").sig("void", "int", "int", "int", "int")
+                .where(string(" pts_count = ")));
+        s.add(method("MessagesController", "removePromoDialog").sig("void")
+                .where(notSynthetic(), touchesField("org.telegram.tgnet.TLRPC$Chat", "restricted"),
+                        writesFieldOfType("org.telegram.messenger.MessagesController", "org.telegram.tgnet.TLRPC$Dialog"),
+                        callsSibling("void", "org.telegram.tgnet.TLRPC$Dialog")));
+        s.add(method("MessagesController", "storiesEnabled").sig("boolean")
+                .where(touchesFieldSymbol("MessagesController.storiesPosting")));
+        s.add(method("MessagesController", "storyEntitiesAllowed").sig("boolean")
+                .where(touchesFieldSymbol("MessagesController.storiesEntities")));
+        s.add(method("MessagesController", "storyEntitiesAllowedO").named("storyEntitiesAllowed")
+                .sig("boolean", "org.telegram.tgnet.TLRPC$User")
+                .where(string("premium"), touchesField("org.telegram.tgnet.TLRPC$User", "premium")));
+        s.add(method("MessagesStorage", "getDatabase").sig("org.telegram.SQLite.SQLiteDatabase"));
+        s.add(method("MessagesStorage", "getInstance").sig("org.telegram.messenger.MessagesStorage", "int"));
+        s.add(method("MessagesStorage", "getStorageQueue").sig("org.telegram.messenger.DispatchQueue"));
+        s.add(method("MessagesStorage", "markMessagesAsDeletedJAZZII").named("markMessagesAsDeleted")
+                .sig("java.util.ArrayList", "long", "java.util.ArrayList", "boolean", "boolean", "int", "int"));
+        s.add(method("MessagesStorage", "markMessagesAsDeletedJIZZ").named("markMessagesAsDeleted")
+                .sig("java.util.ArrayList", "long", "int", "boolean", "boolean"));
+        s.add(method("MessagesStorage", "putMessagesAZZZIIJ").named("putMessages")
+                .sig("void", "java.util.ArrayList", "boolean", "boolean", "boolean", "int", "int", "long"));
+        s.add(method("MessagesStorage", "putMessagesAZZZIZIJ").named("putMessages")
+                .sig("void", "java.util.ArrayList", "boolean", "boolean", "boolean", "int", "boolean", "int", "long"));
+        s.add(method("MessagesStorage", "putMessagesOJIIZIJ").named("putMessages")
+                .sig("void", "org.telegram.tgnet.TLRPC$messages_Messages", "long", "int", "int", "boolean", "int", "long"));
+        s.add(method("NotificationCenter", "postNotificationName").sig("void", "int", "java.lang.Object[]")
+                .where(callsSibling("void", "int", "boolean", "java.lang.Object[]")));
+        s.add(method("NotificationsController", "removeDeletedMessagesFromNotifications")
+                .sig("void", "androidx.collection.LongSparseArray", "boolean"));
+        s.add(method("SharedConfig", "isAppUpdateAvailable").sig("boolean")
+                .where(calls("android.content.pm.PackageManager", "android.content.pm.PackageInfo", "java.lang.String", "int")));
+        s.add(method("SharedConfig", "setNewAppVersionAvailable")
+                .sig("boolean", "org.telegram.tgnet.TLRPC$TL_help_appUpdate"));
+        s.add(method("UserConfig", "getClientUserId").sig("long")
+                .where(touchesFieldSymbol("UserConfig.currentUser"), callCount(0)));
+        s.add(method("UserConfig", "getCurrentUser").sig("org.telegram.tgnet.TLRPC$User"));
+        s.add(method("UserConfig", "isPremium").sig("boolean")
+                .where(touchesFieldSymbol("UserConfig.currentUser"), touchesField("org.telegram.tgnet.TLRPC$User", "premium")));
+        s.add(method("FastDateFormat", "formatD").named("format").sig("java.lang.String", "java.util.Date"));
+        s.add(method("FastDateFormat", "formatJ").named("format").sig("java.lang.String", "long"));
+        s.add(method("FastDateFormat", "formatOSF").named("format")
+                .sig("java.lang.StringBuffer", "java.lang.Object", "java.lang.StringBuffer", "java.text.FieldPosition"));
+        s.add(method("TLRPC$Message", "TLdeserialize")
+                .sig("org.telegram.tgnet.TLRPC$Message", "org.telegram.tgnet.InputSerializedData", "int", "boolean"));
+        s.add(method("TLRPC$Message", "readAttachPath").sig("void", "org.telegram.tgnet.InputSerializedData", "long"));
+        s.add(field("UserConfig", "currentUser").type("org.telegram.tgnet.TLRPC$User").onlyOneOfType());
+        s.add(method("UserConfig", "setCurrentUser").sig("void", "org.telegram.tgnet.TLRPC$User")
+                .where(callsSibling("void", "org.telegram.tgnet.TLRPC$User", "org.telegram.tgnet.TLRPC$User")));
+        s.add(method("UserConfig", "loadConfig").sig("void")
+                .where(string("selectedAccount"), string("2dialogsLoadOffsetId")));
+        s.add(method("Utilities", "<clinit>").sig("void"));
+        s.add(method("LocaleController", "recreateFormatters").sig("void").where(string("iw_")));
+        s.add(field("MessagesController", "storiesPosting").keyedBy("MessagesController#<init>", "storiesPosting"));
+        s.add(field("MessagesController", "storiesEntities").keyedBy("MessagesController#<init>", "storiesEntities"));
+        s.add(method("MessageObject", "isVoiceDocument").sig("boolean", document)
+                .where(touchesField("org.telegram.tgnet.TLRPC$DocumentAttribute", "voice"), callCount(2)));
+        s.add(method("MessageObject", "isMusicDocument").sig("boolean", document).where(string("audio/flac")));
+        s.add(method("MessageObject", "isVoiceMessage").sig("boolean", msg)
+                .where(callsSymbol("MessageObject#isVoiceDocument")));
+        s.add(method("MessageObject", "isMusicMessage").sig("boolean", msg)
+                .where(callsSymbol("MessageObject#isMusicDocument")));
         s.add(method("ChatActivity", "createView"));
         s.add(method("ChatActivity", "isSwipeBackEnabled"));
         s.add(method("ProfileActivity", "isSwipeBackEnabled"));
@@ -365,14 +509,17 @@ public final class TelegramFingerprints {
                 .where(extendsType("android.app.Dialog")));
 
         s.add(cls("androidx.collection.LongSparseArray")
-                .from(fieldTypeOf("org.telegram.messenger.MessagesController", "dialogMessage"))
-                .where(implementsType("java.lang.Cloneable"), hasField(false, "long[]")));
+                .from(fieldTypeOf("org.telegram.messenger.MessagesController", "dialogMessage"),
+                        fieldTypesOf("org.telegram.messenger.MessagesController"))
+                .where(implementsType("java.lang.Cloneable"), hasField(false, "long[]"),
+                        hasField(false, "java.lang.Object[]")));
         s.add(cls("org.telegram.messenger.browser.Browser")
                 .from(declaringStrings("com.duckduckgo.mobile.android", "vivaldi-browser")));
         s.add(cls("org.telegram.ui.ActionBar.Theme")
                 .from(declaringStrings("autoNightScheduleByLocation", "autoNightLastSunCheckDay")));
         s.add(cls("org.telegram.ui.Stories.StoriesController")
-                .from(returnTypeOf("org.telegram.messenger.MessagesController", "getStoriesController")));
+                .from(returnTypeOf("org.telegram.messenger.MessagesController", "getStoriesController"),
+                        declaringStrings("stories_stealth_mode", "last_stories_state_hidden")));
     }
 
     // ----------------------------------------------------------------- settings
@@ -606,7 +753,7 @@ public final class TelegramFingerprints {
                 .where(extendsType("android.view.accessibility.AccessibilityNodeProvider")));
         s.add(cls(cell)
                 .from(fieldTypesOf("org.telegram.ui.Cells.ChatMessageCell$MessageAccessibilityNodeProvider"))
-                .where(implementsType("org.telegram.messenger.ImageReceiver$ImageReceiverDelegate")));
+                .where(inherits("android.view.ViewGroup")));
         s.add(method("ChatMessageCell", "getMessageObject").sig(mo).where(callsNothing()));
         // The only (MessageObject) method that labels imported messages.
         s.add(method("ChatMessageCell", "measureTime").sig("void", mo).where(string("ImportedMessage")));
@@ -651,14 +798,14 @@ public final class TelegramFingerprints {
         // Each is pinned by the kept MessagesController call it makes; R8 may narrow the returned
         // Runnable to the lambda class, which the call site's before-hook does not care about.
         s.add(method("ChatActivity", "sendSecretMediaDelete").sig("java.lang.Runnable", mo).narrowedReturn().staticized()
-                .where(callsNamed("org.telegram.messenger.MessagesController", "createDeleteShowOnceTask")));
+                .where(callsSymbol("MessagesController#createDeleteShowOnceTask")));
         s.add(method("ChatActivity", "sendSecretMessageRead").sig("java.lang.Runnable", mo, "boolean").narrowedReturn()
-                .where(callsNamed("org.telegram.messenger.MessagesController", "markMessageAsRead2")));
+                .where(callsSymbol("MessagesController#markMessageAsRead2")));
         // (boolean, int) compares the top pin against the dismissed one saved under "pin_<dialog>".
         // 12.10.3 has it as (int, boolean).
         s.add(method("ChatActivity", "updatePinnedMessageViewZI").named("updatePinnedMessageView")
                 .sig("void", "boolean", "int").anyOrder()
-                .where(string("pin_"), callsNamed("org.telegram.messenger.MessagesController", "getNotificationsSettings")));
+                .where(string("pin_"), callsSymbol("MessagesController#getNotificationsSettings")));
         // (boolean) only forwards to it; R8 may inline it, in which case hooking (boolean, int) is enough.
         s.add(method("ChatActivity", "updatePinnedMessageViewZ").named("updatePinnedMessageView").sig("void", "boolean")
                 .where(callsSymbol("ChatActivity#updatePinnedMessageViewZI"), callCount(1)));
@@ -690,8 +837,12 @@ public final class TelegramFingerprints {
         String fragment = "org.telegram.ui.ActionBar.BaseFragment";
         String rp = "org.telegram.ui.ActionBar.Theme$ResourcesProvider";
 
+        s.add(cls(loc).from(superclassOf("org.telegram.tgnet.TLRPC$TL_fileLocationToBeDeprecated")));
+        s.add(cls(imgLoc).from(declaringStrings("[richmedia] strippedKey=", " fullObject=")));
         s.add(cls(provider)
-                .from(declaringMethod(null, mo, loc, "int", "boolean", "boolean"))
+                .from(declaringMethod(null, mo, loc, "int", "boolean", "boolean"),
+                        paramTypeWhere("org.telegram.ui.SecretMediaViewer", "void", mo, null,
+                                "java.lang.Runnable", "java.lang.Runnable"))
                 .where(isInterface()));
         s.add(cls(place).from(returnTypeWhere(provider, mo, loc, "int", "boolean", "boolean")));
         s.add(method("PhotoViewer$PhotoViewerProvider", "getPlaceForPhoto").sig(place, mo, loc, "int", "boolean", "boolean"));
@@ -729,9 +880,10 @@ public final class TelegramFingerprints {
         s.add(method("PhotoViewer", "setParentActivityAO").named("setParentActivity").sig("void", "android.app.Activity", rp));
         s.add(method("PhotoViewer", "setParentActivityAOO").named("setParentActivity")
                 .sig("void", "android.app.Activity", fragment, rp));
-        // setParentActivity builds the menus in a fixed order: loop, cast, gallery, pip, all media, QR.
+        // Forks add their own items to the menu setParentActivity builds, but switching photos
+        // still toggles the picture-in-picture item first and the gallery item second.
         s.add(field("PhotoViewer", "galleryButton").type("org.telegram.ui.ActionBar.ActionBarMenuSubItem")
-                .writtenBy("PhotoViewer#setParentActivityAOO", 2));
+                .readBy("PhotoViewer#setIsAboutToSwitchToIndexIZZZ", 1));
         s.add(method("PhotoViewer", "setParentActivityO").named("setParentActivity").sig("void", fragment));
         s.add(method("PhotoViewer", "setParentActivityOO").named("setParentActivity").sig("void", fragment, rp));
 
@@ -753,6 +905,15 @@ public final class TelegramFingerprints {
         // chat - the only boolean() in the app reading both flags of a story item.
         Body screenshots = Body.all(touchesField("org.telegram.tgnet.tl.TL_stories$StoryItem", "noforwards"),
                 touchesField("org.telegram.tgnet.tl.TL_stories$StoryItem", "pinned"));
+        // Some forks rename the tl.* classes; a TL object's constructor id pins it anyway.
+        s.add(cls("org.telegram.tgnet.tl.TL_stories$TL_storyItem").from(declaringConstant(379894076))
+                .where(hasMethod(false, "void", "org.telegram.tgnet.OutputSerializedData")));
+        s.add(cls("org.telegram.tgnet.tl.TL_stories$StoryItem")
+                .from(superclassOf("org.telegram.tgnet.tl.TL_stories$TL_storyItem")));
+        s.add(cls("org.telegram.tgnet.tl.TL_stories$TL_peerStories").from(declaringConstant(-1707742823))
+                .where(hasMethod(false, "void", "org.telegram.tgnet.OutputSerializedData")));
+        s.add(cls("org.telegram.tgnet.tl.TL_stories$PeerStories")
+                .from(superclassOf("org.telegram.tgnet.tl.TL_stories$TL_peerStories")));
         s.add(cls("org.telegram.ui.Stories.PeerStoriesView$StoryItemHolder")
                 .from(declaringMethodWhere(screenshots, "boolean")));
         s.add(method("PeerStoriesView$StoryItemHolder", "allowScreenshots").sig("boolean").where(screenshots));

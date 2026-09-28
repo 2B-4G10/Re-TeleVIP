@@ -51,12 +51,21 @@ public final class Resolver {
     private final Set<String> pendingClasses = new java.util.HashSet<>();
     private final Set<String> pendingMethods = new java.util.HashSet<>();
     private final Set<String> anchorStrings = new java.util.LinkedHashSet<>();
+    private final Set<Long> anchorConstants = new java.util.LinkedHashSet<>();
     private DexIndex.AnchorHits anchorHits;
     private final Map<String, String> ownerFullNames;
+    /** Ignore real names wherever a fingerprint exists: to test fingerprints on a build that keeps them. */
+    boolean fingerprintsOnly;
 
     public Resolver(DexIndex index, Map<String, String> ownerFullNames) {
         this.index = index;
         this.ownerFullNames = ownerFullNames;
+    }
+
+    /** Finds every symbol that has a fingerprint by it alone, as if the build had renamed it. */
+    public Resolver fingerprintsOnly() {
+        fingerprintsOnly = true;
+        return this;
     }
 
     // ------------------------------------------------------------------ run
@@ -74,6 +83,8 @@ public final class Resolver {
                 for (Symbol.ClassSource source : c.sources) {
                     if (source instanceof Classes.StringAnchored) {
                         Collections.addAll(anchorStrings, ((Classes.StringAnchored) source).strings);
+                    } else if (source instanceof Classes.ConstantAnchored) {
+                        anchorConstants.add(((Classes.ConstantAnchored) source).value);
                     }
                 }
             }
@@ -131,10 +142,10 @@ public final class Resolver {
         return kept;
     }
 
-    /** Results of the one shared bytecode scan for every string any fingerprint anchors on. */
+    /** Results of the one shared bytecode scan for every string and constant fingerprints anchor on. */
     DexIndex.AnchorHits anchors() {
         if (anchorHits == null) {
-            anchorHits = index.scanAnchors(anchorStrings, Collections.<Long>emptyList());
+            anchorHits = index.scanAnchors(anchorStrings, anchorConstants);
         }
         return anchorHits;
     }

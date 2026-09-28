@@ -21,6 +21,14 @@ public abstract class Symbol {
 
     abstract void store(Resolver r, Resolver.Attempt attempt, Mapping mapping);
 
+    /** Whether the symbol can be found without its real name. */
+    abstract boolean hasFingerprint();
+
+    /** Whether to look the real name up: always, except when testing the fingerprint alone. */
+    boolean tryName(Resolver r) {
+        return !(r.fingerprintsOnly && hasFingerprint());
+    }
+
     // =================================================================== class
 
     /** Something true or false about a candidate class. Null means "not decidable yet". */
@@ -68,8 +76,13 @@ public abstract class Symbol {
         }
 
         @Override
+        boolean hasFingerprint() {
+            return !sources.isEmpty();
+        }
+
+        @Override
         Resolver.Attempt attempt(Resolver r) {
-            DexClass kept = r.index.findClass(original);
+            DexClass kept = tryName(r) ? r.index.findClass(original) : null;
             if (kept != null) return Resolver.Attempt.of(kept, true);
             Resolver.Attempt ambiguous = null;
             boolean waiting = false;
@@ -230,6 +243,11 @@ public abstract class Symbol {
         }
 
         @Override
+        boolean hasFingerprint() {
+            return returnType != null && !name.startsWith("<");   // constructors are never renamed
+        }
+
+        @Override
         Resolver.Attempt attempt(Resolver r) {
             DexClass cls = r.cls(r.fullName(owner));
             if (cls == null) {
@@ -251,7 +269,8 @@ public abstract class Symbol {
 
             // Kept name: conclusive for a descriptive name, but a short one could equally be
             // something R8 generated, so for those the signature has to agree as well.
-            List<DexClass.Method> named = cls.methodsNamed(name);
+            List<DexClass.Method> named = tryName(r) ? cls.methodsNamed(name)
+                    : java.util.Collections.<DexClass.Method>emptyList();
             if (!named.isEmpty()) {
                 if (want == null && !facts.isEmpty()) {
                     // Overloads of a kept name (e.g. constructors): the facts pick one.
@@ -398,10 +417,17 @@ public abstract class Symbol {
         String handedIn, handedTo;
         boolean narrowed;
         String alternativeType;
+        String keyHost, key;
 
         FieldSymbol(String owner, String name) {
             this.owner = owner;
             this.name = name;
+        }
+
+        @Override
+        boolean hasFingerprint() {
+            return keyHost != null
+                    || type != null && (uniqueOfType || writtenBy != null || accessedBy != null || handedIn != null);
         }
 
         public FieldSymbol type(String sourceType) {
@@ -455,6 +481,17 @@ public abstract class Symbol {
             return this;
         }
 
+        /**
+         * Renamed field: the first field of the class that the given (resolved) method writes after
+         * loading the string {@code key} - a preference or queue name that travels with the field,
+         * as in {@code storiesPosting = preferences.getString("storiesPosting", ...)}.
+         */
+        public FieldSymbol keyedBy(String methodSymbolId, String key) {
+            this.keyHost = methodSymbolId;
+            this.key = key;
+            return this;
+        }
+
         /** The type some builds declare the field with instead (for writtenBy / readBy). */
         public FieldSymbol orType(String sourceType) {
             this.alternativeType = sourceType;
@@ -492,7 +529,7 @@ public abstract class Symbol {
             String typeDesc = type == null ? null : r.descriptor(type);
             if (type != null && typeDesc == null) return Resolver.Attempt.waiting();
 
-            DexClass.Field kept = cls.fieldNamed(name);
+            DexClass.Field kept = tryName(r) ? cls.fieldNamed(name) : null;
             if (kept != null && (name.length() > 3 || typeDesc == null || typeDesc.equals(kept.type()))) {
                 return Resolver.Attempt.of(kept, true);
             }
@@ -534,6 +571,33 @@ public abstract class Symbol {
                     if (typeDesc.equals(f.type()) && (isStatic == null || isStatic == f.isStatic())) ofType.add(f);
                 }
                 return Resolver.Attempt.single(ofType);
+            }
+            if (keyHost != null) {
+                DexClass.Method host = r.methods.get(keyHost);
+                if (host == null) return r.isResolvedOrPending(keyHost)
+                        ? Resolver.Attempt.waiting() : Resolver.Attempt.notFound();
+                if (!host.hasCode()) return Resolver.Attempt.notFound();
+                final DexFile dex = host.owner.dex;
+                final String owner = cls.descriptor;
+                final String wanted = key;
+                final String[] found = new String[1];
+                host.scan(new CodeScanner.Visitor() {
+                    boolean armed;
+
+                    @Override
+                    public void string(int i) {
+                        if (wanted.equals(dex.string(i))) armed = true;
+                    }
+
+                    @Override
+                    public void field(int opcode, int i, boolean write) {
+                        if (!armed || !write) return;
+                        armed = false;   // only the store the key leads to
+                        if (found[0] == null && dex.fieldClass(i).equals(owner)) found[0] = dex.fieldName(i);
+                    }
+                });
+                DexClass.Field declared = found[0] == null ? null : cls.fieldNamed(found[0]);
+                return declared == null ? Resolver.Attempt.notFound() : Resolver.Attempt.of(declared, false);
             }
             if (typeDesc != null && writtenBy != null) {
                 DexClass.Method writer = r.methods.get(writtenBy);

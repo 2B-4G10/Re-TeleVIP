@@ -45,6 +45,22 @@ public final class Classes {
         };
     }
 
+    /** The type of one parameter of the methods reached by a name the build keeps. */
+    public static Symbol.ClassSource paramTypeOf(final String owner, final String methodName, final int index) {
+        return r -> {
+            DexClass cls = r.cls(owner);
+            if (cls == null) return null;
+            java.util.Set<DexClass> out = new java.util.LinkedHashSet<>();
+            for (DexClass.Method m : cls.methodsNamed(methodName)) {
+                String[] params = m.parameterTypes();
+                if (index >= params.length) continue;
+                DexClass c = r.index.byDescriptor(params[index]);
+                if (c != null) out.add(c);
+            }
+            return out;
+        };
+    }
+
     /**
      * Parameter types of methods of {@code owner} whose other parameters are the given source
      * types; {@code null} marks the unknown position. Lets a kept or already-resolved owner name
@@ -206,6 +222,29 @@ public final class Classes {
                 else result.retainAll(owners);
             }
             return result == null ? Collections.<DexClass>emptyList() : result;
+        }
+    }
+
+    /**
+     * Classes with a method that loads this constant - e.g. a TL object's constructor id, which
+     * its serializer writes and which no other class uses.
+     */
+    public static Symbol.ClassSource declaringConstant(final long value) {
+        return new ConstantAnchored(value);
+    }
+
+    static final class ConstantAnchored implements Symbol.ClassSource {
+        final long value;
+
+        ConstantAnchored(long value) {
+            this.value = value;
+        }
+
+        @Override
+        public Collection<DexClass> candidates(Resolver r) {
+            java.util.Set<DexClass> owners = new java.util.LinkedHashSet<>();
+            for (DexClass.Method m : r.anchors().constant(value)) owners.add(m.owner);
+            return owners;
         }
     }
 
