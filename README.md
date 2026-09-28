@@ -4,7 +4,7 @@
 
 # Re-TeleVip
 
-**Privacy, media and quality-of-life features for Telegram and its forks, as an Xposed module.**
+**Privacy, media and quality-of-life Features for Telegram and its forks, as a Vector/Xposed module.**
 
 [![Release](https://img.shields.io/github/v/release/2B-4G10/TeleVIP?label=release&color=FFD500)](../../releases/latest)
 [![Xposed API](https://img.shields.io/badge/libxposed-API%20102-4A4D54)](#requirements)
@@ -51,18 +51,6 @@ Telegram and its forks rename their code on every release, some (Nekogram, Cherr
 all of it. TeleVip doesn't depend on a name table for a single version. It reads the running client's own APK once
 per update and finds each hook by what the code does. Anything it can't pin down exactly is left
 off rather than guessed. Details are in the [changelog](CHANGELOG.md).
-
-## Building
-
-```bash
-./gradlew :app:assembleDebug
-```
-
-JDK 17 and Android SDK 36. Pushing to `main` builds APKs in [Actions](../../actions/workflows/build-apk.yml).
-Bumping `versionName` on `main` publishes a release.
-Every Monday, [Client watch](../../actions/workflows/client-watch.yml) checks the latest Telegram,
-Nekogram, Cherrygram, Nagram, NagramX and Forkgram against every feature's hook points and fails
-(emailing you) if a release breaks one.
 
 ## Credits
 
