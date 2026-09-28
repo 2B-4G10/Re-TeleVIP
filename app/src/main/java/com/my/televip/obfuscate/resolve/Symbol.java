@@ -412,7 +412,6 @@ public abstract class Symbol {
         final String owner, name;
         String type;
         Boolean isStatic;
-        String accessedBy;
         boolean uniqueOfType;
         String writtenBy;
         int writeOrdinal;
@@ -430,7 +429,7 @@ public abstract class Symbol {
         @Override
         boolean hasFingerprint() {
             return keyHost != null
-                    || type != null && (uniqueOfType || writtenBy != null || accessedBy != null || handedIn != null);
+                    || type != null && (uniqueOfType || writtenBy != null || handedIn != null);
         }
 
         public FieldSymbol type(String sourceType) {
@@ -512,11 +511,6 @@ public abstract class Symbol {
             return this;
         }
 
-        /** Renamed field: the one of this type that the given (resolved) method touches. */
-        public FieldSymbol accessedBy(String methodSymbolId) {
-            this.accessedBy = methodSymbolId;
-            return this;
-        }
 
         @Override
         String id() {
@@ -627,20 +621,7 @@ public abstract class Symbol {
                 DexClass.Field declared = cls.fieldNamed(order.get(writeOrdinal));
                 return declared == null ? Resolver.Attempt.notFound() : Resolver.Attempt.of(declared, false);
             }
-            if (typeDesc == null || accessedBy == null) return Resolver.Attempt.notFound();
-            DexClass.Method method = r.methods.get(accessedBy);
-            if (method == null) return Resolver.Attempt.waiting();
-
-            List<DexClass.Field> matching = new ArrayList<>();
-            Body.Refs refs = Body.Refs.of(r, method);
-            for (Body.Refs.FieldRef f : refs.fields) {
-                if (!f.owner.equals(cls.descriptor) || !f.type.equals(typeDesc)) continue;
-                DexClass.Field declared = cls.fieldNamed(f.name);
-                if (declared != null && (isStatic == null || isStatic == declared.isStatic())) {
-                    matching.add(declared);
-                }
-            }
-            return Resolver.Attempt.single(matching);
+            return Resolver.Attempt.notFound();
         }
 
         @Override

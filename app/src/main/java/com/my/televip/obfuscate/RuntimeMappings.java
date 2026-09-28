@@ -55,10 +55,6 @@ public final class RuntimeMappings {
         return active;
     }
 
-    public static String summary() {
-        return summary;
-    }
-
     // ------------------------------------------------------------ prefetch
 
     /**

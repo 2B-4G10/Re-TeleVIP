@@ -20,7 +20,6 @@ import com.my.televip.virtuals.Drawables;
 import com.my.televip.virtuals.Theme;
 import com.my.televip.virtuals.ui.ChatActivity;
 
-import com.my.televip.reflect.XReflect;
 
 public class ChatHook {
 

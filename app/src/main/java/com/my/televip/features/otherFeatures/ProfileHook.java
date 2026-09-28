@@ -16,7 +16,6 @@ import com.my.televip.virtuals.ActionBar.AlertDialog;
 import com.my.televip.virtuals.Drawables;
 import com.my.televip.virtuals.ui.ProfileActivity;
 
-import com.my.televip.reflect.XReflect;
 
 public class ProfileHook {
 

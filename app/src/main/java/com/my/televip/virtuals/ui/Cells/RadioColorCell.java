@@ -29,7 +29,6 @@ public class RadioColorCell extends FrameLayout {
 
         radioButton = new RadioButton(context);
         radioButton.setSize(AndroidUtilities.dp(20));
-        //radioButton.setColor(getThemedColor(Theme.key_dialogRadioBackground), getThemedColor(Theme.key_dialogRadioBackgroundChecked));
         addView(radioButton, LayoutHelper.createFrame(22, 22, (LocaleController.isRTL() ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, (LocaleController.isRTL() ? 0 : 18), 14, (LocaleController.isRTL() ? 18 : 0), 0));
 
         textView = new TextView(context);

@@ -83,10 +83,6 @@ public final class DexIndex {
         return out.toByteArray();
     }
 
-    public List<DexFile> dexFiles() {
-        return dexFiles;
-    }
-
     // ---------------------------------------------------------------- lookup
 
     public boolean hasClass(String javaName) {

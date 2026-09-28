@@ -93,17 +93,6 @@ public abstract class AbstractMethodHook {
             return throwable != null;
         }
 
-        public void setThrowable(Throwable throwable) {
-            this.throwable = throwable;
-            this.result = null;
-            this.resultSet = true;
-        }
-
-        public Object getResultOrThrowable() throws Throwable {
-            if (throwable != null) throw throwable;
-            return result;
-        }
-
         /** True once the callback explicitly assigned a result or a throwable. */
         public boolean isResultSet() {
             return resultSet;

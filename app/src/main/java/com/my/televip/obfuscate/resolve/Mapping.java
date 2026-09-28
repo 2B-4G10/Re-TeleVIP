@@ -62,10 +62,6 @@ public final class Mapping {
         return classes.size() + fields.size() + methods.size();
     }
 
-    public Map<String, String[]> parameters() {
-        return Collections.unmodifiableMap(parameters);
-    }
-
     // ------------------------------------------------------------ persistence
 
     /**
