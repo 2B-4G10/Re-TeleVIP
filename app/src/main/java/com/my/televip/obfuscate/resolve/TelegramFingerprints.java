@@ -312,6 +312,13 @@ public final class TelegramFingerprints {
     // ------------------------------------------------------------------ classes
 
     private static void classes(List<Symbol> s) {
+        // Official Telegram builds rename these too; each loads strings no other class does.
+        s.add(cls("org.telegram.ui.ChatActivity")
+                .from(declaringStrings("WelcomeMessagesLimit", "processLoadedDiscussionMessage reset history",
+                        "AwaitingEncryption")));
+        s.add(cls("org.telegram.ui.SettingsActivity")
+                .from(declaringStrings("disable shadows in settings", "enable debug view metrics")));
+
         // Helpers: not used by call sites directly, but other fingerprints anchor on them.
         s.add(cls("org.telegram.ui.ActionBar.BaseFragment")
                 .from(superclassOf("org.telegram.ui.ChatActivity")));
@@ -405,7 +412,8 @@ public final class TelegramFingerprints {
                 .where(inherits("android.widget.FrameLayout"), loadsString("android.widget.ImageButton"),
                         loadsString("android.widget.Button")));
         s.add(cls(sub)
-                .from(returnTypeWhere(ami, "int", "int", "java.lang.CharSequence"))
+                .from(returnTypeWhere(ami, "int", "int", "java.lang.CharSequence"),
+                        returnTypeWhere(ami, "int", "int", "java.lang.String"))
                 .where(extendsType("android.widget.FrameLayout")));
         // lazilyAddSubItem(int, int, CharSequence); R8 narrows the text to String when only
         // strings are passed.
@@ -415,7 +423,8 @@ public final class TelegramFingerprints {
                 .where(extendsType("java.lang.Object")));
 
         s.add(method("ActionBarMenuItem", "addSubItemIC").named("addSubItem").sig("android.widget.TextView", "int", "java.lang.CharSequence"));
-        s.add(method("ActionBarMenuItem", "addSubItemIIC").named("addSubItem").sig(sub, "int", "int", "java.lang.CharSequence"));
+        s.add(method("ActionBarMenuItem", "addSubItemIIC").named("addSubItem").sig(sub, "int", "int", "java.lang.CharSequence")
+                .narrowedStrings());
         s.add(method("ActionBarMenuItem", "addSubItemIICO").named("addSubItem").sig(sub, "int", "int", "java.lang.CharSequence", rp));
         s.add(method("ActionBarMenuItem", "addSubItemIICZ").named("addSubItem").sig(sub, "int", "int", "java.lang.CharSequence", "boolean"));
         s.add(method("ActionBarMenuItem", "addSubItemIIDCZZ").named("addSubItem")
@@ -426,7 +435,8 @@ public final class TelegramFingerprints {
         s.add(method("ActionBarMenuItem", "addSubItemIVII").named("addSubItem").sig("void", "int", "android.view.View", "int", "int"));
         s.add(method("ActionBarMenuItem", "addSubItemVII").named("addSubItem").sig("void", "android.view.View", "int", "int"));
         s.add(method("ActionBarMenuItem", "lazilyAddSubItemIDC").named("lazilyAddSubItem").sig(item, "int", drawable, "java.lang.CharSequence"));
-        s.add(method("ActionBarMenuItem", "addSubItem").sig(sub, "int", "int", "java.lang.CharSequence"));
+        s.add(method("ActionBarMenuItem", "addSubItem").sig(sub, "int", "int", "java.lang.CharSequence")
+                .narrowedStrings());
         s.add(method("ActionBarMenuItem", "lazilyAddSubItem").sig(item, "int", "int", "java.lang.CharSequence")
                 .narrowedStrings());
         s.add(method("ActionBarMenuItem", "lazilyAddSubItemIIC").named("lazilyAddSubItem").sig(item, "int", "int", "java.lang.CharSequence")
@@ -568,7 +578,7 @@ public final class TelegramFingerprints {
         // measureTime builds currentTimeString first, then measures it:
         // timeTextWidth = timeWidth = ceil(chat_timePaint.measureText(currentTimeString)).
         s.add(field("ChatMessageCell", "currentTimeString").type("android.text.SpannableStringBuilder")
-                .writtenBy("ChatMessageCell#measureTime", 0));
+                .orType("java.lang.CharSequence").writtenBy("ChatMessageCell#measureTime", 0));
         s.add(field("ChatMessageCell", "timeWidth").type("int").writtenBy("ChatMessageCell#measureTime", 0));
         s.add(field("ChatMessageCell", "timeTextWidth").type("int").writtenBy("ChatMessageCell#measureTime", 1));
 
@@ -578,9 +588,10 @@ public final class TelegramFingerprints {
         s.add(method("ChatActivity", "scrollToMessageId").sig("void", "int", "int", "boolean", "int", "boolean", "int"));
         // processSelectedOption starts with "if (selectedObject == null ...) return".
         s.add(field("ChatActivity", "selectedObject").type(mo).readBy("ChatActivity#processSelectedOption", 0));
-        // updatePinnedMessageView toggles the "show pinned" entry of the header (three-dot) menu.
+        // createView adds the action bar items in a fixed order: topic create, search icon, search,
+        // then the header (three-dot) menu.
         s.add(field("ChatActivity", "headerItem").type("org.telegram.ui.ActionBar.ActionBarMenuItem")
-                .readBy("ChatActivity#updatePinnedMessageViewZI", 0));
+                .writtenBy("ChatActivity#createView", 3));
 
         // Builds the pinned bar lazily for updatePinnedMessageView: the one void() helper it calls
         // that stores a new anonymous FrameLayout in a field (its debug-name literal is stripped).
@@ -593,9 +604,9 @@ public final class TelegramFingerprints {
         s.add(method("ChatActivity", "hasSelectedNoforwardsMessage").sig("boolean")
                 .where(touchesField("org.telegram.tgnet.TLRPC$Message", "noforwards")));
         // The context-menu dispatcher: one switch over the OPTION_* constants, including ones
-        // (open-in, speed promo, revenue-sharing ads) no other int handler switches on.
+        // (revenue-sharing ads, speed promo, welcome revert) no other int handler switches on.
         s.add(method("ChatActivity", "processSelectedOption").sig("void", "int")
-                .where(switchKey(33), switchKey(83), switchKey(103)));
+                .where(switchKey(33), switchKey(103), switchKey(116)));
         s.add(method("ChatActivity", "scrollToMessageIdIIZIZI").named("scrollToMessageId")
                 .sig("void", "int", "int", "boolean", "int", "boolean", "int"));
         s.add(method("ChatActivity", "scrollToMessageIdIIZIZIIR").named("scrollToMessageId")
@@ -604,7 +615,7 @@ public final class TelegramFingerprints {
                 .sig("void", "int", "int", "boolean", "int", "boolean", "int", "java.lang.Integer", "byte[]", "java.lang.Runnable"));
         // Each is pinned by the kept MessagesController call it makes; R8 may narrow the returned
         // Runnable to the lambda class, which the call site's before-hook does not care about.
-        s.add(method("ChatActivity", "sendSecretMediaDelete").sig("java.lang.Runnable", mo).narrowedReturn()
+        s.add(method("ChatActivity", "sendSecretMediaDelete").sig("java.lang.Runnable", mo).narrowedReturn().staticized()
                 .where(callsNamed("org.telegram.messenger.MessagesController", "createDeleteShowOnceTask")));
         s.add(method("ChatActivity", "sendSecretMessageRead").sig("java.lang.Runnable", mo, "boolean").narrowedReturn()
                 .where(callsNamed("org.telegram.messenger.MessagesController", "markMessageAsRead2")));

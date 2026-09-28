@@ -132,7 +132,7 @@ public abstract class Symbol {
         String[] params;
         Boolean isStatic;
         int[] readPositions;
-        boolean voidable, narrowedStrings, narrowedReturn, anyOrder;
+        boolean voidable, narrowedStrings, narrowedReturn, anyOrder, staticized;
         final List<Body> facts = new ArrayList<>();
 
         MethodSymbol(String owner, String key) {
@@ -210,6 +210,15 @@ public abstract class Symbol {
             return this;
         }
 
+        /**
+         * R8 can turn a private instance method into a static one that takes the instance as its
+         * first parameter. Accept that shape too; the call site gets the real parameter list.
+         */
+        public MethodSymbol staticized() {
+            this.staticized = true;
+            return this;
+        }
+
         public MethodSymbol where(Body... facts) {
             for (Body f : facts) this.facts.add(f);
             return this;
@@ -284,6 +293,10 @@ public abstract class Symbol {
             if (!m.returnType().equals(ret) && !(voidable && m.returnType().equals("V"))
                     && !(narrowedReturn && isSubtype(r, m.returnType(), ret))) return false;
             String[] actual = m.parameterTypes();
+            if (staticized && m.isStatic() && actual.length == want.length + 1
+                    && actual[0].equals(m.owner.descriptor)) {
+                actual = java.util.Arrays.copyOfRange(actual, 1, actual.length);
+            }
             if (actual.length == want.length) {
                 boolean inOrder = true;
                 for (int i = 0; i < want.length && inOrder; i++) {
@@ -384,6 +397,7 @@ public abstract class Symbol {
         boolean ordinalOfReads;
         String handedIn, handedTo;
         boolean narrowed;
+        String alternativeType;
 
         FieldSymbol(String owner, String name) {
             this.owner = owner;
@@ -438,6 +452,12 @@ public abstract class Symbol {
         public FieldSymbol handedTo(String hostMethod, String calledName) {
             this.handedIn = hostMethod;
             this.handedTo = calledName;
+            return this;
+        }
+
+        /** The type some builds declare the field with instead (for writtenBy / readBy). */
+        public FieldSymbol orType(String sourceType) {
+            this.alternativeType = sourceType;
             return this;
         }
 
@@ -519,9 +539,11 @@ public abstract class Symbol {
                 DexClass.Method writer = r.methods.get(writtenBy);
                 if (writer == null) return r.isResolvedOrPending(writtenBy)
                         ? Resolver.Attempt.waiting() : Resolver.Attempt.notFound();
+                String altDesc = alternativeType == null ? null : r.descriptor(alternativeType);
                 List<String> order = new ArrayList<>();
                 for (Body.Refs.FieldRef f : Body.Refs.of(r, writer).fields) {
-                    boolean typeFits = f.type.equals(typeDesc) || (narrowed && r.index.extendsClass(f.type, typeDesc));
+                    boolean typeFits = f.type.equals(typeDesc) || f.type.equals(altDesc)
+                            || (narrowed && r.index.extendsClass(f.type, typeDesc));
                     if (f.write != ordinalOfReads && f.owner.equals(cls.descriptor) && typeFits
                             && !order.contains(f.name)) order.add(f.name);
                 }
