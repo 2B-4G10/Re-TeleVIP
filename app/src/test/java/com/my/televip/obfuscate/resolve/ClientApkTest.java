@@ -110,14 +110,18 @@ public class ClientApkTest {
         compare(named.classes(), fingerprinted.classes(), wrong);
         compare(named.fields(), fingerprinted.fields(), wrong);
         compare(named.methods(), fingerprinted.methods(), wrong);
-        if (!wrong.isEmpty()) fail("Fingerprints that find the wrong symbol:\n" + String.join("\n", wrong));
+        if (wrong.isEmpty()) return;
+        String md = "\n### Fingerprints that find the wrong symbol\n\n| Symbol | Found | Real |\n|---|---|---|\n";
+        for (String w : wrong) md += "| " + w + " |\n";
+        writeReport(md);
+        fail(md);
     }
 
     private static void compare(Map<String, String> truth, Map<String, String> found, List<String> wrong) {
         for (Map.Entry<String, String> e : truth.entrySet()) {
             String got = found.get(e.getKey());
             if (got != null && !got.equals(e.getValue())) {
-                wrong.add(e.getKey() + ": " + got + " instead of " + e.getValue());
+                wrong.add("`" + e.getKey() + "` | `" + got + "` | `" + e.getValue() + "`");
             }
         }
     }
@@ -129,10 +133,11 @@ public class ClientApkTest {
         return mapping.resolveField(point.substring(0, f), point.substring(f + 1));
     }
 
+    /** Appends, so both tests' findings end up in the one report. */
     private static void writeReport(String text) throws Exception {
         String out = System.getenv("TELEVIP_CLIENT_REPORT");
         if (out == null) return;
-        try (Writer w = new OutputStreamWriter(new FileOutputStream(out), StandardCharsets.UTF_8)) {
+        try (Writer w = new OutputStreamWriter(new FileOutputStream(out, true), StandardCharsets.UTF_8)) {
             w.write(text);
         }
     }
