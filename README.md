@@ -4,7 +4,7 @@
 
 # Re-TeleVip
 
-**Privacy, media and quality-of-life Features for Telegram and its forks, as a Vector/Xposed module.**
+**Privacy, Ad-Blocking and quality-of-life Features for Telegram and its forks, as a Vector/Xposed module.**
 
 [![Release](https://img.shields.io/github/v/release/2B-4G10/Re-TeleVIP?label=release&color=FFD500)](../../releases/latest)
 [![Xposed API](https://img.shields.io/badge/libxposed-API%20102-4A4D54)](#requirements)
