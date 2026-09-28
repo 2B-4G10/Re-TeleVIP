@@ -65,6 +65,16 @@ public class AutomationResolver {
     }
 
 
+    /**
+     * One overload by its member key (e.g. {@code "getInputChannelO2"}), for call sites that
+     * need a specific one. A key nothing maps comes back as the plain name, which is what a
+     * build that keeps its names calls it.
+     */
+    public static String resolveOverload(String className, String key, String plainName) {
+        String resolved = resolve(className, key, ResolverType.Method);
+        return key.equals(resolved) ? plainName : resolved;
+    }
+
     public static Object[] merge(Class<?>[] classes, AbstractMethodHook hook)
     {
         if (classes != null) {

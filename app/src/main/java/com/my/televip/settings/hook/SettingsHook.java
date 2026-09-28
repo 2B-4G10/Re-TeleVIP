@@ -42,7 +42,7 @@ public class SettingsHook {
                     AutomationResolver.merge(AutomationResolver.resolveObject("fillItems", new Class[]{java.util.ArrayList.class, ClassLoad.getClass(ClassNames.UNIVERSAL_ADAPTER)}), new AbstractMethodHook() {
                         @Override
                         protected void afterMethod(final MethodHookParam param) {
-                            ArrayList<Object> arrayList = (ArrayList<Object>) param.args[0];
+                            ArrayList<Object> arrayList = argOfType(param, ArrayList.class);
                             if (arrayList != null) {
 
                                 int color1 = 0xFFF46F6F;
@@ -72,7 +72,7 @@ public class SettingsHook {
                     AutomationResolver.resolve("SettingsActivity", "onClick", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("onClick", new Class[]{UItemClass, View.class, int.class, float.class, float.class}), new AbstractMethodHook() {
                         @Override
                         protected void afterMethod(final MethodHookParam param) {
-                            UItem uItem = new UItem(param.args[0]);
+                            UItem uItem = new UItem(argOfType(param, UItemClass));
                             if (uItem.getUItem() != null) {
                                 if (uItem.getID() == 8353847) {
                                     settingsController.openView();
@@ -83,6 +83,19 @@ public class SettingsHook {
         } catch (Throwable t){
             Logger.e(t);
         }
+    }
+
+    /**
+     * The first argument of this type. R8 may make the hooked method static (the fragment comes
+     * first) and drop parameters it never reads, so positions are not fixed.
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> T argOfType(AbstractMethodHook.MethodHookParam param, Class<?> type) {
+        if (type == null) return null;
+        for (Object arg : param.args) {
+            if (type.isInstance(arg)) return (T) arg;
+        }
+        return null;
     }
 
     /**

@@ -33,7 +33,8 @@ public class MessagesController {
     }
 
     public static Object getInputChannel(TLRPC.InputPeer peer) {
-        return XReflect.callStaticMethod(ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER), AutomationResolver.resolve("MessagesController", "getInputChannel", AutomationResolver.ResolverType.Method), peer.inputPeer);
+        return XReflect.callStaticMethod(ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER),
+                AutomationResolver.resolveOverload("MessagesController", "getInputChannelO2", "getInputChannel"), peer.inputPeer);
     }
 
     public SparseArray<Object> getDialogMessagesByIds() {

@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public final class TelegramFingerprints {
 
-    public static final int VERSION = 6;
+    public static final int VERSION = 7;
 
     private TelegramFingerprints() {
     }
@@ -78,23 +78,29 @@ public final class TelegramFingerprints {
         o.put("AlertDialog$OnButtonClickListener", "org.telegram.ui.ActionBar.AlertDialog$OnButtonClickListener");
         o.put("AndroidUtilities", "org.telegram.messenger.AndroidUtilities");
         o.put("ApplicationLoader", "org.telegram.messenger.ApplicationLoader");
+        o.put("BaseController", "org.telegram.messenger.BaseController");
         o.put("BaseFragment", "org.telegram.ui.ActionBar.BaseFragment");
         o.put("Browser", "org.telegram.messenger.browser.Browser");
         o.put("ChatActivity", "org.telegram.ui.ChatActivity");
         o.put("ChatActivity$ChatMessageCellDelegate", "org.telegram.ui.ChatActivity$ChatMessageCellDelegate");
         o.put("ChatMessageCell", "org.telegram.ui.Cells.ChatMessageCell");
         o.put("ChatMessageCell$MessageAccessibilityNodeProvider", "org.telegram.ui.Cells.ChatMessageCell$MessageAccessibilityNodeProvider");
+        o.put("ConnectionsManager", "org.telegram.tgnet.ConnectionsManager");
         o.put("DispatchQueue", "org.telegram.messenger.DispatchQueue");
+        o.put("DrawerLayoutAdapter", "org.telegram.ui.Adapters.DrawerLayoutAdapter");
+        o.put("DrawerLayoutContainer", "org.telegram.ui.ActionBar.DrawerLayoutContainer");
         o.put("FastDateFormat", "org.telegram.messenger.time.FastDateFormat");
         o.put("FileLoadOperation", "org.telegram.messenger.FileLoadOperation");
         o.put("FileLoader", "org.telegram.messenger.FileLoader");
         o.put("HeaderCell", "org.telegram.ui.Cells.HeaderCell");
         o.put("ImageReceiver", "org.telegram.messenger.ImageReceiver");
+        o.put("LaunchActivity", "org.telegram.ui.LaunchActivity");
         o.put("LocaleController", "org.telegram.messenger.LocaleController");
         o.put("LongSparseArray", "androidx.collection.LongSparseArray");
         o.put("MessageObject", "org.telegram.messenger.MessageObject");
         o.put("MessagesController", "org.telegram.messenger.MessagesController");
         o.put("MessagesStorage", "org.telegram.messenger.MessagesStorage");
+        o.put("NativeByteBuffer", "org.telegram.tgnet.NativeByteBuffer");
         o.put("NotificationCenter", "org.telegram.messenger.NotificationCenter");
         o.put("NotificationsController", "org.telegram.messenger.NotificationsController");
         o.put("PeerStoriesView$StoryItemHolder", "org.telegram.ui.Stories.PeerStoriesView$StoryItemHolder");
@@ -102,9 +108,8 @@ public final class TelegramFingerprints {
         o.put("PhotoViewer$PhotoViewerProvider", "org.telegram.ui.PhotoViewer$PhotoViewerProvider");
         o.put("PhotoViewer$PlaceProviderObject", "org.telegram.ui.PhotoViewer$PlaceProviderObject");
         o.put("ProfileActivity", "org.telegram.ui.ProfileActivity");
-        o.put("PeerStoriesView$StoryItemHolder", "org.telegram.ui.Stories.PeerStoriesView$StoryItemHolder");
-        o.put("SimpleTextView", "org.telegram.ui.ActionBar.SimpleTextView");
         o.put("QuickAckDelegate", "org.telegram.tgnet.QuickAckDelegate");
+        o.put("RequestDelegate", "org.telegram.tgnet.RequestDelegate");
         o.put("RequestDelegateTimestamp", "org.telegram.tgnet.RequestDelegateTimestamp");
         o.put("SQLiteCursor", "org.telegram.SQLite.SQLiteCursor");
         o.put("SQLiteDatabase", "org.telegram.SQLite.SQLiteDatabase");
@@ -115,6 +120,7 @@ public final class TelegramFingerprints {
         o.put("SettingsActivity$SettingCell$Factory", "org.telegram.ui.SettingsActivity$SettingCell$Factory");
         o.put("ShadowSectionCell", "org.telegram.ui.Cells.ShadowSectionCell");
         o.put("SharedConfig", "org.telegram.messenger.SharedConfig");
+        o.put("SimpleTextView", "org.telegram.ui.ActionBar.SimpleTextView");
         o.put("StoriesController", "org.telegram.ui.Stories.StoriesController");
         o.put("TLObject", "org.telegram.tgnet.TLObject");
         o.put("TLRPC$Chat", "org.telegram.tgnet.TLRPC$Chat");
@@ -154,7 +160,6 @@ public final class TelegramFingerprints {
         o.put("UserConfig", "org.telegram.messenger.UserConfig");
         o.put("Utilities", "org.telegram.messenger.Utilities");
         o.put("WriteToSocketDelegate", "org.telegram.tgnet.WriteToSocketDelegate");
-        o.put("LaunchActivity", "org.telegram.ui.LaunchActivity");
         return Collections.unmodifiableMap(o);
     }
 
@@ -483,6 +488,10 @@ public final class TelegramFingerprints {
                 .where(callsSymbol("MessageObject#isVoiceDocument")));
         s.add(method("MessageObject", "isMusicMessage").sig("boolean", msg)
                 .where(callsSymbol("MessageObject#isMusicDocument")));
+        s.add(method("FileLoader", "getLocalFile").sig("java.io.File", "org.telegram.messenger.ImageLocation"));
+        s.add(cls("org.telegram.messenger.BaseController").from(superclassOf("org.telegram.messenger.MessagesController")));
+        s.add(method("BaseController", "getUserConfig").sig("org.telegram.messenger.UserConfig"));
+        s.add(method("BaseFragment", "getUserConfig").sig("org.telegram.messenger.UserConfig"));
         s.add(method("ChatActivity", "createView"));
         s.add(method("ChatActivity", "isSwipeBackEnabled"));
         s.add(method("ProfileActivity", "isSwipeBackEnabled"));
@@ -541,15 +550,19 @@ public final class TelegramFingerprints {
                 .from(instantiatedBySymbol("SettingsActivity$SettingCell$Factory#createView"))
                 .where(extendsType("android.widget.LinearLayout"), hasField(false, "android.widget.ImageView")));
         s.add(cls("org.telegram.ui.Components.UniversalAdapter")
-                .from(paramTypesOf("org.telegram.ui.SettingsActivity$SettingCell$Factory"))
+                .from(paramTypeWhere("org.telegram.ui.SettingsActivity", "void", "java.util.ArrayList", null),
+                        paramTypesOf("org.telegram.ui.SettingsActivity$SettingCell$Factory"))
                 .where(hasMethod(false, uitem, "int"),
                         isNot(inherits("androidx.recyclerview.widget.RecyclerView"))));
 
+        // Telegram 12.10.5 has both static, taking the fragment first and without the parameters
+        // they never read: fillItems(activity, list) and onClick(activity, item). The hooks find
+        // the list and the item by type.
         s.add(method("SettingsActivity", "fillItems")
                 .sig("void", "java.util.ArrayList", "org.telegram.ui.Components.UniversalAdapter").reads(0)
-                .where(calls(uitem, uitem, "int")));
+                .staticized().where(calls(uitem, uitem, "int")));
         s.add(method("SettingsActivity", "onClick")
-                .sig("void", uitem, "android.view.View", "int", "float", "float").reads(0));
+                .sig("void", uitem, "android.view.View", "int", "float", "float").reads(0).staticized());
         s.add(method("SettingsActivity$SettingCell", "set")
                 .sig("void", "int", "int", "int", "java.lang.CharSequence", "java.lang.CharSequence", "java.lang.CharSequence"));
         // Factory.of assigns item.id, iconResId, text, subtext, textValue in that order.
@@ -685,10 +698,11 @@ public final class TelegramFingerprints {
 
         s.add(cls("org.telegram.ui.Cells.TextCheckCell")
                 .from(subclassesOf("android.widget.FrameLayout"))
+                // setTextAndCheck keeps its CharSequence; setTextAndValueAndCheck's may be narrowed
+                // to String. Look-alikes (TextCheckCell2, radio cells, NagramX's TextSettingsCell)
+                // lack the switch or the circular reveal animation.
                 .where(hasConstructor("android.content.Context"),
-                        hasMethod(false, "void", "java.lang.CharSequence", "java.lang.CharSequence", "boolean", "boolean", "boolean"),
-                        // Forks' look-alikes (TextCheckCell2, NagramX's TextSettingsCell) lack
-                        // the switch or the circular reveal animation.
+                        hasMethod(false, "void", "java.lang.CharSequence", "boolean", "boolean"),
                         hasField(false, "org.telegram.ui.Components.Switch"), loadsString("animationProgress")));
         s.add(method("TextCheckCell", "isChecked").sig("boolean"));
         s.add(method("TextCheckCell", "setChecked").sig("void", "boolean")
@@ -696,7 +710,8 @@ public final class TelegramFingerprints {
         s.add(method("TextCheckCell", "setTextAndCheck").sig("void", "java.lang.CharSequence", "boolean", "boolean"));
         // The setters start with textView.setText(...), so the first TextView they read is it.
         s.add(field("TextCheckCell", "textView").type("android.widget.TextView").readBy("TextCheckCell#setTextAndCheck", 0));
-        s.add(method("TextCheckCell", "setTextAndValueAndCheck").sig("void", "java.lang.CharSequence", "java.lang.CharSequence", "boolean", "boolean", "boolean"));
+        s.add(method("TextCheckCell", "setTextAndValueAndCheck").narrowedStrings()
+                .sig("void", "java.lang.CharSequence", "java.lang.CharSequence", "boolean", "boolean", "boolean"));
 
         s.add(cls("org.telegram.ui.Cells.TextSettingsCell")
                 .from(subclassesOf("android.widget.FrameLayout"))
@@ -848,6 +863,8 @@ public final class TelegramFingerprints {
                                 "java.lang.Runnable", "java.lang.Runnable"))
                 .where(isInterface()));
         s.add(cls(place).from(returnTypeWhere(provider, mo, loc, "int", "boolean", "boolean")));
+        s.add(field("PhotoViewer$PlaceProviderObject", "imageReceiver")
+                .type("org.telegram.messenger.ImageReceiver").onlyOneOfType());
         s.add(method("PhotoViewer$PhotoViewerProvider", "getPlaceForPhoto").sig(place, mo, loc, "int", "boolean", "boolean"));
         // Named by openPhoto(int, PageBlocksAdapter, provider) - or, once R8 has inlined that
         // overload, by the one openPhoto every overload funnels into.
@@ -858,7 +875,8 @@ public final class TelegramFingerprints {
                                 "long", "long", "long", "boolean", null, "java.lang.Integer"))
                 .where(isInterface()));
 
-        s.add(method("PhotoViewer", "getInstance").isStatic(true).sig(pv));
+        // getPipInstance and the like only return a field; getInstance creates the viewer.
+        s.add(method("PhotoViewer", "getInstance").isStatic(true).sig(pv).where(refersTo(pv)));
         s.add(method("PhotoViewer", "openPhotoAIJJJO").named("openPhoto")
                 .sig("boolean", "java.util.ArrayList", "int", "long", "long", "long", provider));
         s.add(method("PhotoViewer", "openPhotoAIO").named("openPhoto").sig("boolean", "java.util.ArrayList", "int", provider));

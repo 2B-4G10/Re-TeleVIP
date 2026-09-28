@@ -15,8 +15,10 @@ public class ResolverRegistry {
     Class<?> finalClass;
     Class<?> clazz;
 
+    /** {@code clazz} is the client's table, or null for a client without one. */
     public ResolverRegistry(Class<?> clazz){
         this.clazz = clazz;
+        if (clazz == null) return;   // every lookup below then finds nothing and falls back
         try {
             Class<?> fieldResolverClass = null;
             Class<?> methodResolverClass = null;
@@ -38,7 +40,7 @@ public class ResolverRegistry {
     }
 
     public String resolveMethodName(String className, String name) {
-        if (RuntimeMappings.active() != null) return TelegramFingerprints.methodKey(className, name);
+        if (RuntimeMappings.active() != null || clazz == null) return TelegramFingerprints.methodKey(className, name);
         try {
             return (String) clazz.getMethod("resolveMethodName", String.class, String.class).invoke(null, className, name);
         } catch (Throwable e){
@@ -108,7 +110,8 @@ public class ResolverRegistry {
 
     public boolean hasParameter(String name){
         Mapping runtime = RuntimeMappings.active();
-        if (runtime != null) return runtime.resolveParameters(name) != null;
+        if (runtime != null && runtime.resolveParameters(name) != null) return true;
+        if (runtime != null && !forkParameters()) return false;
         try {
             return (boolean)finalParameter.getMethod("has", String.class).invoke(null, name);
         } catch (Throwable e){
@@ -118,7 +121,8 @@ public class ResolverRegistry {
 
     public Class<?>[] resolveParameter(String name){
         Mapping runtime = RuntimeMappings.active();
-        if (runtime != null) return toClasses(runtime.resolveParameters(name));
+        if (runtime != null && runtime.resolveParameters(name) != null) return toClasses(runtime.resolveParameters(name));
+        if (runtime != null && !forkParameters()) return null;
         try {
             return (Class<?>[]) finalParameter.getMethod("resolve", String.class).invoke(null, name);
         } catch (Throwable e){
@@ -127,9 +131,21 @@ public class ResolverRegistry {
     }
 
     public void loadParameter(){
+        if (clazz == null) return;
         try {
             clazz.getMethod("loadParameter").invoke(null);
         } catch (Throwable ignored){}
+    }
+
+    /**
+     * Whether the client's own parameter registrations still apply next to a runtime mapping.
+     * They do for forks that changed a method's parameters in their source (Nicegram's
+     * fillMessageMenu, Nagram's putMessages, ...); not for a table made from one obfuscated
+     * build, whose shapes belong to that build only.
+     */
+    private static boolean forkParameters() {
+        ClientChecker.ClientType client = ClientChecker.ClientType.fromPackage(Utils.pkgName);
+        return client != null && !client.hasStaticTable();
     }
 
     /** Real parameter types from a runtime mapping, loaded through the client's class loader. */

@@ -312,8 +312,9 @@ public abstract class Symbol {
             if (!m.returnType().equals(ret) && !(voidable && m.returnType().equals("V"))
                     && !(narrowedReturn && isSubtype(r, m.returnType(), ret))) return false;
             String[] actual = m.parameterTypes();
-            if (staticized && m.isStatic() && actual.length == want.length + 1
-                    && actual[0].equals(m.owner.descriptor)) {
+            // The instance becomes the first parameter; R8 may delete unused ones on top of that.
+            if (staticized && m.isStatic() && actual.length > 0 && actual[0].equals(m.owner.descriptor)
+                    && (actual.length == want.length + 1 || readPositions != null)) {
                 actual = java.util.Arrays.copyOfRange(actual, 1, actual.length);
             }
             if (actual.length == want.length) {
@@ -389,8 +390,10 @@ public abstract class Symbol {
             DexClass.Method m = (DexClass.Method) attempt.found;
             r.methods.put(id(), m);
             mapping.methods.put(Mapping.memberKey(owner, key), m.name());
-            // Deleted parameters: the call site asks for the source list, so hand it the real one.
-            if (params != null && (m.parameterTypes().length != params.length || reordered(r, m))) {
+            // Deleted, reordered or prepended (staticized) parameters: the call site asks for the
+            // source list, so hand it the real one.
+            if (params != null && (m.parameterTypes().length != params.length || reordered(r, m)
+                    || (staticized && m.isStatic()))) {
                 String[] actual = m.parameterTypes();
                 String[] names = new String[actual.length];
                 for (int i = 0; i < actual.length; i++) names[i] = javaName(actual[i]);
