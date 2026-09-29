@@ -2,7 +2,7 @@
 
 <img src=".github/assets/logo.svg" width="128" alt="TeleVip logo">
 
-# Re-TeleVip
+# Re-TeleVIP
 
 **Privacy, Ad-Blocking and quality-of-life Features for Telegram and its forks, as a Vector/Xposed module.**
 
