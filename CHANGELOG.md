@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.6 — ad blocking that works
+
+- **Hide Proxy Sponsor is now Block Ads**, and your earlier setting carries over. It blocks the
+  requests that fetch ads before they are sent, so nothing is downloaded and nothing is shown:
+  - sponsored posts in channels and bot chats, and the ads in the video player;
+  - the "Ad" results in chat search;
+  - the proxy sponsor / announcement channel pinned to the top of the chat list.
+- **The sponsor channel no longer comes back.** It used to be removed only after the client had
+  already asked the server for it, so the reply put it straight back. The check is now skipped,
+  and a channel saved from before is removed along with the settings that restored it on start.
+- The ad requests are found by their protocol ids on renamed builds. Every Block Ads hook point
+  resolves on Telegram 12.10.5, Nekogram 12.10.3 and Cherrygram 12.10.1, and the weekly Client
+  watch checks them.
+
 ## 1.0.5 — every feature reaches its code
 
 Every feature's lookups were replayed against Telegram 12.10.5, Nekogram 12.10.3 and
