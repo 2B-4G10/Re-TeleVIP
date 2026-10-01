@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public final class TelegramFingerprints {
 
-    public static final int VERSION = 7;
+    public static final int VERSION = 8;
 
     private TelegramFingerprints() {
     }
@@ -276,6 +276,14 @@ public final class TelegramFingerprints {
         s.add(cls("org.telegram.tgnet.WriteToSocketDelegate").from(paramTypeOf(connections, "sendRequestInternal", 4))
                 .where(isInterface()));
         s.add(cls("org.telegram.tgnet.tl.TL_account$updateStatus").from(declaringConstant(1713919532))
+                .where(serializes));
+        // The requests that fetch ads: messages.getSponsoredMessages, contacts.getSponsoredPeers and
+        // help.getPromoData.
+        s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_getSponsoredMessages").from(declaringConstant(0x3d6ce850))
+                .where(serializes));
+        s.add(cls("org.telegram.tgnet.TLRPC$TL_contacts_getSponsoredPeers").from(declaringConstant(0xb6c8c393))
+                .where(serializes));
+        s.add(cls("org.telegram.tgnet.TLRPC$TL_help_getPromoData").from(declaringConstant(0xc0977421))
                 .where(serializes));
         s.add(cls("org.telegram.tgnet.tl.TL_stories$TL_stories_incrementStoryViews")
                 .from(declaringConstant(-1308456197)).where(serializes));

@@ -30,6 +30,9 @@ public class ClassNames {
     public static final String QUICK_ACK_DELEGATE = "org.telegram.tgnet.QuickAckDelegate";
     public static final String WRITE_TO_SOCKET_DELEGATE = "org.telegram.tgnet.WriteToSocketDelegate";
     public static final String TL_HELP_APP_UPDATE = "org.telegram.tgnet.TLRPC$TL_help_appUpdate";
+    public static final String TL_HELP_GET_PROMO_DATA = "org.telegram.tgnet.TLRPC$TL_help_getPromoData";
+    public static final String TL_MESSAGES_GET_SPONSORED_MESSAGES = "org.telegram.tgnet.TLRPC$TL_messages_getSponsoredMessages";
+    public static final String TL_CONTACTS_GET_SPONSORED_PEERS = "org.telegram.tgnet.TLRPC$TL_contacts_getSponsoredPeers";
     public static final String CHAT_MESSAGE_CELL = "org.telegram.ui.Cells.ChatMessageCell";
     public static final String TL_MESSAGE = "org.telegram.tgnet.TLRPC$Message";
     public static final String SECRET_MEDIA_VIEWER = "org.telegram.ui.SecretMediaViewer";

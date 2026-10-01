@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.my.televip.ClientChecker;
 import com.my.televip.Clients.Telegraph;
+import com.my.televip.features.AdBlock;
 import com.my.televip.features.DisableChannelSwipeBack;
 import com.my.televip.features.DisableNumberRounding;
 import com.my.televip.features.DisableProfileSwipeBack;
@@ -14,7 +15,6 @@ import com.my.televip.features.FixTLError;
 import com.my.televip.features.GhostMode;
 import com.my.televip.features.HidePhone;
 import com.my.televip.features.HidePinnedMessages;
-import com.my.televip.features.HideProxySponsor;
 import com.my.televip.features.HideUpdateApp;
 import com.my.televip.features.HijriDate;
 import com.my.televip.features.PreventMedia;
@@ -82,7 +82,7 @@ public class ConfigManager {
     public static ConfigItem hidePinnedMessages;
     public static ConfigItem disableChannelSwipeBack;
     public static ConfigItem disableProfileSwipeBack;
-    public static ConfigItem hideProxySponsor;
+    public static ConfigItem blockAds;
     public static ConfigItem showUserID;
     public static ConfigItem customCalendar;
 
@@ -211,8 +211,13 @@ public class ConfigManager {
         disableProfileSwipeBack = new ConfigItem(ConfigItem.SWITCH, Keys.DisableProfileSwipeBack, ConfigPreferences.getBoolean(Keys.DisableProfileSwipeBack), DisableProfileSwipeBack::init);
         items.add(disableProfileSwipeBack);
 
-        hideProxySponsor = new ConfigItem(ConfigItem.SWITCH, Keys.HideProxySponsor, true, ConfigPreferences.getBoolean(Keys.HideProxySponsor), HideProxySponsor::init);
-        items.add(hideProxySponsor);
+        // "Hide proxy sponsor" grew into this switch; carry its setting over.
+        if (ConfigPreferences.getBoolean(Keys.HideProxySponsor)) {
+            ConfigPreferences.putBoolean(Keys.BlockAds, true);
+            ConfigPreferences.putBoolean(Keys.HideProxySponsor, false);
+        }
+        blockAds = new ConfigItem(ConfigItem.SWITCH, Keys.BlockAds, true, ConfigPreferences.getBoolean(Keys.BlockAds), AdBlock::init);
+        items.add(blockAds);
 
         if (!ClientChecker.check(ClientChecker.ClientType.Telegraph) && !ClientChecker.check(ClientChecker.ClientType.Nekogram) && !ClientChecker.check(ClientChecker.ClientType.Cherrygram)) {
             showUserID = new ConfigItem(ConfigItem.SWITCH, Keys.ShowUserID, ConfigPreferences.getBoolean(Keys.ShowUserID), () -> EditOnlineTextView.init(context));

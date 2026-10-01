@@ -27,7 +27,7 @@ public class ClientApkTest {
 
     private static final String FIELD = ".", METHOD = "#";
 
-    /** Hook point (owner + separator + key) -> the feature that stops working without it. */
+    /** Hook point (a class, or owner + separator + key) -> the feature that stops working without it. */
     private static final Map<String, String> HOOK_POINTS = new LinkedHashMap<>();
 
     static {
@@ -47,6 +47,9 @@ public class ClientApkTest {
                 "ChatActivity.headerItem", "ProfileActivity.otherItem", "ProfileActivity#createActionBarMenu");
         hook("Profile user ID / online status", "ProfileActivity#updateProfileData", "ProfileActivity.userId",
                 "ProfileActivity.onlineTextView");
+        hook("Block ads", "org.telegram.tgnet.TLRPC$TL_messages_getSponsoredMessages",
+                "org.telegram.tgnet.TLRPC$TL_contacts_getSponsoredPeers", "org.telegram.tgnet.TLRPC$TL_help_getPromoData",
+                "MessagesController#checkPromoInfoInternal", "MessagesController#removePromoDialog");
     }
 
     private static void hook(String feature, String... points) {
@@ -127,6 +130,7 @@ public class ClientApkTest {
     }
 
     private static String resolve(Mapping mapping, String point) {
+        if (point.startsWith("org.")) return mapping.resolveClass(point);
         int m = point.indexOf(METHOD);
         if (m >= 0) return mapping.resolveMethod(point.substring(0, m), point.substring(m + 1));
         int f = point.lastIndexOf(FIELD);

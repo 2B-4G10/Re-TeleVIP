@@ -26,6 +26,7 @@
 | Show deleted messages | Always allow saving media | Disable stories |
 | Keep secret media from self-destructing | Faster downloads | Disable channel / profile swipe-back |
 | Show user IDs on profiles | Local Premium | Jump to first / any message |
+| Block ads: sponsored posts, video and search ads, proxy sponsor | Hijri and Persian dates | Hide app update prompts |
 
 …and more in the module's settings, which live inside the client's own **Settings**.
 
