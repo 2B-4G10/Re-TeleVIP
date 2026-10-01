@@ -87,6 +87,23 @@ public final class DexClass {
         return result;
     }
 
+    private Long[] staticInts;
+
+    /** The int-like constant a static field starts with, from the class's static values; or null. */
+    public Long initialValue(Field field) {
+        if (!field.isStatic()) return null;
+        int staticCount = 0;
+        for (Field f : fields) if (f.isStatic()) staticCount++;
+        if (staticInts == null) staticInts = dex.staticIntValues(classDefIndex, staticCount);
+        int i = 0;
+        for (Field f : fields) {
+            if (!f.isStatic()) continue;
+            if (f == field) return i < staticInts.length ? staticInts[i] : null;
+            i++;
+        }
+        return null;
+    }
+
     public Field fieldNamed(String name) {
         for (Field f : fields) if (f.name().equals(name)) return f;
         return null;

@@ -52,6 +52,7 @@ public class ClassNames {
     public static final String SETTINGS_ADAPTER_RECYCLER_LIST_VIEW = "com.televip.SettingsAdapter.SettingsAdapter$RecyclerListView";
     public static final String SETTINGS_ADAPTER = "com.televip.SettingsAdapter.SettingsAdapter";
     public static final String TEXT_CHECK_CELL = "org.telegram.ui.Cells.TextCheckCell";
+    public static final String UNIVERSAL_RECYCLER_VIEW = "org.telegram.ui.Components.UniversalRecyclerView";
     public static final String SHADOW_SECTION_CELL = "org.telegram.ui.Cells.ShadowSectionCell";
     public static final String HEADER_CELL = "org.telegram.ui.Cells.HeaderCell";
     public static final String FAST_DATE_FORMAT = "org.telegram.messenger.time.FastDateFormat";

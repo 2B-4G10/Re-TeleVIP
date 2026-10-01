@@ -199,12 +199,15 @@ public final class TelegramFingerprints {
      * only they load.
      */
     private static void messenger(List<Symbol> s) {
+        // Nekogram 12.10.5+ strips log strings and splits the class; the typeface loader stays.
         s.add(cls("org.telegram.messenger.AndroidUtilities")
-                .from(declaringStrings("Could not get typeface '", "sms listener registered")));
+                .from(declaringStrings("Could not get typeface '", "sms listener registered"),
+                        declaringStrings("Could not get typeface '", "no space left on device")));
         s.add(cls("org.telegram.messenger.ApplicationLoader")
                 .from(declaringStrings("app initied", "screen state = ")));
         s.add(cls("org.telegram.messenger.FileLoadOperation")
-                .from(declaringStrings("unable to rename temp = ", "setIsPreloadVideoOperation ")));
+                .from(declaringStrings("unable to rename temp = ", "setIsPreloadVideoOperation "),
+                        declaringStrings(" file reference expired ", "setIsPreloadVideoOperation ")));
         s.add(cls("org.telegram.messenger.FileLoader")
                 .from(declaringStrings("create load operation fileName=", "fileUploadQueue")));
         s.add(cls("org.telegram.messenger.LocaleController")
@@ -215,8 +218,11 @@ public final class TelegramFingerprints {
                 .from(declaringStrings("inapp_update_check_delay", "saved_gifs_limit_default")));
         s.add(cls("org.telegram.messenger.MessagesStorage")
                 .from(declaringStrings("Try create new database = ", "DELETE FROM stickers_v2")));
+        // Where those debug-only strings are stripped: the class holding hundreds of int event ids.
         s.add(cls("org.telegram.messenger.NotificationCenter")
-                .from(declaringStrings("addObserver allowed only from MAIN thread", "postNotificationName allowed only from MAIN thread")));
+                .from(declaringStrings("addObserver allowed only from MAIN thread", "postNotificationName allowed only from MAIN thread"),
+                        withStaticFields("int", 300))
+                .where(hasMethod(false, "void", "int", "boolean", "java.lang.Object[]")));
         s.add(cls("org.telegram.messenger.NotificationsController")
                 .from(declaringStrings("showExtraNotifications: [", "resetNotificationSound")));
         s.add(cls("org.telegram.messenger.SharedConfig")
@@ -338,8 +344,9 @@ public final class TelegramFingerprints {
                 .where(refersTo("java.lang.Integer"), writesFieldOfType("org.telegram.messenger.MessageObject", "boolean")));
         // Event ids are assigned in declaration order; forks append theirs after Telegram's.
         s.add(method("NotificationCenter", "<clinit>").isStatic(true).sig("void"));
+        // Where R8 folds them into constants (Nekogram 12.10.5+), the seventh id is the value 7.
         s.add(field("NotificationCenter", "messagesDeleted").isStatic(true).type("int")
-                .writtenBy("NotificationCenter#<clinit>", 5));
+                .writtenBy("NotificationCenter#<clinit>", 5).orInitialValue(7));
         s.add(field("UserConfig", "clientUserId").type("long").writtenBy("UserConfig#setCurrentUser", 0));
         s.add(field("UserConfig", "selectedAccount").keyedBy("UserConfig#loadConfig", "selectedAccount"));
         s.add(field("Utilities", "stageQueue").keyedBy("Utilities#<clinit>", "stageQueue"));
@@ -597,9 +604,11 @@ public final class TelegramFingerprints {
         // Helpers: not used by call sites directly, but other fingerprints anchor on them.
         s.add(cls("org.telegram.ui.ActionBar.BaseFragment")
                 .from(superclassOf("org.telegram.ui.ChatActivity")));
+        // getColor(int) and getPaint(String): no other interface a fragment holds has both.
         s.add(cls("org.telegram.ui.ActionBar.Theme$ResourcesProvider")
-                .from(fieldTypeOf("org.telegram.ui.ActionBar.BaseFragment", "resourceProvider"))
-                .where(isInterface()));
+                .from(fieldTypeOf("org.telegram.ui.ActionBar.BaseFragment", "resourceProvider"),
+                        fieldTypesOf("org.telegram.ui.ActionBar.BaseFragment"))
+                .where(isInterface(), hasMethod(false, "int", "int"), hasMethod(false, "android.graphics.Paint", "java.lang.String")));
 
         s.add(cls("androidx.collection.LongSparseArray")
                 .from(fieldTypeOf("org.telegram.messenger.MessagesController", "dialogMessage"),
@@ -621,9 +630,19 @@ public final class TelegramFingerprints {
         String uitem = "org.telegram.ui.Components.UItem";
         // UItem's API is a large set of static factories (asHeader, asCheck, asButton, ...);
         // nothing else a settings screen touches looks like that.
+        // Nekogram 12.10.5+ folds the settings callbacks into merged lambdas; UniversalFragment,
+        // which keeps its name there, still declares them.
+        String universalFragment = "org.telegram.ui.Components.UniversalFragment";
         s.add(cls(uitem)
-                .from(paramTypesOf("org.telegram.ui.SettingsActivity"))
+                .from(paramTypesOf("org.telegram.ui.SettingsActivity"),
+                        paramTypeWhere(universalFragment, "void", null, "android.view.View"))
                 .where(staticFactories(15)));
+        // Built in createView as new UniversalRecyclerView(this, fillItems, onClick, onLongClick).
+        s.add(method("SettingsActivity", "createView").sig("android.view.View", "android.content.Context")
+                .where(overrides("BaseFragment#createView")));
+        s.add(cls("org.telegram.ui.Components.UniversalRecyclerView")
+                .from(instantiatedBySymbol("SettingsActivity#createView"))
+                .where(hasConstructorFrom("org.telegram.ui.ActionBar.BaseFragment", 4)));
         s.add(cls("org.telegram.ui.SettingsActivity$SettingCell$Factory")
                 .from(declaringMethod(uitem, "int", "int", "int", "int", "java.lang.CharSequence", "java.lang.CharSequence", "java.lang.CharSequence")));
         s.add(cls("org.telegram.ui.Components.UItem$UItemFactory")
@@ -641,7 +660,8 @@ public final class TelegramFingerprints {
                 .where(extendsType("android.widget.LinearLayout"), hasField(false, "android.widget.ImageView")));
         s.add(cls("org.telegram.ui.Components.UniversalAdapter")
                 .from(paramTypeWhere("org.telegram.ui.SettingsActivity", "void", "java.util.ArrayList", null),
-                        paramTypesOf("org.telegram.ui.SettingsActivity$SettingCell$Factory"))
+                        paramTypesOf("org.telegram.ui.SettingsActivity$SettingCell$Factory"),
+                        paramTypeWhere(universalFragment, "void", "java.util.ArrayList", null))
                 .where(hasMethod(false, uitem, "int"),
                         isNot(inherits("android.view.ViewGroup"))));
 
@@ -682,7 +702,8 @@ public final class TelegramFingerprints {
         String drawable = "android.graphics.drawable.Drawable";
 
         s.add(cls("org.telegram.ui.ActionBar.ActionBar")
-                .from(fieldTypeOf("org.telegram.ui.ActionBar.BaseFragment", "actionBar"))
+                .from(fieldTypeOf("org.telegram.ui.ActionBar.BaseFragment", "actionBar"),
+                        fieldTypesOf("org.telegram.ui.ActionBar.BaseFragment"))
                 .where(extendsType("android.widget.FrameLayout")));
         // A tiny listener class every fragment subclasses: onItemClick(int) and canOpenMenu().
         s.add(cls("org.telegram.ui.ActionBar.ActionBar$ActionBarMenuOnItemClick")
@@ -887,7 +908,7 @@ public final class TelegramFingerprints {
         s.add(cls("org.telegram.ui.ChatActivity$ChatMessageCellDelegate")
                 .from(declaringMethod("void", cell, "float", "float", "boolean"),
                         declaringMethod("void", cell, "float", "float"))
-                .where(hasField(false, "org.telegram.ui.ChatActivity"), someMethod(pressesImage)));
+                .where(someMethod(pressesImage)));
         // The hook reads only the cell (args[0]); the real parameter list is published for it.
         s.add(method("ChatActivity$ChatMessageCellDelegate", "didPressImage")
                 .sig("void", cell, "float", "float", "boolean").reads(0).where(pressesImage));

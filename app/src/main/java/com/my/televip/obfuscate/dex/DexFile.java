@@ -205,6 +205,57 @@ public final class DexFile {
         return result;
     }
 
+    /**
+     * The initial values of a class's static fields that are int-like constants (byte, short,
+     * char, int), in static field order; null where the value is of another kind or absent.
+     */
+    public Long[] staticIntValues(int classDefIndex, int staticFieldCount) {
+        Long[] out = new Long[staticFieldCount];
+        int off = u4(data, classDefsOff + classDefIndex * 32 + 28);
+        if (off == 0) return out;
+        int[] cursor = {off};
+        int size = uleb128(data, cursor);
+        for (int i = 0; i < size; i++) {
+            Long v = readEncodedInt(cursor);
+            if (i < staticFieldCount) out[i] = v;
+        }
+        return out;
+    }
+
+    /** Reads one encoded_value; returns it if int-like, skips it otherwise. */
+    private Long readEncodedInt(int[] cursor) {
+        int header = data[cursor[0]++] & 0xFF;
+        int type = header & 0x1F, arg = header >> 5;
+        switch (type) {
+            case 0x00: case 0x02: case 0x03: case 0x04: {          // byte, short, char, int
+                long v = 0;
+                for (int b = 0; b <= arg; b++) v |= (long) (data[cursor[0]++] & 0xFF) << (8 * b);
+                int bits = 8 * (arg + 1);
+                if (type != 0x03 && bits < 64) v = (v << (64 - bits)) >> (64 - bits);   // sign-extend
+                return v;
+            }
+            case 0x1C: {                                            // array
+                int n = uleb128(data, cursor);
+                for (int i = 0; i < n; i++) readEncodedInt(cursor);
+                return null;
+            }
+            case 0x1D: {                                            // annotation
+                uleb128(data, cursor);
+                int n = uleb128(data, cursor);
+                for (int i = 0; i < n; i++) {
+                    uleb128(data, cursor);
+                    readEncodedInt(cursor);
+                }
+                return null;
+            }
+            case 0x1E: case 0x1F:                                   // null, boolean
+                return null;
+            default:                                                // sized values
+                cursor[0] += arg + 1;
+                return null;
+        }
+    }
+
     int classDataOffset(int classDefIndex) {
         return u4(data, classDefsOff + classDefIndex * 32 + 24);
     }

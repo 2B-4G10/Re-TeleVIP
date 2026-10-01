@@ -174,6 +174,21 @@ public final class Classes {
         };
     }
 
+    /** Classes declaring at least {@code min} static fields of a platform or primitive type. */
+    public static Symbol.ClassSource withStaticFields(final String type, final int min) {
+        return r -> {
+            String desc = r.descriptor(type);
+            List<DexClass> out = new ArrayList<>();
+            for (String d : r.index.descriptors()) {
+                DexClass c = r.index.byDescriptor(d);
+                int n = 0;
+                for (DexClass.Field f : c.fields) if (f.isStatic() && f.type().equals(desc)) n++;
+                if (n >= min) out.add(c);
+            }
+            return out;
+        };
+    }
+
     /** The return types of every method a resolved class declares. */
     public static Symbol.ClassSource returnTypesOf(final String owner) {
         return r -> {
@@ -362,6 +377,19 @@ public final class Classes {
     }
 
     /** Declares a constructor taking these parameters. */
+    /** Has a constructor of this arity whose first parameter is {@code firstParam}. */
+    public static Symbol.ClassFact hasConstructorFrom(final String firstParam, final int arity) {
+        return (r, c) -> {
+            String first = r.descriptor(firstParam);
+            if (first == null) return null;
+            for (DexClass.Method m : c.methods) {
+                String[] p = m.parameterTypes();
+                if (m.isConstructor() && !m.isStatic() && p.length == arity && p[0].equals(first)) return true;
+            }
+            return false;
+        };
+    }
+
     public static Symbol.ClassFact hasConstructor(final String... params) {
         return (r, c) -> {
             String proto = r.proto("void", params);

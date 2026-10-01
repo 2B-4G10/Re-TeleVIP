@@ -84,6 +84,9 @@ final class CallSites {
         OPTIONAL.put("TextCheckCell#isChecked", "inlined in some builds; the module remembers the last value it set");
         OPTIONAL.put("org.telegram.ui.Cells.ShadowSectionCell", "merged away in some builds; a plain spacer replaces it");
         OPTIONAL.put("SettingsActivity$SettingCell#set", "the row's icon is set from Factory.bindView instead");
+        OPTIONAL.put("SettingsActivity$SettingCell$Factory#bindView", "only paints the ghost icon on TeleVip's row");
+        OPTIONAL.put("SettingsActivity$SettingCell.iconView", "only paints the ghost icon on TeleVip's row");
+        OPTIONAL.put("org.telegram.ui.SettingsActivity$SettingCell", "only paints the ghost icon on TeleVip's row");
         OPTIONAL.put("SecretMediaViewer#openMedia", "the old secret media viewer; ChatActivity's hooks cover current builds");
         OPTIONAL.put("SecretMediaViewer.onClose", "belt and braces: the read and delete requests are blocked already");
         OPTIONAL.put("MessageObject#isSecret", "inlined by Nekogram 12.9-12.10.1, which does not offer Secret media save;"
@@ -94,9 +97,13 @@ final class CallSites {
         OPTIONAL.put("org.telegram.tgnet.TLRPC$TL_contacts_getSponsoredPeers",
                 "R8 drops it from builds that never send it (NagramX removes search ads itself)");
 
+        String[] row = {"org.telegram.ui.SettingsActivity", "org.telegram.ui.SettingsActivity$SettingCell$Factory",
+                "SettingsActivity$SettingCell$Factory#of|SettingsActivity$SettingCell$Factory#ofIIIICCC",
+                "org.telegram.ui.Components.UItem", "UItem.id", "UItem.text", "UItem.subtext"};
         ROUTES.put("TeleVip's entry in the client's settings", new String[][]{
-                {"org.telegram.ui.SettingsActivity", "org.telegram.ui.SettingsActivity$SettingCell$Factory",
-                        "SettingsActivity$SettingCell$Factory#of|SettingsActivity$SettingCell$Factory#ofIIIICCC"},
+                concat(row, "SettingsActivity#fillItems", "SettingsActivity#onClick",
+                        "org.telegram.ui.Components.UniversalAdapter"),
+                concat(row, "org.telegram.ui.Components.UniversalRecyclerView"),
                 {"org.telegram.ui.Adapters.DrawerLayoutAdapter", "org.telegram.ui.Adapters.DrawerLayoutAdapter$Item",
                         "DrawerLayoutAdapter#resetItems", "DrawerLayoutAdapter#getId", "DrawerLayoutAdapter.items",
                         "DrawerLayoutContainer#closeDrawer", "LaunchActivity.drawerLayoutAdapter",
@@ -110,6 +117,12 @@ final class CallSites {
                 {"PhotoViewer#openPhoto|PhotoViewer#openPhotoOOOOAAAIOOJJJZOI"}});
         ROUTES.put("Disable stories", new String[][]{
                 {"StoriesController#hasStories|StoriesController#hasStories2"}});
+    }
+
+    private static String[] concat(String[] a, String... b) {
+        String[] out = java.util.Arrays.copyOf(a, a.length + b.length);
+        System.arraycopy(b, 0, out, a.length, b.length);
+        return out;
     }
 
     /** The module's own settings list (its injected dex), not the client's. */

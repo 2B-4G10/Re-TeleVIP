@@ -425,6 +425,7 @@ public abstract class Symbol {
         String keyHost, key;
         String flagHost;
         int flagBit;
+        Long initialValue;
 
         FieldSymbol(String owner, String name) {
             this.owner = owner;
@@ -443,6 +444,15 @@ public abstract class Symbol {
          * flag sits between two writes of the flags word, whatever order the compiler loaded
          * the constant and the field in.
          */
+        /**
+         * Where R8 turned a static field into a constant: the static field of this type starting
+         * with {@code value}. Consulted when nothing else locates the field.
+         */
+        public FieldSymbol orInitialValue(long value) {
+            this.initialValue = value;
+            return this;
+        }
+
         public FieldSymbol flagOf(String serializerSymbolId, int bit) {
             this.flagHost = serializerSymbolId;
             this.flagBit = bit;
@@ -682,11 +692,20 @@ public abstract class Symbol {
                     if (f.write != ordinalOfReads && f.owner.equals(cls.descriptor) && typeFits
                             && !order.contains(f.name)) order.add(f.name);
                 }
-                if (writeOrdinal >= order.size()) return Resolver.Attempt.notFound();
+                if (writeOrdinal >= order.size()) return byInitialValue(cls, typeDesc);
                 DexClass.Field declared = cls.fieldNamed(order.get(writeOrdinal));
                 return declared == null ? Resolver.Attempt.notFound() : Resolver.Attempt.of(declared, false);
             }
             return Resolver.Attempt.notFound();
+        }
+
+        private Resolver.Attempt byInitialValue(DexClass cls, String typeDesc) {
+            if (initialValue == null) return Resolver.Attempt.notFound();
+            List<DexClass.Field> found = new ArrayList<>();
+            for (DexClass.Field f : cls.fields) {
+                if (f.isStatic() && f.type().equals(typeDesc) && initialValue.equals(cls.initialValue(f))) found.add(f);
+            }
+            return Resolver.Attempt.single(found);
         }
 
         @Override
