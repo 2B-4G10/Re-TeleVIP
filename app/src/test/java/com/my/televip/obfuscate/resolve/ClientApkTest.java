@@ -39,10 +39,11 @@ public class ClientApkTest {
         Mapping mapping = new Resolver(index, TelegramFingerprints.owners()).resolve(TelegramFingerprints.all(), report);
         List<CallSites.Site> sites = CallSites.read();
         List<CallSites.Site> missing = CallSites.missing(index, mapping, sites);
-        CallSites.Verdict verdict = CallSites.verdict(sites, missing);
+        String pkg = ApkPackage.of(new File(path));
+        CallSites.Verdict verdict = CallSites.verdict(sites, missing, pkg);
 
         StringBuilder md = new StringBuilder();
-        md.append("Symbols: ").append(report.count(Resolver.Outcome.KEPT)).append(" by real name, ")
+        md.append("Package ").append(pkg).append(". Symbols: ").append(report.count(Resolver.Outcome.KEPT)).append(" by real name, ")
                 .append(report.count(Resolver.Outcome.FINGERPRINTED)).append(" fingerprinted, ")
                 .append(report.count(Resolver.Outcome.AMBIGUOUS)).append(" ambiguous, ")
                 .append(report.count(Resolver.Outcome.UNRESOLVED)).append(" unresolved. Call sites: ")

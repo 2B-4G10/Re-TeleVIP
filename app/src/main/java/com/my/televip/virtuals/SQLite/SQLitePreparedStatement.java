@@ -18,11 +18,25 @@ public class SQLitePreparedStatement {
     }
 
     public void step() {
-        XReflect.callMethod(sQLitePreparedStatement, AutomationResolver.resolve("SQLitePreparedStatement","step", AutomationResolver.ResolverType.Method));
+        String step = AutomationResolver.resolve("SQLitePreparedStatement","step", AutomationResolver.ResolverType.Method);
+        if (XReflect.findMethodExactIfExists(sQLitePreparedStatement.getClass(), step) != null) {
+            XReflect.callMethod(sQLitePreparedStatement, step);
+            return;
+        }
+        // step() only calls the native step(handle); R8 inlines it where nothing else calls it.
+        long handle = XReflect.getLongField(sQLitePreparedStatement,
+                AutomationResolver.resolve("SQLitePreparedStatement", "sqliteStatementHandle", AutomationResolver.ResolverType.Field));
+        XReflect.callMethod(sQLitePreparedStatement, "step", handle);
     }
 
     public void dispose() {
-        XReflect.callMethod(sQLitePreparedStatement, AutomationResolver.resolve("SQLitePreparedStatement","dispose", AutomationResolver.ResolverType.Method));
+        String dispose = AutomationResolver.resolve("SQLitePreparedStatement","dispose", AutomationResolver.ResolverType.Method);
+        if (XReflect.findMethodExactIfExists(sQLitePreparedStatement.getClass(), dispose) != null) {
+            XReflect.callMethod(sQLitePreparedStatement, dispose);
+            return;
+        }
+        // dispose() only calls finalizeQuery(); R8 inlines it where nothing else calls it.
+        XReflect.callMethod(sQLitePreparedStatement, AutomationResolver.resolve("SQLitePreparedStatement","finalizeQuery", AutomationResolver.ResolverType.Method));
     }
 
     public void bindByteBuffer(int index, NativeByteBuffer value) {

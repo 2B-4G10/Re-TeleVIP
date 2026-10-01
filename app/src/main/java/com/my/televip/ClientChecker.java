@@ -58,6 +58,7 @@ public class ClientChecker {
         VERIFIED_BUILD.put(ClientType.forkgram, "12.8.4.0 (691908)");
         VERIFIED_BUILD.put(ClientType.forkgramBeta, "12.8.4.0 (691909)");
         VERIFIED_BUILD.put(ClientType.ForkgramClassic, "12.8.10.0");
+        VERIFIED_BUILD.put(ClientType.Mercurygram, "12.10.5.1 (7105018)");
         VERIFIED_BUILD.put(ClientType.Telegraph, "12.8.1.1 (69172)");
         VERIFIED_BUILD.put(ClientType.Telega, "2.4.3 (107)");
         VERIFIED_BUILD.put(ClientType.Momogram, "12.6.4");
@@ -131,7 +132,8 @@ public class ClientChecker {
         Cherrygram("uz.unnarsx.cherrygram", com.my.televip.Clients.Cherrygram.class, true),
         ForkgramClassic("org.forkgram.classic"),
         Turrit("org.telegram.group", com.my.televip.Clients.Turrit.class),
-        NagramXF("fork.risin42.nagramx");
+        NagramXF("fork.risin42.nagramx"),
+        Mercurygram("it.belloworld.mercurygram");
 
         private final String[] packageNames;
         private final Class<?> resolverClass;

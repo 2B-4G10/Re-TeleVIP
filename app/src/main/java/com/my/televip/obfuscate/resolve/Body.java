@@ -36,6 +36,19 @@ public interface Body {
         };
     }
 
+    /** True if any fact holds; undecided while one could still decide it. */
+    static Body any(final Body... facts) {
+        return (r, m) -> {
+            boolean undecided = false;
+            for (Body f : facts) {
+                Boolean b = f.test(r, m);
+                if (b == null) undecided = true;
+                else if (b) return true;
+            }
+            return undecided ? null : false;
+        };
+    }
+
     static Body not(final Body fact) {
         return (r, m) -> {
             Boolean b = fact.test(r, m);

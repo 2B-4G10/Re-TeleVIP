@@ -16,13 +16,23 @@ public class MessagesStorage {
     }
 
     public SQLiteDatabase getDatabase() {
-
-        return new SQLiteDatabase(XReflect.callMethod(messagesStorage, AutomationResolver.resolve("MessagesStorage", "getDatabase", AutomationResolver.ResolverType.Method)));
+        return new SQLiteDatabase(getterOrField(
+                AutomationResolver.resolve("MessagesStorage", "getDatabase", AutomationResolver.ResolverType.Method),
+                AutomationResolver.resolve("MessagesStorage", "database", AutomationResolver.ResolverType.Field)));
     }
 
     public DispatchQueue getStorageQueue() {
+        return new DispatchQueue(getterOrField(
+                AutomationResolver.resolve("MessagesStorage", "getStorageQueue", AutomationResolver.ResolverType.Method),
+                AutomationResolver.resolve("MessagesStorage", "storageQueue", AutomationResolver.ResolverType.Field)));
+    }
 
-        return new DispatchQueue(XReflect.callMethod(messagesStorage, AutomationResolver.resolve("MessagesStorage", "getStorageQueue", AutomationResolver.ResolverType.Method)));
+    /** A getter, or the field it returns where R8 inlined the getter (Nekogram 12.10.5+). */
+    private Object getterOrField(String getter, String field) {
+        if (XReflect.findMethodExactIfExists(messagesStorage.getClass(), getter) != null) {
+            return XReflect.callMethod(messagesStorage, getter);
+        }
+        return XReflect.getObjectField(messagesStorage, field);
     }
 
     public static MessagesStorage getInstance(int num) {

@@ -50,8 +50,17 @@ public final class Classes {
         return r -> {
             DexClass cls = r.cls(owner);
             if (cls == null) return null;
+            // A method symbol id ("Owner#key") names the method by what it resolved to.
+            List<DexClass.Method> methods;
+            if (methodName.contains("#")) {
+                DexClass.Method m = r.methods.get(methodName);
+                if (m == null) return r.isResolvedOrPending(methodName) ? null : java.util.Collections.<DexClass>emptyList();
+                methods = java.util.Collections.singletonList(m);
+            } else {
+                methods = cls.methodsNamed(methodName);
+            }
             java.util.Set<DexClass> out = new java.util.LinkedHashSet<>();
-            for (DexClass.Method m : cls.methodsNamed(methodName)) {
+            for (DexClass.Method m : methods) {
                 String[] params = m.parameterTypes();
                 if (index >= params.length) continue;
                 DexClass c = r.index.byDescriptor(params[index]);

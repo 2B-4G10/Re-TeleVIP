@@ -64,6 +64,43 @@ final class CallSites {
     private static final Pattern CONSTANT = Pattern.compile(
             "static\\s+final\\s+String\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*\"([^\"]*)\"\\s*;");
     private static final Pattern STRING = Pattern.compile("\"([^\"]+)\"");
+    private static final Pattern WORD = Pattern.compile("\\b[A-Z][A-Za-z0-9_]*\\b");
+
+    /** Module source file (simple name) -> the module classes it mentions. Filled by {@link #read()}. */
+    static final Map<String, Set<String>> REFERENCES = new HashMap<>();
+    /** The classes META-INF/xposed/java_init.list declares, by simple name. Filled by {@link #read()}. */
+    static final List<String> ENTRY_POINTS = new ArrayList<>();
+
+    /**
+     * Features ConfigManager does not run on a client, by package. Call sites only these (and what
+     * only they use) reach are not that client's to have.
+     */
+    static final Map<String, String[]> NOT_ON = new HashMap<>();
+
+    static {
+        String[] profileExtras = {"FeatureInitializer", "CopyNameHook", "EditOnlineTextView", "HijriDate"};
+        for (String pkg : new String[]{"tw.nekomimi.nekogram", "uz.unnarsx.cherrygram"}) {
+            NOT_ON.put(pkg, concat(profileExtras, "SecretMediaSave"));
+        }
+        NOT_ON.put("ir.ilmili.telegraph", concat(profileExtras, "DisableNumberRounding", "HideUpdateApp", "FixTLError"));
+        NOT_ON.put("xyz.nextalone.nagram", new String[]{"ChatHook"});
+        NOT_ON.put("org.telegram.plus", new String[]{"ChatHook"});
+    }
+
+    /** Module classes a client runs: everything reachable from the classes ConfigManager does not turn off. */
+    static Set<String> reachable(String pkg) {
+        Set<String> off = new TreeSet<>(java.util.Arrays.asList(NOT_ON.getOrDefault(pkg, new String[0])));
+        // From the module's Xposed entry class, through what each class mentions, never into a
+        // switched-off feature.
+        Set<String> seen = new TreeSet<>();
+        java.util.ArrayDeque<String> todo = new java.util.ArrayDeque<>(ENTRY_POINTS);
+        while (!todo.isEmpty()) {
+            String c = todo.poll();
+            if (off.contains(c) || !seen.add(c)) continue;
+            todo.addAll(REFERENCES.getOrDefault(c, java.util.Collections.<String>emptySet()));
+        }
+        return seen;
+    }
 
     private CallSites() {
     }
@@ -109,6 +146,12 @@ final class CallSites {
                         "DrawerLayoutContainer#closeDrawer", "LaunchActivity.drawerLayoutAdapter",
                         "LaunchActivity.drawerLayoutContainer"},
         });
+        ROUTES.put("Telegram's database", new String[][]{{"MessagesStorage#getDatabase|MessagesStorage.database"}});
+        ROUTES.put("Telegram's storage queue", new String[][]{{"MessagesStorage#getStorageQueue|MessagesStorage.storageQueue"}});
+        ROUTES.put("Finishing a database statement", new String[][]{
+                {"SQLitePreparedStatement#dispose|SQLitePreparedStatement#finalizeQuery"}});
+        ROUTES.put("Running a database statement", new String[][]{
+                {"SQLitePreparedStatement#step|SQLitePreparedStatement.sqliteStatementHandle"}});
         ROUTES.put("Jump to message", new String[][]{
                 {"ChatActivity#scrollToMessageId|ChatActivity#scrollToMessageIdIIZIZIIABR"}});
         ROUTES.put("Photo viewer: parent activity", new String[][]{
@@ -143,6 +186,24 @@ final class CallSites {
     }
 
     static Verdict verdict(List<Site> sites, List<Site> missing) {
+        return verdict(sites, missing, null);
+    }
+
+    /** As {@link #verdict(List, List)}, counting only what runs on the client with this package. */
+    static Verdict verdict(List<Site> sites, List<Site> missing, String pkg) {
+        if (pkg != null && NOT_ON.containsKey(pkg)) {
+            Set<String> runs = reachable(pkg);
+            List<Site> active = new ArrayList<>();
+            for (Site s : missing) {
+                for (String f : s.files) {
+                    if (runs.contains(f.replace(".java", ""))) {
+                        active.add(s);
+                        break;
+                    }
+                }
+            }
+            missing = active;
+        }
         Map<String, Site> byKey = new HashMap<>();
         for (Site s : sites) byKey.put(s.key(), s);
         Set<String> miss = new TreeSet<>();
@@ -202,6 +263,15 @@ final class CallSites {
 
         Map<String, String> classNames = constants(new File(root, "com/my/televip/Class/ClassNames.java"));
         Map<String, Site> sites = new TreeMap<>();
+        Set<String> moduleClasses = new TreeSet<>();
+        for (File file : files) moduleClasses.add(file.getName().replace(".java", ""));
+        REFERENCES.clear();
+        ENTRY_POINTS.clear();
+        File init = new File(root.getParentFile(), "resources/META-INF/xposed/java_init.list");
+        for (String line : Files.readAllLines(init.toPath(), StandardCharsets.UTF_8)) {
+            line = line.trim();
+            if (!line.isEmpty()) ENTRY_POINTS.add(line.substring(line.lastIndexOf('.') + 1));
+        }
         for (File file : files) {
             String path = file.getPath().replace(File.separatorChar, '/');
             // The per-client name tables and the resolver itself are not call sites.
@@ -209,6 +279,11 @@ final class CallSites {
             String src = stripComments(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
             Map<String, String> local = constants(src);
             String where = file.getName();
+            Set<String> refs = new TreeSet<>();
+            // Code only: "ProfileActivity" in a resolver call names the client's class, not ours.
+            Matcher words = WORD.matcher(src.replaceAll("\"(?:[^\"\\\\]|\\\\.)*\"", "\"\""));
+            while (words.find()) if (moduleClasses.contains(words.group())) refs.add(words.group());
+            REFERENCES.put(where.replace(".java", ""), refs);
 
             Matcher m = RESOLVE_MEMBER.matcher(src);
             while (m.find()) {

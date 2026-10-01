@@ -250,10 +250,19 @@ public final class TelegramFingerprints {
         s.add(cls("org.telegram.messenger.DispatchQueue")
                 .from(fieldTypesOf("org.telegram.messenger.Utilities"))
                 .where(extendsType("java.lang.Thread")));
-        s.add(cls("org.telegram.tgnet.QuickAckDelegate").from(paramTypeOf(connections, "sendRequestInternal", 3))
+        // sendRequestInternal(object, onComplete, onCompleteTimestamp, onQuickAck, onWriteToSocket,
+        // flags, datacenterId, connectionType, immediate, requestToken). Nekogram 12.10.5+ inlines it
+        // into sendRequest's lambda, which takes the same parameters - and is what to hook there.
+        String send = "ConnectionsManager#sendRequestInternal", any = Symbol.ANY;
+        s.add(method("ConnectionsManager", "sendRequestInternal").isStatic(false)
+                .sig("void", "org.telegram.tgnet.TLObject", any, any, any, any, "int", "int", "int", "boolean", "int")
+                .where(callsAnyNamed("native_sendRequest")));
+        s.add(cls("org.telegram.tgnet.RequestDelegate").from(paramTypeOf(connections, send, 1)).where(isInterface()));
+        s.add(method("RequestDelegate", "run").sig("void", "org.telegram.tgnet.TLObject", any));
+        s.add(cls("org.telegram.tgnet.QuickAckDelegate").from(paramTypeOf(connections, send, 3))
                 .where(isInterface()));
         s.add(cls("org.telegram.tgnet.RequestDelegateTimestamp")
-                .from(paramTypeOf(connections, "sendRequestInternal", 2)).where(isInterface()));
+                .from(paramTypeOf(connections, send, 2)).where(isInterface()));
         // Concrete types the abstract parents are found from.
         s.add(tl("org.telegram.tgnet.TLRPC$TL_chat", 0x41cbf256));
         s.add(tl("org.telegram.tgnet.TLRPC$TL_encryptedChat", 0x61f0d4c7));
@@ -304,7 +313,7 @@ public final class TelegramFingerprints {
         s.add(cls("org.telegram.tgnet.InputSerializedData")
                 .from(paramTypeWhere("org.telegram.tgnet.TLRPC$Message", "org.telegram.tgnet.TLRPC$Message",
                         null, "int", "boolean")));
-        s.add(cls("org.telegram.tgnet.WriteToSocketDelegate").from(paramTypeOf(connections, "sendRequestInternal", 4))
+        s.add(cls("org.telegram.tgnet.WriteToSocketDelegate").from(paramTypeOf(connections, send, 4))
                 .where(isInterface()));
         s.add(cls("org.telegram.tgnet.tl.TL_account$updateStatus").from(serializingConstant(1713919532)));
         // The requests that fetch ads: messages.getSponsoredMessages, contacts.getSponsoredPeers and
@@ -419,7 +428,9 @@ public final class TelegramFingerprints {
         s.add(field("MessagesController", "dialogMessage").type("androidx.collection.LongSparseArray")
                 .readBy("MessagesController#markDialogMessageAsDeleted", 0));
         s.add(method("SQLiteCursor", "byteBufferValue").sig("org.telegram.tgnet.NativeByteBuffer", "int"));
-        s.add(method("SQLiteCursor", "dispose").sig("void").where(callsSymbol("SQLitePreparedStatement#dispose")));
+        // Calls the statement's dispose, or its finalizeQuery where R8 inlined dispose.
+        s.add(method("SQLiteCursor", "dispose").sig("void").where(callCount(1),
+                Body.any(callsSymbol("SQLitePreparedStatement#dispose"), callsSymbol("SQLitePreparedStatement#finalizeQuery"))));
         s.add(method("SQLiteCursor", "intValue").sig("int", "int").where(callsNamed(cursor, "columnIntValue")));
         s.add(method("SQLiteCursor", "longValue").sig("long", "int").where(callsNamed(cursor, "columnLongValue")));
         s.add(method("SQLiteCursor", "next").sig("boolean").where(string("sqlite busy")));
@@ -466,9 +477,12 @@ public final class TelegramFingerprints {
                 .where(refersTo("org.telegram.tgnet.TLRPC$TL_message_secret"), touchesField("org.telegram.tgnet.TLRPC$Message", "noforwards")));
         s.add(method("MessageObject", "getDialogId").sig("long")
                 .where(callsSymbol("MessageObject#getDialogIdO"), callCount(1)));
+        // Caches the id it works out in message.dialog_id - the one static long(Message) that writes
+        // a long of the message.
         s.add(method("MessageObject", "getDialogIdO").named("getDialogId")
                 .sig("long", "org.telegram.tgnet.TLRPC$Message")
-                .where(callsSibling("boolean", "org.telegram.tgnet.TLRPC$Message")));
+                .where(writesFieldOfType("org.telegram.tgnet.TLRPC$Message", "long")));
+        s.add(field("MessageObject", "messageOwner").type("org.telegram.tgnet.TLRPC$Message").onlyOneOfType());
         s.add(method("MessageObject", "isMusic").sig("boolean")
                 .where(callsSymbol("MessageObject#isMusicMessage")));
         s.add(method("MessageObject", "isSecret").sig("boolean")
@@ -525,6 +539,12 @@ public final class TelegramFingerprints {
                 .sig("boolean", "org.telegram.tgnet.TLRPC$User")
                 .where(string("premium"), touchesField("org.telegram.tgnet.TLRPC$User", "premium")));
         s.add(method("MessagesStorage", "getDatabase").sig("org.telegram.SQLite.SQLiteDatabase"));
+        // Where R8 inlines the two getters (Nekogram 12.10.5+), the fields they return.
+        s.add(field("MessagesStorage", "database").type("org.telegram.SQLite.SQLiteDatabase").onlyOneOfType());
+        s.add(field("MessagesStorage", "storageQueue").type("org.telegram.messenger.DispatchQueue").onlyOneOfType());
+        // The statement handle: what finalizeQuery hands to the native finalize.
+        s.add(field("SQLitePreparedStatement", "sqliteStatementHandle").type("long")
+                .handedTo("SQLitePreparedStatement#finalizeQuery", "finalize"));
         s.add(method("MessagesStorage", "getInstance").sig("org.telegram.messenger.MessagesStorage", "int"));
         s.add(method("MessagesStorage", "getStorageQueue").sig("org.telegram.messenger.DispatchQueue"));
         s.add(method("MessagesStorage", "markMessagesAsDeletedJAZZII").named("markMessagesAsDeleted")
@@ -569,8 +589,9 @@ public final class TelegramFingerprints {
         s.add(method("MessageObject", "isVoiceDocument").sig("boolean", document)
                 .where(touchesField("org.telegram.tgnet.TLRPC$DocumentAttribute", "voice"), callCount(2)));
         s.add(method("MessageObject", "isMusicDocument").sig("boolean", document).where(string("audio/flac")));
+        // isVoiceOnce has the same shape but also checks for secret messages.
         s.add(method("MessageObject", "isVoiceMessage").sig("boolean", msg)
-                .where(callsSymbol("MessageObject#isVoiceDocument")));
+                .where(callsSymbol("MessageObject#isVoiceDocument"), not(refersTo("org.telegram.tgnet.TLRPC$TL_message_secret"))));
         s.add(method("MessageObject", "isMusicMessage").sig("boolean", msg)
                 .where(callsSymbol("MessageObject#isMusicDocument")));
         s.add(method("FileLoader", "getLocalFile").sig("java.io.File", "org.telegram.messenger.ImageLocation"));
