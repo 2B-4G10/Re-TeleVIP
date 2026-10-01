@@ -191,6 +191,16 @@ public final class DexClass {
             if (codeOffset != 0) CodeScanner.scan(owner.dex, codeOffset, visitor);
         }
 
+        /** The int each static field of its own class is set to here, where constants decide it; by name. */
+        public java.util.Map<String, Long> staticIntWrites() {
+            java.util.Map<String, Long> out = new java.util.LinkedHashMap<>();
+            if (codeOffset == 0) return out;
+            for (java.util.Map.Entry<Integer, Long> e : CodeScanner.staticIntWrites(owner.dex, codeOffset).entrySet()) {
+                if (owner.dex.fieldClass(e.getKey()).equals(owner.descriptor)) out.put(owner.dex.fieldName(e.getKey()), e.getValue());
+            }
+            return out;
+        }
+
         public String signature() {
             StringBuilder sb = new StringBuilder(name()).append('(');
             for (String p : parameterTypes()) sb.append(p);

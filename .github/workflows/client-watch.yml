@@ -110,7 +110,7 @@ jobs:
             # An .xapk (APKPure) is a zip of split APKs: the code lives in the largest one.
             if unzip -l client.apk manifest.json >/dev/null 2>&1; then
               inner=$(unzip -Z1 client.apk '*.apk' | while read -r f; do
-                echo "$(unzip -Zl client.apk "$f" | awk 'NR==1{print $4}') $f"; done | sort -rn | head -n1 | cut -d' ' -f2-)
+                echo "$(unzip -Zl client.apk "$f" | awk 'NR==1{print $4}') $f"; done | sort -rn | sed -n 1p | cut -d' ' -f2-)
               unzip -p client.apk "$inner" > base.apk && mv base.apk client.apk
             fi
 

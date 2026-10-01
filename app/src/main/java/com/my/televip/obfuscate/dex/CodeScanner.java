@@ -140,6 +140,84 @@ public final class CodeScanner {
         }
     }
 
+    /**
+     * The int value each sput in a method stores, by field index, where it follows from constants
+     * and literal additions - {@code a = total++; b = total++; ...} in a class initialiser. Values
+     * it cannot follow are left out; registers written by anything else are forgotten.
+     */
+    static java.util.Map<Integer, Long> staticIntWrites(DexFile dex, int codeOffset) {
+        byte[] d = dex.data();
+        int insnsSize = DexFile.u4(d, codeOffset + 12);
+        int base = codeOffset + 16;
+        int end = base + insnsSize * 2;
+        java.util.Map<Integer, Long> regs = new java.util.HashMap<>();
+        java.util.Map<Integer, Long> statics = new java.util.HashMap<>();
+        java.util.Map<Integer, Long> out = new java.util.LinkedHashMap<>();
+        int pc = base;
+        while (pc < end) {
+            int unit = DexFile.u2(d, pc);
+            int op = unit & 0xFF;
+            if (op == 0x00 && unit != 0x0000) {
+                pc += payloadWidth(d, pc, unit, new Visitor() { }) * 2;
+                continue;
+            }
+            int a = (unit >> 8) & 0xFF, a4 = (unit >> 8) & 0xF, b4 = (unit >> 12) & 0xF;
+            switch (op) {
+                case 0x01: put(regs, a4, regs.get(b4)); break;                                  // move
+                case 0x02: put(regs, a, regs.get(DexFile.u2(d, pc + 2))); break;                // move/from16
+                case 0x12: regs.put(a4, (long) (((short) unit) >> 12)); break;                  // const/4
+                case 0x13: regs.put(a, (long) (short) DexFile.u2(d, pc + 2)); break;            // const/16
+                case 0x14: regs.put(a, (long) DexFile.u4(d, pc + 2)); break;                    // const
+                case 0x15: regs.put(a, (long) (DexFile.u2(d, pc + 2) << 16)); break;            // const/high16
+                case 0xb0: put(regs, a4, sum(regs.get(a4), regs.get(b4))); break;               // add-int/2addr
+                case 0x90: {                                                                    // add-int
+                    int bc = DexFile.u2(d, pc + 2);
+                    put(regs, a, sum(regs.get(bc & 0xFF), regs.get(bc >> 8)));
+                    break;
+                }
+                case 0xd0: {                                                                    // add-int/lit16
+                    Long src = regs.get(b4);
+                    put(regs, a4, src == null ? null : src + (short) DexFile.u2(d, pc + 2));
+                    break;
+                }
+                case 0xd8: {                                                                    // add-int/lit8
+                    int bc = DexFile.u2(d, pc + 2);
+                    Long src = regs.get(bc & 0xFF);
+                    put(regs, a, src == null ? null : src + (byte) (bc >> 8));
+                    break;
+                }
+                case 0x60:                                                                      // sget
+                    put(regs, a, statics.get(DexFile.u2(d, pc + 2)));
+                    break;
+                case 0x67: {                                                                    // sput
+                    int field = DexFile.u2(d, pc + 2);
+                    Long value = regs.get(a);
+                    if (value != null) {
+                        statics.put(field, value);
+                        out.put(field, value);
+                    }
+                    break;
+                }
+                default:
+                    // Whatever else wrote a register: vA or vAA, depending on the format.
+                    regs.remove(a);
+                    regs.remove(a4);
+                    break;
+            }
+            pc += WIDTH[op] * 2;
+        }
+        return out;
+    }
+
+    private static void put(java.util.Map<Integer, Long> regs, int reg, Long value) {
+        if (value == null) regs.remove(reg);
+        else regs.put(reg, value);
+    }
+
+    private static Long sum(Long x, Long y) {
+        return x == null || y == null ? null : x + y;
+    }
+
     /** Width of a payload in code units, reporting switch keys on the way past. */
     private static int payloadWidth(byte[] d, int pc, int ident, Visitor v) {
         switch (ident) {

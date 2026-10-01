@@ -426,6 +426,8 @@ public abstract class Symbol {
         String flagHost;
         int flagBit;
         Long initialValue;
+        String storedBy;
+        long storedValue;
         boolean intLike;
 
         FieldSymbol(String owner, String name) {
@@ -436,7 +438,7 @@ public abstract class Symbol {
         @Override
         boolean hasFingerprint() {
             return keyHost != null || flagHost != null
-                    || type != null && (uniqueOfType || writtenBy != null || handedIn != null);
+                    || type != null && (uniqueOfType || writtenBy != null || storedBy != null || handedIn != null);
         }
 
         /**
@@ -455,6 +457,17 @@ public abstract class Symbol {
          */
         public FieldSymbol intLike() {
             this.intLike = true;
+            return this;
+        }
+
+        /**
+         * The static field {@code methodSymbolId} sets to {@code value}, following constants and
+         * additions - an event id from {@code a = total++; b = total++; ...}. Counting writes
+         * instead breaks wherever R8 folds some of them into initial values.
+         */
+        public FieldSymbol storedBy(String methodSymbolId, long value) {
+            this.storedBy = methodSymbolId;
+            this.storedValue = value;
             return this;
         }
 
@@ -692,8 +705,8 @@ public abstract class Symbol {
             }
             if (typeDesc != null && writtenBy != null) {
                 DexClass.Method writer = r.methods.get(writtenBy);
-                if (writer == null) return r.isResolvedOrPending(writtenBy)
-                        ? Resolver.Attempt.waiting() : Resolver.Attempt.notFound();
+                if (writer == null && r.isResolvedOrPending(writtenBy)) return Resolver.Attempt.waiting();
+                if (writer == null) return byStoredValue(r, cls, typeDesc);
                 String altDesc = alternativeType == null ? null : r.descriptor(alternativeType);
                 List<String> order = new ArrayList<>();
                 for (Body.Refs.FieldRef f : Body.Refs.of(r, writer).fields) {
@@ -703,11 +716,25 @@ public abstract class Symbol {
                     if (f.write != ordinalOfReads && f.owner.equals(cls.descriptor) && typeFits
                             && !order.contains(f.name)) order.add(f.name);
                 }
-                if (writeOrdinal >= order.size()) return byInitialValue(cls, typeDesc);
+                if (writeOrdinal >= order.size()) return byStoredValue(r, cls, typeDesc);
                 DexClass.Field declared = cls.fieldNamed(order.get(writeOrdinal));
                 return declared == null ? Resolver.Attempt.notFound() : Resolver.Attempt.of(declared, false);
             }
+            if (typeDesc != null && storedBy != null) return byStoredValue(r, cls, typeDesc);
             return Resolver.Attempt.notFound();
+        }
+
+        private Resolver.Attempt byStoredValue(Resolver r, DexClass cls, String typeDesc) {
+            if (storedBy == null) return byInitialValue(cls, typeDesc);
+            DexClass.Method writer = r.methods.get(storedBy);
+            if (writer == null) return r.isResolvedOrPending(storedBy)
+                    ? Resolver.Attempt.waiting() : byInitialValue(cls, typeDesc);
+            List<DexClass.Field> found = new ArrayList<>();
+            for (java.util.Map.Entry<String, Long> e : writer.staticIntWrites().entrySet()) {
+                DexClass.Field f = cls.fieldNamed(e.getKey());
+                if (f != null && f.isStatic() && f.type().equals(typeDesc) && e.getValue() == storedValue) found.add(f);
+            }
+            return found.isEmpty() ? byInitialValue(cls, typeDesc) : Resolver.Attempt.single(found);
         }
 
         private Resolver.Attempt byInitialValue(DexClass cls, String typeDesc) {

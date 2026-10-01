@@ -30,7 +30,8 @@ case "$source" in
         .packages[$p] // [] | .[]
         | select((.nativecode // ["arm64-v8a"]) | index("arm64-v8a"))
         | [(.versionCode | tostring), .versionName, $base + .apkName] | @tsv'
-    done | sort -t $'\t' -k1,1rn | awk -F '\t' '!seen[$2]++ { print $2 "\t" $3 }' | head -n "$count"
+    done | sort -t $'\t' -k1,1rn | awk -F '\t' -v n="$count" '!seen[$2]++ && shown++ < n { print $2 "\t" $3 }'
+    # (awk counts rather than head: head would close the pipe early, which pipefail reports.)
     rm -rf "$work"
     ;;
   url)
