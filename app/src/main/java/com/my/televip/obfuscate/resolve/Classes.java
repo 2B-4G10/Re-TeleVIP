@@ -174,6 +174,20 @@ public final class Classes {
         };
     }
 
+    /** The return types of every method a resolved class declares. */
+    public static Symbol.ClassSource returnTypesOf(final String owner) {
+        return r -> {
+            DexClass cls = r.cls(owner);
+            if (cls == null) return null;
+            List<DexClass> out = new ArrayList<>();
+            for (DexClass.Method m : cls.methods) {
+                DexClass c = r.index.byDescriptor(m.returnType());
+                if (c != null && !out.contains(c)) out.add(c);
+            }
+            return out;
+        };
+    }
+
     /** The types of every field a resolved class declares. */
     public static Symbol.ClassSource fieldTypesOf(final String owner) {
         return r -> {

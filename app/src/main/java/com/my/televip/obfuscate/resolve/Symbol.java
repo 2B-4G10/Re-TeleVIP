@@ -41,6 +41,9 @@ public abstract class Symbol {
         Collection<DexClass> candidates(Resolver r);
     }
 
+    /** A method parameter of any type: one no symbol names (e.g. a renamed helper class). */
+    public static final String ANY = "*";
+
     public static ClassSymbol cls(String originalName) {
         return new ClassSymbol(originalName);
     }
@@ -261,7 +264,7 @@ public abstract class Symbol {
                 ret = r.descriptor(returnType);
                 want = new String[params.length];
                 for (int i = 0; i < params.length; i++) {
-                    want[i] = r.descriptor(params[i]);
+                    want[i] = ANY.equals(params[i]) ? ANY : r.descriptor(params[i]);
                     if (want[i] == null) return Resolver.Attempt.waiting();
                 }
                 if (ret == null) return Resolver.Attempt.waiting();
@@ -359,7 +362,7 @@ public abstract class Symbol {
         }
 
         private boolean paramFits(String declared, String actual) {
-            return declared.equals(actual) || (narrowedStrings
+            return declared.equals(ANY) || declared.equals(actual) || (narrowedStrings
                     && declared.equals("Ljava/lang/CharSequence;") && actual.equals("Ljava/lang/String;"));
         }
 
@@ -380,7 +383,7 @@ public abstract class Symbol {
             if (!anyOrder) return false;
             String[] actual = m.parameterTypes();
             for (int i = 0; i < actual.length; i++) {
-                if (!paramFits(r.descriptor(params[i]), actual[i])) return true;
+                if (!paramFits(ANY.equals(params[i]) ? ANY : r.descriptor(params[i]), actual[i])) return true;
             }
             return false;
         }

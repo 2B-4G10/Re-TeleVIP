@@ -7,7 +7,6 @@ import com.my.televip.base.AbstractMethodHook;
 import com.my.televip.hooks.HMethod;
 import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.AutomationResolver;
-import com.my.televip.virtuals.messenger.NotificationCenter;
 
 public class FixTLError {
 
@@ -21,8 +20,7 @@ public class FixTLError {
                     HMethod.hookMethod(ClassLoad.getClass(ClassNames.LAUNCH_ACTIVITY), AutomationResolver.resolve("LaunchActivity", "didReceivedNotification", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("didReceivedNotification", new Class[]{int.class, int.class, Object[].class}), new AbstractMethodHook() {
                         @Override
                         protected void beforeMethod(MethodHookParam param) {
-                            int id = (int) param.args[0];
-                            if (id == NotificationCenter.getTlSchemeParseException() && ConfigManager.fixTLError.isEnable())
+                            if (ConfigManager.fixTLError.isEnable() && isTlParseError(param.args[2]))
                                 param.setResult(null);
                         }
                     }));
@@ -33,4 +31,14 @@ public class FixTLError {
     }
     }
 
+    /**
+     * The "TL Error" notification, recognised by what it carries rather than by its id, which
+     * some builds give a renamed field: a TLParseException ("can't parse magic %x in %s. ...").
+     */
+    private static boolean isTlParseError(Object args) {
+        if (!(args instanceof Object[]) || ((Object[]) args).length == 0) return false;
+        Object error = ((Object[]) args)[0];
+        return error instanceof RuntimeException
+                && String.valueOf(((RuntimeException) error).getMessage()).startsWith("can't parse magic");
+    }
 }

@@ -86,6 +86,8 @@ final class CallSites {
         OPTIONAL.put("SettingsActivity$SettingCell#set", "the row's icon is set from Factory.bindView instead");
         OPTIONAL.put("SecretMediaViewer#openMedia", "the old secret media viewer; ChatActivity's hooks cover current builds");
         OPTIONAL.put("SecretMediaViewer.onClose", "belt and braces: the read and delete requests are blocked already");
+        OPTIONAL.put("FileLoader#getLocalFile", "only used inside the old secret media viewer's hook (see openMedia)");
+        OPTIONAL.put("ImageReceiver#getImageLocation", "only used inside the old secret media viewer's hook (see openMedia)");
         OPTIONAL.put("org.telegram.messenger.R$drawable", "stripped by some builds; icons are looked up in the resource table");
         OPTIONAL.put("org.telegram.tgnet.TLRPC$TL_contacts_getSponsoredPeers",
                 "R8 drops it from builds that never send it (NagramX removes search ads itself)");

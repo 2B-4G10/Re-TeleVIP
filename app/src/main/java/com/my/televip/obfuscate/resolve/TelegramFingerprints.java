@@ -297,11 +297,25 @@ public final class TelegramFingerprints {
                 .writtenBy("FileLoadOperation#updateParams", 1));
         s.add(field("FileLoadOperation", "maxDownloadRequestsBig").type("int")
                 .writtenBy("FileLoadOperation#updateParams", 2));
-        s.add(field("LocaleController", "currentLocale"));
+        // onDeviceConfigurationChange stores the system locale first, then the one in use.
+        s.add(method("LocaleController", "onDeviceConfigurationChange").sig("void", "android.content.res.Configuration"));
+        s.add(field("LocaleController", "currentLocale").type("java.util.Locale")
+                .writtenBy("LocaleController#onDeviceConfigurationChange", 1));
         s.add(field("LocaleController", "isRTL").keyedBy("LocaleController#recreateFormatters", "iw_"));
-        s.add(field("MessagesController", "dialogMessagesByIds"));
-        s.add(field("NotificationCenter", "messagesDeleted"));
-        s.add(field("NotificationCenter", "tlSchemeParseException"));
+        // cleanup() clears the per-account state field by field; its SparseArrays come in the
+        // order dialogsByFolder, dialogMessagesByIds, dialogFiltersById.
+        s.add(method("MessagesController", "cleanup").sig("void")
+                .where(string("transcribeButtonPressed"), string("shortcut_widget")));
+        s.add(field("MessagesController", "dialogMessagesByIds").type("android.util.SparseArray")
+                .readBy("MessagesController#cleanup", 1));
+        // Marks a dialog's cached messages deleted: dialogMessage.get(id), then obj.deleted = true
+        // for each Integer id that matches.
+        s.add(method("MessagesController", "markDialogMessageAsDeleted").sig("void", "long", "java.util.ArrayList")
+                .where(refersTo("java.lang.Integer"), writesFieldOfType("org.telegram.messenger.MessageObject", "boolean")));
+        // Event ids are assigned in declaration order; forks append theirs after Telegram's.
+        s.add(method("NotificationCenter", "<clinit>").isStatic(true).sig("void"));
+        s.add(field("NotificationCenter", "messagesDeleted").isStatic(true).type("int")
+                .writtenBy("NotificationCenter#<clinit>", 5));
         s.add(field("UserConfig", "clientUserId").type("long").writtenBy("UserConfig#setCurrentUser", 0));
         s.add(field("UserConfig", "selectedAccount").keyedBy("UserConfig#loadConfig", "selectedAccount"));
         s.add(field("Utilities", "stageQueue").keyedBy("Utilities#<clinit>", "stageQueue"));
@@ -335,7 +349,8 @@ public final class TelegramFingerprints {
         s.add(field("TL_update$TL_updateDeleteChannelMessages", "messages")
                 .type("java.util.ArrayList").onlyOneOfType());
         s.add(field("TL_update$TL_updateDeleteMessages", "messages").type("java.util.ArrayList").onlyOneOfType());
-        s.add(field("MessagesController", "dialogMessage"));
+        s.add(field("MessagesController", "dialogMessage").type("androidx.collection.LongSparseArray")
+                .readBy("MessagesController#markDialogMessageAsDeleted", 0));
         s.add(method("SQLiteCursor", "byteBufferValue").sig("org.telegram.tgnet.NativeByteBuffer", "int"));
         s.add(method("SQLiteCursor", "dispose").sig("void").where(callsSymbol("SQLitePreparedStatement#dispose")));
         s.add(method("SQLiteCursor", "intValue").sig("int", "int").where(callsNamed(cursor, "columnIntValue")));
@@ -544,16 +559,22 @@ public final class TelegramFingerprints {
                 .from(declaringMethod(uitem, "int", "int", "int", "int", "java.lang.CharSequence", "java.lang.CharSequence", "java.lang.CharSequence")));
         s.add(cls("org.telegram.ui.Components.UItem$UItemFactory")
                 .from(superclassOf("org.telegram.ui.SettingsActivity$SettingCell$Factory")));
-        s.add(method("SettingsActivity$SettingCell$Factory", "createView"));
-        s.add(method("SettingsActivity$SettingCell$Factory", "bindView"));
+        // UItemFactory's two overrides; Cherrygram renames them. The recycler view types are
+        // helpers no symbol names.
+        s.add(method("SettingsActivity$SettingCell$Factory", "createView").sig("android.view.View",
+                "android.content.Context", Symbol.ANY, "int", "int", "org.telegram.ui.ActionBar.Theme$ResourcesProvider"));
+        s.add(method("SettingsActivity$SettingCell$Factory", "bindView").sig("void",
+                "android.view.View", uitem, "boolean", "org.telegram.ui.Components.UniversalAdapter", Symbol.ANY));
+        // createView builds the cell; Forkgram 12.10.4 moves that into a sibling returning it.
         s.add(cls("org.telegram.ui.SettingsActivity$SettingCell")
-                .from(instantiatedBySymbol("SettingsActivity$SettingCell$Factory#createView"))
+                .from(instantiatedBySymbol("SettingsActivity$SettingCell$Factory#createView"),
+                        returnTypesOf("org.telegram.ui.SettingsActivity$SettingCell$Factory"))
                 .where(extendsType("android.widget.LinearLayout"), hasField(false, "android.widget.ImageView")));
         s.add(cls("org.telegram.ui.Components.UniversalAdapter")
                 .from(paramTypeWhere("org.telegram.ui.SettingsActivity", "void", "java.util.ArrayList", null),
                         paramTypesOf("org.telegram.ui.SettingsActivity$SettingCell$Factory"))
                 .where(hasMethod(false, uitem, "int"),
-                        isNot(inherits("androidx.recyclerview.widget.RecyclerView"))));
+                        isNot(inherits("android.view.ViewGroup"))));
 
         // Telegram 12.10.5 has both static, taking the fragment first and without the parameters
         // they never read: fillItems(activity, list) and onClick(activity, item). The hooks find
@@ -561,8 +582,10 @@ public final class TelegramFingerprints {
         s.add(method("SettingsActivity", "fillItems")
                 .sig("void", "java.util.ArrayList", "org.telegram.ui.Components.UniversalAdapter").reads(0)
                 .staticized().where(calls(uitem, uitem, "int")));
+        // Forkgram keeps an instance onClick behind a static forwarder; hook the one doing the work.
         s.add(method("SettingsActivity", "onClick")
-                .sig("void", uitem, "android.view.View", "int", "float", "float").reads(0).staticized());
+                .sig("void", uitem, "android.view.View", "int", "float", "float").reads(0).staticized()
+                .where(not(callsSibling("void", uitem, "android.view.View", "int", "float", "float"))));
         s.add(method("SettingsActivity$SettingCell", "set")
                 .sig("void", "int", "int", "int", "java.lang.CharSequence", "java.lang.CharSequence", "java.lang.CharSequence"));
         // Factory.of assigns item.id, iconResId, text, subtext, textValue in that order.
@@ -673,7 +696,9 @@ public final class TelegramFingerprints {
                 .where(hasConstructor("android.content.Context"), hasConstructor("android.content.Context", "int", rp),
                         hasMethod(false, "void", "java.lang.CharSequence", "boolean"),
                         hasMethod(false, "void", "java.lang.CharSequence", "java.lang.CharSequence", "boolean", "boolean")));
-        s.add(method("TextSettingsCell", "setText").sig("void", "java.lang.CharSequence", "boolean"));
+        // setValue(CharSequence, boolean) has the same shape; only setText redraws for the divider.
+        s.add(method("TextSettingsCell", "setText").sig("void", "java.lang.CharSequence", "boolean")
+                .where(callsAnyNamed("setWillNotDraw")));
         s.add(field("TextSettingsCell", "textView").type("android.widget.TextView").readBy("TextSettingsCell#setText", 0));
         s.add(method("TextSettingsCell", "setTextAndValueCCZ").named("setTextAndValue").sig("void", "java.lang.CharSequence", "java.lang.CharSequence", "boolean"));
         s.add(method("TextSettingsCell", "setTextAndValueCCZZ").named("setTextAndValue").sig("void", "java.lang.CharSequence", "java.lang.CharSequence", "boolean", "boolean"));
@@ -759,9 +784,10 @@ public final class TelegramFingerprints {
         s.add(method("ChatActivity", "hasSelectedNoforwardsMessage").sig("boolean")
                 .where(touchesField("org.telegram.tgnet.TLRPC$Message", "noforwards")));
         // The context-menu dispatcher: one switch over the OPTION_* constants, including ones
-        // (revenue-sharing ads, speed promo, welcome revert) no other int handler switches on.
+        // (revenue-sharing ads, speed promo, gift) no other int handler switches on - all three
+        // there since Telegram 11.9.
         s.add(method("ChatActivity", "processSelectedOption").sig("void", "int")
-                .where(switchKey(33), switchKey(103), switchKey(116)));
+                .where(switchKey(33), switchKey(103), switchKey(108)));
         s.add(method("ChatActivity", "scrollToMessageIdIIZIZI").named("scrollToMessageId")
                 .sig("void", "int", "int", "boolean", "int", "boolean", "int"));
         s.add(method("ChatActivity", "scrollToMessageIdIIZIZIIR").named("scrollToMessageId")
@@ -937,7 +963,7 @@ public final class TelegramFingerprints {
         // "return currentTheme.isDark()": one call, returned as is. isCurrentThemeDay is the same
         // call negated (xor-int/lit8 ..., 1), or two calls where getActiveTheme() is not inlined.
         s.add(method("Theme", "isCurrentThemeDark").isStatic(true).sig("boolean")
-                .where(callCount(1), not(usesOpcode(0xdf))));
+                .where(callCount(1), not(usesOpcode(0xdf)), not(callsSibling("boolean"))));
         // measureTime also touches chat_unlockExtendedMediaTextPaint, but reads chat_timePaint first.
         s.add(field("Theme", "chat_timePaint").isStatic(true).type("android.text.TextPaint")
                 .readBy("ChatMessageCell#measureTime", 0));

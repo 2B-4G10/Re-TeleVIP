@@ -10,7 +10,6 @@ public class NotificationCenter {
 
 
     private static int messagesDeleted = -1;
-    private static int tlSchemeParseException = -1;
 
 
     public static int getMessagesDeleted() {
@@ -18,12 +17,5 @@ public class NotificationCenter {
             messagesDeleted = XReflect.getStaticIntField(ClassLoad.getClass(ClassNames.NOTIFICATION_CENTER), AutomationResolver.resolve("NotificationCenter", "messagesDeleted", AutomationResolver.ResolverType.Field));
         }
         return messagesDeleted;
-    }
-
-    public static int getTlSchemeParseException() {
-        if (tlSchemeParseException == -1) {
-            tlSchemeParseException = XReflect.getStaticIntField(ClassLoad.getClass(ClassNames.NOTIFICATION_CENTER), AutomationResolver.resolve("NotificationCenter", "tlSchemeParseException", AutomationResolver.ResolverType.Field));
-        }
-        return tlSchemeParseException;
     }
 }

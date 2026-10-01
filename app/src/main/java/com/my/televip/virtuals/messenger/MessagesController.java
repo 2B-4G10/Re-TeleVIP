@@ -50,7 +50,7 @@ public class MessagesController {
     }
 
     public static Object getInputChannel(long id) {
-        return XReflect.callStaticMethod(ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER), AutomationResolver.resolve("MessagesController", "getInputChannel", AutomationResolver.ResolverType.Method), id);
+        return XReflect.callStaticMethod(ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER), AutomationResolver.resolveOverload("MessagesController", "getInputChannelJ", "getInputChannel"), id);
     }
 
     public MessagesStorage getMessagesStorage() {
