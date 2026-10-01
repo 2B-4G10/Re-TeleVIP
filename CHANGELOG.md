@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.0.7 — Nekogram 12.10.5+ and the last five releases of every client
+
+- **Nekogram 12.10.5 and 12.10.6 are supported.** Their build renames, reorders, merges and
+  inlines much more than before, which broke the settings entry, Ghost Mode, Block Ads,
+  saving edits, the photo viewer and more. Every feature now finds its code there again.
+- **Mercurygram** is supported.
+- **Every feature was checked on the last five releases of each client** that can be
+  downloaded, 36 builds in all:
+  - Nekogram 12.9.2–12.10.6, Cherrygram 10.9–11.3, Nagram and NagramX;
+  - Forkgram 12.9.5–12.10.4, Forkgram Classic 12.10.3–12.10.8 and Mercurygram 12.9.0–12.10.5;
+  - Telegram 12.10.5 and 12.10.6.
+- **The weekly Client watch now checks the last five releases of each of these clients**, not
+  just the newest one. Forkgram, Forkgram Classic and Mercurygram are fetched from F-Droid.
+- *Ghost Mode*: reading a channel without being seen marked it read with the wrong id on Nagram.
+  The account's own channel lookup is used now.
+- *Fix TL error*: the parse error is recognised by its message, where the build has no name
+  for it.
+- *Disable number rounding*, *Save edits history* and *Hide app updates* keep working where the
+  build reorders those methods' parameters or drops their return value.
+- TeleVip's dialogs use the system dialog everywhere. The Telegram-styled one never actually
+  loaded, because of a misspelt class name.
+
 ## 1.0.6 — ad blocking that works
 
 - **Hide Proxy Sponsor is now Block Ads**, and your earlier setting carries over. It blocks the
