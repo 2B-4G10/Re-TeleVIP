@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public final class TelegramFingerprints {
 
-    public static final int VERSION = 9;
+    public static final int VERSION = 10;
 
     private TelegramFingerprints() {
     }
@@ -125,6 +125,14 @@ public final class TelegramFingerprints {
         o.put("TLRPC$Message", "org.telegram.tgnet.TLRPC$Message");
         o.put("TLRPC$Peer", "org.telegram.tgnet.TLRPC$Peer");
         o.put("TLRPC$TL_channels_readHistory", "org.telegram.tgnet.TLRPC$TL_channels_readHistory");
+        o.put("TLRPC$TL_inputPeerChat", "org.telegram.tgnet.TLRPC$TL_inputPeerChat");
+        o.put("TLRPC$TL_inputPeerUser", "org.telegram.tgnet.TLRPC$TL_inputPeerUser");
+        o.put("TLRPC$TL_message_secret", "org.telegram.tgnet.TLRPC$TL_message_secret");
+        o.put("TLRPC$TL_messages_messages", "org.telegram.tgnet.TLRPC$TL_messages_messages");
+        o.put("TLRPC$TL_peerChannel", "org.telegram.tgnet.TLRPC$TL_peerChannel");
+        o.put("TLRPC$TL_peerChat", "org.telegram.tgnet.TLRPC$TL_peerChat");
+        o.put("TLRPC$TL_peerUser", "org.telegram.tgnet.TLRPC$TL_peerUser");
+        o.put("TLRPC$TL_user", "org.telegram.tgnet.TLRPC$TL_user");
         o.put("TLRPC$TL_channels_readMessageContents", "org.telegram.tgnet.TLRPC$TL_channels_readMessageContents");
         o.put("TLRPC$TL_inputPeerChannel", "org.telegram.tgnet.TLRPC$TL_inputPeerChannel");
         o.put("TLRPC$TL_messages_affectedMessages", "org.telegram.tgnet.TLRPC$TL_messages_affectedMessages");
@@ -142,6 +150,12 @@ public final class TelegramFingerprints {
         o.put("TLRPC$User", "org.telegram.tgnet.TLRPC$User");
         o.put("TLRPC$messages_Messages", "org.telegram.tgnet.TLRPC$messages_Messages");
         o.put("TL_account$updateStatus", "org.telegram.tgnet.tl.TL_account$updateStatus");
+        o.put("TL_stories$StoryItem", "org.telegram.tgnet.tl.TL_stories$StoryItem");
+        o.put("TL_stories$TL_storyItem", "org.telegram.tgnet.tl.TL_stories$TL_storyItem");
+        o.put("TLRPC$TL_channel", "org.telegram.tgnet.TLRPC$TL_channel");
+        o.put("TLRPC$TL_message", "org.telegram.tgnet.TLRPC$TL_message");
+        o.put("TLRPC$TL_documentAttributeAudio", "org.telegram.tgnet.TLRPC$TL_documentAttributeAudio");
+        o.put("TLRPC$DocumentAttribute", "org.telegram.tgnet.TLRPC$DocumentAttribute");
         o.put("TL_stories$TL_stories_incrementStoryViews", "org.telegram.tgnet.tl.TL_stories$TL_stories_incrementStoryViews");
         o.put("TL_stories$TL_stories_readStories", "org.telegram.tgnet.tl.TL_stories$TL_stories_readStories");
         o.put("TL_update$TL_updateDeleteChannelMessages", "org.telegram.tgnet.tl.TL_update$TL_updateDeleteChannelMessages");
@@ -157,6 +171,11 @@ public final class TelegramFingerprints {
         o.put("Utilities", "org.telegram.messenger.Utilities");
         o.put("WriteToSocketDelegate", "org.telegram.tgnet.WriteToSocketDelegate");
         return Collections.unmodifiableMap(o);
+    }
+
+    /** A TL class, by the constructor id it writes (see {@link Classes#serializingConstant}). */
+    private static Symbol tl(String name, long constructor) {
+        return cls(name).from(serializingConstant(constructor));
     }
 
     public static List<Symbol> all() {
@@ -220,8 +239,6 @@ public final class TelegramFingerprints {
         String cursor = "org.telegram.SQLite.SQLiteCursor", statement = "org.telegram.SQLite.SQLitePreparedStatement";
         // ConnectionsManager's natives call back into it by name, so its members keep theirs too.
         String connections = "org.telegram.tgnet.ConnectionsManager";
-        // A TL object writes its own constructor id; its abstract parent only compares against it.
-        Symbol.ClassFact serializes = hasMethod(false, "void", "org.telegram.tgnet.OutputSerializedData");
         String msg = "org.telegram.tgnet.TLRPC$Message", document = "org.telegram.tgnet.TLRPC$Document";
         // Utilities' queues are its only Thread-typed fields.
         s.add(cls("org.telegram.messenger.DispatchQueue")
@@ -231,6 +248,19 @@ public final class TelegramFingerprints {
                 .where(isInterface()));
         s.add(cls("org.telegram.tgnet.RequestDelegateTimestamp")
                 .from(paramTypeOf(connections, "sendRequestInternal", 2)).where(isInterface()));
+        // Concrete types the abstract parents are found from.
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_chat", 0x41cbf256));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_encryptedChat", 0x61f0d4c7));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_peerUser", 0x59511722));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_user", 0xb1b8cc83));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_messages_messages", 0x1d73e7ea));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_inputChannel", 0xf35aec28));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_dialog", 0xfc89f7f3));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_document", 0x8fd4c4d8));
+        // The story recorder serializes an audio attribute of its own with the same id.
+        s.add(cls("org.telegram.tgnet.TLRPC$TL_documentAttributeAudio").from(serializingConstant(0x9852f9c6))
+                .where(inherits("org.telegram.tgnet.TLObject")));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_fileLocationToBeDeprecated", 0xbc7fc6cd));
         s.add(cls("org.telegram.tgnet.TLObject")
                 .from(superclassOf("org.telegram.tgnet.TLRPC$TL_messages_readHistory")));
         s.add(cls("org.telegram.tgnet.TLRPC$Chat").from(superclassOf("org.telegram.tgnet.TLRPC$TL_chat")));
@@ -239,21 +269,21 @@ public final class TelegramFingerprints {
         s.add(cls("org.telegram.tgnet.TLRPC$InputPeer")
                 .from(superclassOf("org.telegram.tgnet.TLRPC$TL_inputPeerChannel")));
         s.add(cls("org.telegram.tgnet.TLRPC$Peer").from(superclassOf("org.telegram.tgnet.TLRPC$TL_peerUser")));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_channels_readHistory"));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_channels_readMessageContents"));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_inputPeerChannel"));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_affectedMessages"));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_readDiscussion"));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_readEncryptedHistory"));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_readHistory"));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_readMessageContents"));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_sendMedia"));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_sendMessage"));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_sendMultiMedia"));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_sendPaidReaction"));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_sendReaction"));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_setEncryptedTyping"));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_setTyping"));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_channels_readHistory", 0xcc104937));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_channels_readMessageContents", 0xeab5dc38));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_inputPeerChannel", 0x27bcbbfc));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_messages_affectedMessages", 0x84d19185));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_messages_readDiscussion", 0xf731a9f4));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_messages_readEncryptedHistory", 0x7f4b690a));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_messages_readHistory", 0x0e306d3a));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_messages_readMessageContents", 0x36a73f77));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_messages_sendMedia", 0x0330e77f));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_messages_sendMessage", 0xfef48f62));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_messages_sendMultiMedia", 0x1bf89d74));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_messages_sendPaidReaction", 0x58bbcb50));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_messages_sendReaction", 0xd30d78d4));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_messages_setEncryptedTyping", 0x791451ed));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_messages_setTyping", 0x58943ee2));
         s.add(cls("org.telegram.tgnet.TLRPC$User").from(superclassOf("org.telegram.tgnet.TLRPC$TL_user")));
         s.add(cls("org.telegram.tgnet.TLRPC$messages_Messages")
                 .from(superclassOf("org.telegram.tgnet.TLRPC$TL_messages_messages")));
@@ -270,24 +300,18 @@ public final class TelegramFingerprints {
                         null, "int", "boolean")));
         s.add(cls("org.telegram.tgnet.WriteToSocketDelegate").from(paramTypeOf(connections, "sendRequestInternal", 4))
                 .where(isInterface()));
-        s.add(cls("org.telegram.tgnet.tl.TL_account$updateStatus").from(declaringConstant(1713919532))
-                .where(serializes));
+        s.add(cls("org.telegram.tgnet.tl.TL_account$updateStatus").from(serializingConstant(1713919532)));
         // The requests that fetch ads: messages.getSponsoredMessages, contacts.getSponsoredPeers and
         // help.getPromoData.
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_getSponsoredMessages").from(declaringConstant(0x3d6ce850))
-                .where(serializes));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_contacts_getSponsoredPeers").from(declaringConstant(0xb6c8c393))
-                .where(serializes));
-        s.add(cls("org.telegram.tgnet.TLRPC$TL_help_getPromoData").from(declaringConstant(0xc0977421))
-                .where(serializes));
+        s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_getSponsoredMessages").from(serializingConstant(0x3d6ce850)));
+        s.add(cls("org.telegram.tgnet.TLRPC$TL_contacts_getSponsoredPeers").from(serializingConstant(0xb6c8c393)));
+        s.add(cls("org.telegram.tgnet.TLRPC$TL_help_getPromoData").from(serializingConstant(0xc0977421)));
         s.add(cls("org.telegram.tgnet.tl.TL_stories$TL_stories_incrementStoryViews")
-                .from(declaringConstant(-1308456197)).where(serializes));
-        s.add(cls("org.telegram.tgnet.tl.TL_stories$TL_stories_readStories").from(declaringConstant(-1521034552))
-                .where(serializes));
+                .from(serializingConstant(-1308456197)));
+        s.add(cls("org.telegram.tgnet.tl.TL_stories$TL_stories_readStories").from(serializingConstant(-1521034552)));
         s.add(cls("org.telegram.tgnet.tl.TL_update$TL_updateDeleteChannelMessages")
-                .from(declaringConstant(-1020437742)).where(serializes));
-        s.add(cls("org.telegram.tgnet.tl.TL_update$TL_updateDeleteMessages").from(declaringConstant(-1576161051))
-                .where(serializes));
+                .from(serializingConstant(-1020437742)));
+        s.add(cls("org.telegram.tgnet.tl.TL_update$TL_updateDeleteMessages").from(serializingConstant(-1576161051)));
         s.add(field("ApplicationLoader", "applicationContext").isStatic(true)
                 .type("android.content.Context").onlyOneOfType());
         s.add(field("FileLoadOperation", "downloadChunkSizeBig").type("int")
@@ -319,31 +343,67 @@ public final class TelegramFingerprints {
         s.add(field("UserConfig", "clientUserId").type("long").writtenBy("UserConfig#setCurrentUser", 0));
         s.add(field("UserConfig", "selectedAccount").keyedBy("UserConfig#loadConfig", "selectedAccount"));
         s.add(field("Utilities", "stageQueue").keyedBy("Utilities#<clinit>", "stageQueue"));
-        s.add(field("TLRPC$InputPeer", "channel_id"));
-        s.add(field("TLRPC$InputPeer", "chat_id"));
-        s.add(field("TLRPC$InputPeer", "user_id"));
-        s.add(field("TLRPC$Message", "flags"));
-        s.add(field("TLRPC$Message", "from_id"));
-        s.add(field("TLRPC$Message", "id"));
-        s.add(field("TLRPC$Message", "message"));
-        s.add(field("TLRPC$Message", "ttl"));
-        s.add(field("TLRPC$Peer", "channel_id"));
-        s.add(field("TLRPC$Peer", "chat_id"));
-        s.add(field("TLRPC$Peer", "user_id"));
-        s.add(field("TLRPC$TL_channels_readHistory", "channel"));
-        s.add(field("TLRPC$TL_channels_readHistory", "max_id"));
-        s.add(field("TLRPC$TL_messages_affectedMessages", "pts"));
-        s.add(field("TLRPC$TL_messages_affectedMessages", "pts_count"));
-        s.add(field("TLRPC$TL_messages_readHistory", "max_id"));
-        s.add(field("TLRPC$TL_messages_readHistory", "peer"));
-        s.add(field("TLRPC$TL_messages_readDiscussion", "peer"));
-        s.add(field("TLRPC$TL_messages_sendMedia", "peer"));
-        s.add(field("TLRPC$TL_messages_sendMessage", "peer"));
-        s.add(field("TLRPC$TL_messages_sendMultiMedia", "peer"));
-        s.add(field("TLRPC$TL_messages_sendPaidReaction", "peer"));
-        s.add(field("TLRPC$TL_messages_sendReaction", "peer"));
-        s.add(field("TLRPC$User", "phone"));
-        s.add(field("TLRPC$messages_Messages", "messages"));
+        // TL fields, for builds that rename them (Nekogram 12.9-12.10.1, 12.10.5+): the n-th
+        // field of a type that a class's serializeToStream reads, in the order the schema writes them.
+        String peer = "org.telegram.tgnet.TLRPC$Peer", inputPeer = "org.telegram.tgnet.TLRPC$InputPeer";
+        for (String c : new String[]{"TL_peerUser", "TL_peerChat", "TL_peerChannel", "TL_inputPeerUser",
+                "TL_inputPeerChat", "TL_inputPeerChannel", "TL_message_secret", "TL_user", "TL_messages_messages",
+                "TL_messages_readHistory", "TL_channels_readHistory", "TL_messages_affectedMessages",
+                "TL_messages_readDiscussion", "TL_messages_sendMedia", "TL_messages_sendMessage",
+                "TL_messages_sendMultiMedia", "TL_messages_sendPaidReaction", "TL_messages_sendReaction"}) {
+            s.add(method("TLRPC$" + c, "serializeToStream").sig("void", "org.telegram.tgnet.OutputSerializedData"));
+        }
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_peerChat", 0x36c6019a));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_peerChannel", 0xa2a5371e));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_inputPeerUser", 0xdde8a54c));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_inputPeerChat", 0x35a95cb9));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_message_secret", 0x555555fa));
+        s.add(field("TLRPC$Peer", "user_id").type("long").readBy("TLRPC$TL_peerUser#serializeToStream", 0));
+        s.add(field("TLRPC$Peer", "chat_id").type("long").readBy("TLRPC$TL_peerChat#serializeToStream", 0));
+        s.add(field("TLRPC$Peer", "channel_id").type("long").readBy("TLRPC$TL_peerChannel#serializeToStream", 0));
+        s.add(field("TLRPC$InputPeer", "user_id").type("long").readBy("TLRPC$TL_inputPeerUser#serializeToStream", 0));
+        s.add(field("TLRPC$InputPeer", "chat_id").type("long").readBy("TLRPC$TL_inputPeerChat#serializeToStream", 0));
+        s.add(field("TLRPC$InputPeer", "channel_id").type("long")
+                .readBy("TLRPC$TL_inputPeerChannel#serializeToStream", 0));
+        // Boolean flags, by the bit their class's serializer folds them into its flags word with.
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_message", 0x7600b9d3));
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_channel", 0xd49f34c6));
+        for (String c : new String[]{"TLRPC$TL_message", "TLRPC$TL_channel", "TL_stories$TL_storyItem",
+                "TLRPC$TL_documentAttributeAudio"}) {
+            s.add(method(c, "serializeToStream").sig("void", "org.telegram.tgnet.OutputSerializedData"));
+        }
+        s.add(field("TLRPC$Message", "noforwards").flagOf("TLRPC$TL_message#serializeToStream", 26));
+        s.add(field("TLRPC$Chat", "restricted").flagOf("TLRPC$TL_channel#serializeToStream", 9));
+        s.add(field("TLRPC$User", "premium").flagOf("TLRPC$TL_user#serializeToStream", 28));
+        s.add(field("TLRPC$DocumentAttribute", "voice").flagOf("TLRPC$TL_documentAttributeAudio#serializeToStream", 10));
+        s.add(field("TL_stories$StoryItem", "noforwards").flagOf("TL_stories$TL_storyItem#serializeToStream", 10));
+        s.add(field("TL_stories$StoryItem", "pinned").flagOf("TL_stories$TL_storyItem#serializeToStream", 5));
+        // message_secret: flags, id, ttl, from_id.user_id, peer_id, message.
+        String secret = "TLRPC$TL_message_secret#serializeToStream";
+        s.add(field("TLRPC$Message", "flags").type("int").readBy(secret, 0));
+        s.add(field("TLRPC$Message", "id").type("int").readBy(secret, 1));
+        s.add(field("TLRPC$Message", "ttl").type("int").readBy(secret, 2));
+        s.add(field("TLRPC$Message", "from_id").type(peer).readBy(secret, 0));
+        s.add(field("TLRPC$Message", "message").type("java.lang.String").readBy(secret, 0));
+        // user: username (checked for null first), first_name, last_name, username, phone.
+        s.add(field("TLRPC$User", "phone").type("java.lang.String").readBy("TLRPC$TL_user#serializeToStream", 3));
+        s.add(field("TLRPC$messages_Messages", "messages").type("java.util.ArrayList")
+                .readBy("TLRPC$TL_messages_messages#serializeToStream", 0));
+        s.add(field("TLRPC$TL_channels_readHistory", "channel").type("org.telegram.tgnet.TLRPC$InputChannel")
+                .readBy("TLRPC$TL_channels_readHistory#serializeToStream", 0));
+        s.add(field("TLRPC$TL_channels_readHistory", "max_id").type("int")
+                .readBy("TLRPC$TL_channels_readHistory#serializeToStream", 0));
+        s.add(field("TLRPC$TL_messages_affectedMessages", "pts").type("int")
+                .readBy("TLRPC$TL_messages_affectedMessages#serializeToStream", 0));
+        s.add(field("TLRPC$TL_messages_affectedMessages", "pts_count").type("int")
+                .readBy("TLRPC$TL_messages_affectedMessages#serializeToStream", 1));
+        s.add(field("TLRPC$TL_messages_readHistory", "max_id").type("int")
+                .readBy("TLRPC$TL_messages_readHistory#serializeToStream", 0));
+        for (String c : new String[]{"TL_messages_readHistory", "TL_messages_readDiscussion", "TL_messages_sendMedia",
+                "TL_messages_sendMessage", "TL_messages_sendMultiMedia", "TL_messages_sendPaidReaction",
+                "TL_messages_sendReaction"}) {
+            s.add(field("TLRPC$" + c, "peer").type(inputPeer).readBy("TLRPC$" + c + "#serializeToStream", 0));
+        }
         s.add(field("TL_account$updateStatus", "offline").type("boolean").onlyOneOfType());
         s.add(field("TL_update$TL_updateDeleteChannelMessages", "channel_id").type("long").onlyOneOfType());
         s.add(field("TL_update$TL_updateDeleteChannelMessages", "messages")
@@ -510,18 +570,27 @@ public final class TelegramFingerprints {
         s.add(cls("org.telegram.messenger.BaseController").from(superclassOf("org.telegram.messenger.MessagesController")));
         s.add(method("BaseController", "getUserConfig").sig("org.telegram.messenger.UserConfig"));
         s.add(method("BaseFragment", "getUserConfig").sig("org.telegram.messenger.UserConfig"));
-        s.add(method("ChatActivity", "createView"));
-        s.add(method("ChatActivity", "isSwipeBackEnabled"));
-        s.add(method("ProfileActivity", "isSwipeBackEnabled"));
+        // BaseFragment's overridables keep their names on most builds; where R8 renames them
+        // (Nekogram 12.9-12.10.1), the base declaration is pinned by shape and overrides follow it.
+        String ctx = "android.content.Context", view = "android.view.View", ev = "android.view.MotionEvent";
+        s.add(method("BaseFragment", "createView").sig(view, ctx).where(callCount(0)));
+        s.add(method("BaseFragment", "isSwipeBackEnabled").isStatic(false).sig("boolean", ev));
+        for (String fragment : new String[]{"ChatActivity", "ProfileActivity"}) {
+            s.add(method(fragment, "createView").sig(view, ctx).where(overrides("BaseFragment#createView")));
+            s.add(method(fragment, "isSwipeBackEnabled").isStatic(false).sig("boolean", ev)
+                    .where(overrides("BaseFragment#isSwipeBackEnabled")));
+        }
     }
 
     // ------------------------------------------------------------------ classes
 
     private static void classes(List<Symbol> s) {
         // Official Telegram builds rename these too; each loads strings no other class does.
+        // Forkgram Classic has no welcome-message limit; the other two strings are enough there.
         s.add(cls("org.telegram.ui.ChatActivity")
                 .from(declaringStrings("WelcomeMessagesLimit", "processLoadedDiscussionMessage reset history",
-                        "AwaitingEncryption")));
+                        "AwaitingEncryption"),
+                        declaringStrings("processLoadedDiscussionMessage reset history", "AwaitingEncryption")));
         s.add(cls("org.telegram.ui.SettingsActivity")
                 .from(declaringStrings("disable shadows in settings", "enable debug view metrics")));
 
@@ -671,7 +740,9 @@ public final class TelegramFingerprints {
                 .from(subclassesOf("android.widget.FrameLayout"))
                 .where(hasMethod(false, "void", "java.lang.CharSequence"), hasMethod(false, "void", "java.lang.CharSequence", "boolean"),
                         hasConstructor("android.content.Context", "int", "int", "int", "int", "boolean", "boolean", rp)));
-        s.add(method("HeaderCell", "setTextC").named("setText").sig("void", "java.lang.CharSequence"));
+        // setText(text) forwards to setText(text, false); setText2 has the same shape.
+        s.add(method("HeaderCell", "setTextC").named("setText").sig("void", "java.lang.CharSequence")
+                .where(callsSymbol("HeaderCell#setTextCZ")));
         s.add(method("HeaderCell", "setTextCZ").named("setText").sig("void", "java.lang.CharSequence", "boolean"));
 
         s.add(cls("org.telegram.ui.Cells.TextCheckCell")
@@ -771,7 +842,7 @@ public final class TelegramFingerprints {
         // The three-dot menu is the item createView fills with lazily added entries; forks add
         // action bar items of their own, so the order they are created in says nothing.
         s.add(field("ChatActivity", "headerItem").type("org.telegram.ui.ActionBar.ActionBarMenuItem")
-                .handedTo("createView", "ActionBarMenuItem#lazilyAddSubItem"));
+                .handedTo("ChatActivity#createView", "ActionBarMenuItem#lazilyAddSubItem"));
 
         // Builds the pinned bar lazily for updatePinnedMessageView: the one void() helper it calls
         // that stores a new anonymous FrameLayout in a field (its debug-name literal is stripped).
@@ -908,12 +979,10 @@ public final class TelegramFingerprints {
         Body screenshots = Body.all(touchesField("org.telegram.tgnet.tl.TL_stories$StoryItem", "noforwards"),
                 touchesField("org.telegram.tgnet.tl.TL_stories$StoryItem", "pinned"));
         // Some forks rename the tl.* classes; a TL object's constructor id pins it anyway.
-        s.add(cls("org.telegram.tgnet.tl.TL_stories$TL_storyItem").from(declaringConstant(379894076))
-                .where(hasMethod(false, "void", "org.telegram.tgnet.OutputSerializedData")));
+        s.add(cls("org.telegram.tgnet.tl.TL_stories$TL_storyItem").from(serializingConstant(379894076)));
         s.add(cls("org.telegram.tgnet.tl.TL_stories$StoryItem")
                 .from(superclassOf("org.telegram.tgnet.tl.TL_stories$TL_storyItem")));
-        s.add(cls("org.telegram.tgnet.tl.TL_stories$TL_peerStories").from(declaringConstant(-1707742823))
-                .where(hasMethod(false, "void", "org.telegram.tgnet.OutputSerializedData")));
+        s.add(cls("org.telegram.tgnet.tl.TL_stories$TL_peerStories").from(serializingConstant(-1707742823)));
         s.add(cls("org.telegram.tgnet.tl.TL_stories$PeerStories")
                 .from(superclassOf("org.telegram.tgnet.tl.TL_stories$TL_peerStories")));
         s.add(cls("org.telegram.ui.Stories.PeerStoriesView$StoryItemHolder")

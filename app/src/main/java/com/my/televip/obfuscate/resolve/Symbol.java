@@ -423,6 +423,8 @@ public abstract class Symbol {
         boolean narrowed;
         String alternativeType;
         String keyHost, key;
+        String flagHost;
+        int flagBit;
 
         FieldSymbol(String owner, String name) {
             this.owner = owner;
@@ -431,8 +433,20 @@ public abstract class Symbol {
 
         @Override
         boolean hasFingerprint() {
-            return keyHost != null
+            return keyHost != null || flagHost != null
                     || type != null && (uniqueOfType || writtenBy != null || handedIn != null);
+        }
+
+        /**
+         * Renamed boolean flag: the field a TL serializer folds into its flags word with bit
+         * {@code bit} - {@code flags = setFlag(flags, 1 << bit, field)}, called or inlined. Each
+         * flag sits between two writes of the flags word, whatever order the compiler loaded
+         * the constant and the field in.
+         */
+        public FieldSymbol flagOf(String serializerSymbolId, int bit) {
+            this.flagHost = serializerSymbolId;
+            this.flagBit = bit;
+            return this;
         }
 
         public FieldSymbol type(String sourceType) {
@@ -478,8 +492,8 @@ public abstract class Symbol {
          * last before calling a method named {@code calledName} - e.g. the view an Activity's
          * onCreate hands to setContentView. R8 narrows such fields to their anonymous subclass and
          * adds look-alikes of the same base type, so neither the type nor uniqueness pins them.
-         * The host must be a name the build keeps; the called method can instead be a method
-         * symbol id ({@code "Owner#key"}), matched by what it resolved to.
+         * The host and the called method are each a name the build keeps or a method symbol id
+         * ({@code "Owner#key"}), matched by what it resolved to.
          */
         public FieldSymbol handedTo(String hostMethod, String calledName) {
             this.handedIn = hostMethod;
@@ -544,7 +558,16 @@ public abstract class Symbol {
                 final String owner = cls.descriptor;
                 final String base = typeDesc;
                 final Resolver resolver = r;
-                for (DexClass.Method host : cls.methodsNamed(handedIn)) {
+                // The host is a method symbol id ("Owner#key") or a name the build keeps.
+                List<DexClass.Method> hosts;
+                if (handedIn.contains("#")) {
+                    DexClass.Method h = r.methods.get(handedIn);
+                    if (h == null) return r.isResolvedOrPending(handedIn) ? Resolver.Attempt.waiting() : Resolver.Attempt.notFound();
+                    hosts = java.util.Collections.singletonList(h);
+                } else {
+                    hosts = cls.methodsNamed(handedIn);
+                }
+                for (DexClass.Method host : hosts) {
                     if (!host.hasCode()) continue;
                     final DexFile dex = host.owner.dex;
                     final String[] lastRead = new String[1];
@@ -607,6 +630,45 @@ public abstract class Symbol {
                 });
                 DexClass.Field declared = found[0] == null ? null : cls.fieldNamed(found[0]);
                 return declared == null ? Resolver.Attempt.notFound() : Resolver.Attempt.of(declared, false);
+            }
+            if (flagHost != null) {
+                DexClass.Method host = r.methods.get(flagHost);
+                if (host == null) return r.isResolvedOrPending(flagHost)
+                        ? Resolver.Attempt.waiting() : Resolver.Attempt.notFound();
+                if (!host.hasCode()) return Resolver.Attempt.notFound();
+                final DexFile dex = host.owner.dex;
+                final String ownerDesc = cls.descriptor;
+                final long bit = 1L << flagBit, mask = (int) ~(1L << flagBit);
+                final java.util.Set<String> found = new java.util.LinkedHashSet<>();
+                host.scan(new CodeScanner.Visitor() {
+                    final List<String> reads = new ArrayList<>();
+                    boolean hasBit;
+
+                    @Override
+                    public void constant(long value) {
+                        if (value == bit || value == (int) bit || value == mask) hasBit = true;
+                    }
+
+                    @Override
+                    public void field(int opcode, int i, boolean write) {
+                        if (!dex.fieldClass(i).equals(ownerDesc)) return;
+                        String t = dex.fieldType(i);
+                        if (!write && t.equals("Z")) {
+                            reads.add(dex.fieldName(i));
+                        } else if (write && t.equals("I")) {
+                            // The flags word was stored: one setFlag step is complete.
+                            if (hasBit && reads.size() == 1) found.add(reads.get(0));
+                            reads.clear();
+                            hasBit = false;
+                        }
+                    }
+                });
+                List<DexClass.Field> fields = new ArrayList<>();
+                for (String n : found) {
+                    DexClass.Field f = cls.fieldNamed(n);
+                    if (f != null) fields.add(f);
+                }
+                return Resolver.Attempt.single(fields);
             }
             if (typeDesc != null && writtenBy != null) {
                 DexClass.Method writer = r.methods.get(writtenBy);

@@ -50,6 +50,8 @@ public final class Resolver {
     final Map<DexClass.Method, Body.Refs> refs = new HashMap<>();
     private final Set<String> pendingClasses = new java.util.HashSet<>();
     private final Set<String> pendingMethods = new java.util.HashSet<>();
+    private final Set<String> pendingFields = new java.util.HashSet<>();
+    private Map<String, String> ownerSimpleNames;
     private final Set<String> anchorStrings = new java.util.LinkedHashSet<>();
     private final Set<Long> anchorConstants = new java.util.LinkedHashSet<>();
     private DexIndex.AnchorHits anchorHits;
@@ -77,6 +79,7 @@ public final class Resolver {
         pendingMethods.clear();
         for (Symbol s : symbols) {
             if (s instanceof Symbol.MethodSymbol) pendingMethods.add(s.id());
+            if (s instanceof Symbol.FieldSymbol) pendingFields.add(s.id());
             if (s instanceof Symbol.ClassSymbol) {
                 Symbol.ClassSymbol c = (Symbol.ClassSymbol) s;
                 pendingClasses.add(c.original);
@@ -103,10 +106,12 @@ public final class Resolver {
                     pendingClasses.remove(((Symbol.ClassSymbol) symbol).original);
                 }
                 pendingMethods.remove(symbol.id());
+                pendingFields.remove(symbol.id());
             }
         }
         // Anything still waiting depends on a symbol that never resolved.
         for (Symbol symbol : pending) report.outcomes.put(symbol.id(), Outcome.UNRESOLVED);
+        pendingFields.clear();
         return mapping;
     }
 
@@ -158,6 +163,23 @@ public final class Resolver {
     /** True while a class symbol for this name is still waiting to be resolved in this run. */
     boolean pendingOrResolvable(String originalName) {
         return pendingClasses.contains(originalName);
+    }
+
+    /**
+     * What a field of an original class is called in this build: its resolved name when a field
+     * symbol describes it, its own name otherwise. Null while that symbol is still being resolved.
+     */
+    String fieldName(String ownerFullName, String name) {
+        if (ownerSimpleNames == null) {
+            ownerSimpleNames = new HashMap<>();
+            for (Map.Entry<String, String> e : ownerFullNames.entrySet()) ownerSimpleNames.put(e.getValue(), e.getKey());
+        }
+        String simple = ownerSimpleNames.get(ownerFullName);
+        if (simple == null) return name;
+        String id = simple + "." + name;
+        DexClass.Field f = fields.get(id);
+        if (f != null) return f.name();
+        return pendingFields.contains(id) ? null : name;
     }
 
     String fullName(String ownerSimpleName) {

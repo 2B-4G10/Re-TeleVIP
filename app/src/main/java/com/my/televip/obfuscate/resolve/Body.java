@@ -136,9 +136,11 @@ public interface Body {
     static Body touchesField(final String owner, final String name) {
         return (r, m) -> {
             String ownerDesc = r.descriptor(owner);
-            if (ownerDesc == null) return null;
+            // Renamed in builds where a field symbol describes it.
+            String real = r.fieldName(owner, name);
+            if (ownerDesc == null || real == null) return null;
             for (Refs.FieldRef f : Refs.of(r, m).fields) {
-                if (f.owner.equals(ownerDesc) && f.name.equals(name)) return true;
+                if (f.owner.equals(ownerDesc) && f.name.equals(real)) return true;
             }
             return false;
         };
@@ -236,6 +238,15 @@ public interface Body {
                 if (f.write && f.owner.equals(ownerDesc) && f.type.equals(typeDesc)) return true;
             }
             return false;
+        };
+    }
+
+    /** Overrides a resolved method: same name (the signature is the symbol's own). */
+    static Body overrides(final String methodSymbolId) {
+        return (r, m) -> {
+            DexClass.Method target = r.methods.get(methodSymbolId);
+            if (target == null) return r.isResolvedOrPending(methodSymbolId) ? null : false;
+            return m.name().equals(target.name()) && !m.owner.descriptor.equals(target.owner.descriptor);
         };
     }
 

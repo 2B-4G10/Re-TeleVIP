@@ -247,17 +247,35 @@ public final class Classes {
         return new ConstantAnchored(value);
     }
 
+    /**
+     * The TL class with this constructor id: the owner of the instance {@code void(x)} method
+     * that writes it, which is serializeToStream. The abstract parent only compares against the
+     * id in its static TLdeserialize, so this needs nothing else resolved first.
+     */
+    public static Symbol.ClassSource serializingConstant(final long value) {
+        return new ConstantAnchored(value, true);
+    }
+
     static final class ConstantAnchored implements Symbol.ClassSource {
         final long value;
+        final boolean serializerOnly;
 
         ConstantAnchored(long value) {
+            this(value, false);
+        }
+
+        ConstantAnchored(long value, boolean serializerOnly) {
             this.value = value;
+            this.serializerOnly = serializerOnly;
         }
 
         @Override
         public Collection<DexClass> candidates(Resolver r) {
             java.util.Set<DexClass> owners = new java.util.LinkedHashSet<>();
-            for (DexClass.Method m : r.anchors().constant(value)) owners.add(m.owner);
+            for (DexClass.Method m : r.anchors().constant(value)) {
+                if (serializerOnly && (m.isStatic() || !m.returnType().equals("V") || m.parameterTypes().length != 1)) continue;
+                owners.add(m.owner);
+            }
             return owners;
         }
     }
