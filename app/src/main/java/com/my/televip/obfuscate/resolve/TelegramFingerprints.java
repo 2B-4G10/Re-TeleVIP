@@ -329,12 +329,14 @@ public final class TelegramFingerprints {
         s.add(cls("org.telegram.tgnet.tl.TL_update$TL_updateDeleteMessages").from(serializingConstant(-1576161051)));
         s.add(field("ApplicationLoader", "applicationContext").isStatic(true)
                 .type("android.content.Context").onlyOneOfType());
-        s.add(field("FileLoadOperation", "downloadChunkSizeBig").type("int")
+        // Nekogram 12.10.5+ narrows the request counts to byte.
+        s.add(field("FileLoadOperation", "downloadChunkSizeBig").type("int").intLike()
                 .writtenBy("FileLoadOperation#updateParams", 0));
-        s.add(field("FileLoadOperation", "maxCdnParts").type("int").writtenBy("FileLoadOperation#updateParams", 3));
-        s.add(field("FileLoadOperation", "maxDownloadRequests").type("int")
+        s.add(field("FileLoadOperation", "maxCdnParts").type("int").intLike()
+                .writtenBy("FileLoadOperation#updateParams", 3));
+        s.add(field("FileLoadOperation", "maxDownloadRequests").type("int").intLike()
                 .writtenBy("FileLoadOperation#updateParams", 1));
-        s.add(field("FileLoadOperation", "maxDownloadRequestsBig").type("int")
+        s.add(field("FileLoadOperation", "maxDownloadRequestsBig").type("int").intLike()
                 .writtenBy("FileLoadOperation#updateParams", 2));
         // onDeviceConfigurationChange stores the system locale first, then the one in use.
         s.add(method("LocaleController", "onDeviceConfigurationChange").sig("void", "android.content.res.Configuration"));
@@ -452,8 +454,10 @@ public final class TelegramFingerprints {
         s.add(method("SQLitePreparedStatement", "requery").sig("void").where(callsNamed(statement, "reset")));
         s.add(method("SQLitePreparedStatement", "step").sig("int").where(callsNamed(statement, "step")));
         s.add(method("SQLitePreparedStatement", "stepJ").named("step"));
+        // Caches isTabletForce(), which R8 inlines in some builds (Nekogram 12.10.5+): getBoolean(R.bool.isTablet).
         s.add(method("AndroidUtilities", "isTabletInternal").sig("boolean")
-                .where(writesFieldOfType("org.telegram.messenger.AndroidUtilities", "java.lang.Boolean"), callsSibling("boolean")));
+                .where(writesFieldOfType("org.telegram.messenger.AndroidUtilities", "java.lang.Boolean"),
+                        Body.any(callsSibling("boolean"), calls("android.content.res.Resources", "boolean", "int"))));
         s.add(method("DispatchQueue", "postRunnableR").named("postRunnable").sig("boolean", "java.lang.Runnable")
                 .where(callsSibling("boolean", "java.lang.Runnable", "long")));
         s.add(method("DispatchQueue", "postRunnableRJ").named("postRunnable")
@@ -469,7 +473,8 @@ public final class TelegramFingerprints {
                 .sig("java.io.File", "org.telegram.tgnet.TLRPC$Message", "boolean", "boolean"));
         s.add(method("ImageReceiver", "getImageLocation").sig("org.telegram.messenger.ImageLocation")
                 .where(touchesField("org.telegram.messenger.ImageReceiver", "currentImageLocation"), callCount(0)));
-        s.add(method("LocaleController", "formatShortNumber").sig("java.lang.String", "int", "int[]"));
+        // (int[], int) in Nekogram 12.10.5+.
+        s.add(method("LocaleController", "formatShortNumber").sig("java.lang.String", "int", "int[]").anyOrder());
         s.add(method("LocaleController", "formatYearMont").sig("java.lang.String", "long", "boolean")
                 .where(string("LOC_ERR"), string(" "), not(constant(5))));
         s.add(method("LocaleController", "getInstance").sig("org.telegram.messenger.LocaleController"));
@@ -487,8 +492,9 @@ public final class TelegramFingerprints {
                 .where(callsSymbol("MessageObject#isMusicMessage")));
         s.add(method("MessageObject", "isSecret").sig("boolean")
                 .where(refersTo("org.telegram.tgnet.TLRPC$TL_message_secret"), callCount(0)));
+        // isVoiceOnce also reads the message's ttl against 0x7FFFFFFF.
         s.add(method("MessageObject", "isVoice").sig("boolean")
-                .where(callsSymbol("MessageObject#isVoiceMessage"), callCount(1)));
+                .where(callsSymbol("MessageObject#isVoiceMessage"), callCount(1), not(constant(0x7FFFFFFF))));
         s.add(method("MessagesController", "checkPromoInfoInternal").sig("void", "boolean")
                 .where(string("proxy_enabled")));
         s.add(method("MessagesController", "deleteMessagesAAOJIZI").named("deleteMessages")
@@ -511,7 +517,8 @@ public final class TelegramFingerprints {
         s.add(method("MessagesController", "getNotificationsSettings").sig("android.content.SharedPreferences", "int")
                 .where(touchesFieldSymbol("MessagesController.notificationsPreferences")));
         // Queues the "delete after viewing" task: a 16-byte buffer tagged 102.
-        s.add(method("MessagesController", "createDeleteShowOnceTask").sig("long", "long", "int").where(constant(102)));
+        s.add(method("MessagesController", "createDeleteShowOnceTask").sig("long", "long", "int").anyOrder()
+                .where(constant(102)));   // (int, long) in Nekogram 12.10.5+
         s.add(method("MessagesController", "markMessageAsRead2")
                 .sig("void", "long", "int", "org.telegram.tgnet.TLRPC$InputChannel", "int", "long", "boolean"));
         s.add(method("MessagesController", "getInputChannelJ").named("getInputChannel")
@@ -525,8 +532,14 @@ public final class TelegramFingerprints {
                 .where(callsSymbol("MessagesController#isChatNoForwardsO")));
         s.add(method("MessagesController", "isChatNoForwardsO").named("isChatNoForwards")
                 .sig("boolean", "org.telegram.tgnet.TLRPC$Chat"));
+        // Its log line is stripped in some builds; it also waits up to 1500 ms for missing updates.
         s.add(method("MessagesController", "processNewDifferenceParams").sig("void", "int", "int", "int", "int")
-                .where(string(" pts_count = ")));
+                .where(Body.any(string(" pts_count = "), constant(1500))));
+        // Without seq, which only ever reached the log (Nagram; Nekogram 12.10.5+).
+        s.add(method("MessagesController", "processNewDifferenceParamsIII").named("processNewDifferenceParams")
+                .sig("void", "int", "int", "int")
+                .where(Body.any(string("processNewDifferenceParams seq = -1 pts = "), string("processNewDifferenceParams pts = "),
+                        Body.all(constant(1500), not(string(" channeldId = "))))));
         s.add(method("MessagesController", "removePromoDialog").sig("void")
                 .where(notSynthetic(), touchesField("org.telegram.tgnet.TLRPC$Chat", "restricted"),
                         writesFieldOfType("org.telegram.messenger.MessagesController", "org.telegram.tgnet.TLRPC$Dialog"),
@@ -556,15 +569,18 @@ public final class TelegramFingerprints {
         s.add(method("MessagesStorage", "putMessagesAZZZIZIJ").named("putMessages")
                 .sig("void", "java.util.ArrayList", "boolean", "boolean", "boolean", "int", "boolean", "int", "long"));
         s.add(method("MessagesStorage", "putMessagesOJIIZIJ").named("putMessages")
-                .sig("void", "org.telegram.tgnet.TLRPC$messages_Messages", "long", "int", "int", "boolean", "int", "long"));
+                .sig("void", "org.telegram.tgnet.TLRPC$messages_Messages", "long", "int", "int", "boolean", "int", "long")
+                .anyOrder()     // grouped by type in Nagram and Nekogram 12.10.5+
+                .where(touchesFieldSymbol("MessagesStorage.storageQueue")));   // not its body's lambda
         s.add(method("NotificationCenter", "postNotificationName").sig("void", "int", "java.lang.Object[]")
                 .where(callsSibling("void", "int", "boolean", "java.lang.Object[]")));
         s.add(method("NotificationsController", "removeDeletedMessagesFromNotifications")
                 .sig("void", "androidx.collection.LongSparseArray", "boolean"));
         s.add(method("SharedConfig", "isAppUpdateAvailable").sig("boolean")
                 .where(calls("android.content.pm.PackageManager", "android.content.pm.PackageInfo", "java.lang.String", "int")));
+        // void where it always answers true (Nekogram 12.10.5+).
         s.add(method("SharedConfig", "setNewAppVersionAvailable")
-                .sig("boolean", "org.telegram.tgnet.TLRPC$TL_help_appUpdate"));
+                .sig("boolean", "org.telegram.tgnet.TLRPC$TL_help_appUpdate").voidable());
         s.add(method("UserConfig", "getClientUserId").sig("long")
                 .where(touchesFieldSymbol("UserConfig.currentUser"), callCount(0)));
         s.add(method("UserConfig", "getCurrentUser").sig("org.telegram.tgnet.TLRPC$User"));
@@ -576,7 +592,8 @@ public final class TelegramFingerprints {
                 .sig("java.lang.StringBuffer", "java.lang.Object", "java.lang.StringBuffer", "java.text.FieldPosition"));
         s.add(method("TLRPC$Message", "TLdeserialize")
                 .sig("org.telegram.tgnet.TLRPC$Message", "org.telegram.tgnet.InputSerializedData", "int", "boolean"));
-        s.add(method("TLRPC$Message", "readAttachPath").sig("void", "org.telegram.tgnet.InputSerializedData", "long"));
+        // R8 narrows the stream's type to the shared base of the byte buffers (Nekogram 12.10.5+).
+        s.add(method("TLRPC$Message", "readAttachPath").sig("void", Symbol.ANY, "long").where(string("poll_with_media=")));
         s.add(field("UserConfig", "currentUser").type("org.telegram.tgnet.TLRPC$User").onlyOneOfType());
         s.add(method("UserConfig", "setCurrentUser").sig("void", "org.telegram.tgnet.TLRPC$User")
                 .where(callsSibling("void", "org.telegram.tgnet.TLRPC$User", "org.telegram.tgnet.TLRPC$User")));
@@ -917,7 +934,8 @@ public final class TelegramFingerprints {
         // 12.10.3 has it as (int, boolean).
         s.add(method("ChatActivity", "updatePinnedMessageViewZI").named("updatePinnedMessageView")
                 .sig("void", "boolean", "int").anyOrder()
-                .where(string("pin_"), callsSymbol("MessagesController#getNotificationsSettings")));
+                .where(string("pin_"), Body.any(callsSymbol("MessagesController#getNotificationsSettings"),
+                        touchesFieldSymbol("MessagesController.notificationsPreferences"))));   // inlined in Nekogram 12.10.5+
         // (boolean) only forwards to it; R8 may inline it, in which case hooking (boolean, int) is enough.
         s.add(method("ChatActivity", "updatePinnedMessageViewZ").named("updatePinnedMessageView").sig("void", "boolean")
                 .where(callsSymbol("ChatActivity#updatePinnedMessageViewZI"), callCount(1)));
@@ -985,7 +1003,8 @@ public final class TelegramFingerprints {
         s.add(method("PhotoViewer", "openPhotoOOO").named("openPhoto").sig("boolean", loc, imgLoc, provider));
         s.add(method("PhotoViewer", "openPhotoOOOOAAAIOOJJJZOI").named("openPhoto")
                 .sig("boolean", mo, loc, imgLoc, imgLoc, "java.util.ArrayList", "java.util.ArrayList", "java.util.ArrayList",
-                        "int", provider, chat, "long", "long", "long", "boolean", blocks, "java.lang.Integer"));
+                        "int", provider, chat, "long", "long", "long", "boolean", Symbol.ANY, "java.lang.Integer"));
+        // Symbol.ANY: R8 merges PageBlocksAdapter's one implementation into a shared class (Nekogram 12.10.5+).
         s.add(method("PhotoViewer", "setIsAboutToSwitchToIndexIZZ").named("setIsAboutToSwitchToIndex")
                 .sig("void", "int", "boolean", "boolean"));
         // A look-alike (int, boolean, boolean, boolean) exists; only this one names YouTube videos.
@@ -994,7 +1013,7 @@ public final class TelegramFingerprints {
         s.add(method("PhotoViewer", "setParentActivityA").named("setParentActivity").sig("void", "android.app.Activity"));
         s.add(method("PhotoViewer", "setParentActivityAO").named("setParentActivity").sig("void", "android.app.Activity", rp));
         s.add(method("PhotoViewer", "setParentActivityAOO").named("setParentActivity")
-                .sig("void", "android.app.Activity", fragment, rp));
+                .sig("void", "android.app.Activity", fragment, rp).anyOrder());   // (fragment, rp, Activity) in Nekogram 12.10.5+
         // Forks add their own items to the menu setParentActivity builds, but switching photos
         // still toggles the picture-in-picture item first and the gallery item second.
         s.add(field("PhotoViewer", "galleryButton").type("org.telegram.ui.ActionBar.ActionBarMenuSubItem")
@@ -1056,10 +1075,12 @@ public final class TelegramFingerprints {
         s.add(cls(progress).from(paramTypeWhere(browser, "void", ctx, uri, "boolean", "boolean", "boolean",
                 null, "java.lang.String", "boolean", "boolean", "boolean")));
         // openUrlInSystemBrowser has the same signature, but it goes straight to the ten-parameter
-        // overload; openUrl(Context, String) never does, whether or not R8 inlines the step between.
+        // overload with allowCustom false. openUrl(Context, String) goes through openUrl(Context,
+        // Uri, true) - or, where R8 inlines every step (Nekogram 12.10.5+), calls the ten-parameter
+        // one with allowCustom and tryTelegraph both true: two loads of 1 where the other has one.
         s.add(method("Browser", "openUrlCS").named("openUrl").isStatic(true).sig("void", ctx, "java.lang.String")
-                .where(not(callsSibling("void", ctx, uri, "boolean", "boolean", "boolean", progress,
-                        "java.lang.String", "boolean", "boolean", "boolean"))));
+                .where(Body.any(not(callsSibling("void", ctx, uri, "boolean", "boolean", "boolean", progress,
+                        "java.lang.String", "boolean", "boolean", "boolean")), constantTimes(1, 2))));
         s.add(method("Browser", "openUrlCSZ").named("openUrl").isStatic(true).sig("void", ctx, "java.lang.String", "boolean"));
         s.add(method("Browser", "openUrlCSZZ").named("openUrl").isStatic(true)
                 .sig("void", ctx, "java.lang.String", "boolean", "boolean"));

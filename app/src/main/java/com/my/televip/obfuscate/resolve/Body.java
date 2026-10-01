@@ -68,6 +68,14 @@ public interface Body {
         return (r, m) -> Refs.of(r, m).constants.contains(value);
     }
 
+    /** Loads the given integer constant at least this many times. */
+    static Body constantTimes(final long value, final int times) {
+        return (r, m) -> {
+            Integer n = Refs.of(r, m).constantLoads.get(value);
+            return n != null && n >= times;
+        };
+    }
+
     /** Calls a method of its own class with this signature. */
     static Body callsSibling(final String returnType, final String... params) {
         return (r, m) -> {
@@ -109,7 +117,8 @@ public interface Body {
     static Body callsSymbol(final String methodSymbolId) {
         return (r, m) -> {
             DexClass.Method target = r.methods.get(methodSymbolId);
-            if (target == null) return null;
+            // Undecided while the target may still resolve; a target that never did is not called.
+            if (target == null) return r.isResolvedOrPending(methodSymbolId) ? null : false;
             String proto = Resolver.protoOf(target);
             for (Refs.Call c : Refs.of(r, m).calls) {
                 if (c.owner.equals(target.owner.descriptor) && c.name.equals(target.name())
@@ -331,6 +340,7 @@ public interface Body {
         final List<FieldRef> fields = new ArrayList<>();
         final Set<String> strings = new HashSet<>();
         final Set<Long> constants = new HashSet<>();
+        final java.util.Map<Long, Integer> constantLoads = new java.util.HashMap<>();
         final Set<String> types = new HashSet<>();
         final List<String> newInstances = new ArrayList<>();
         final Set<Integer> switchKeys = new HashSet<>();
@@ -350,6 +360,8 @@ public interface Body {
                 @Override
                 public void constant(long value) {
                     refs.constants.add(value);
+                    Integer n = refs.constantLoads.get(value);
+                    refs.constantLoads.put(value, n == null ? 1 : n + 1);
                 }
 
                 @Override

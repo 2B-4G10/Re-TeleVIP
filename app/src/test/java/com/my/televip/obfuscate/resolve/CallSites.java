@@ -152,6 +152,10 @@ final class CallSites {
                 {"SQLitePreparedStatement#dispose|SQLitePreparedStatement#finalizeQuery"}});
         ROUTES.put("Running a database statement", new String[][]{
                 {"SQLitePreparedStatement#step|SQLitePreparedStatement.sqliteStatementHandle"}});
+        ROUTES.put("A channel's input channel", new String[][]{
+                {"MessagesController#getInputChannelO2|MessagesController#getInputChannelJ"}});
+        ROUTES.put("Applying a pts update", new String[][]{
+                {"MessagesController#processNewDifferenceParams|MessagesController#processNewDifferenceParamsIII"}});
         ROUTES.put("Jump to message", new String[][]{
                 {"ChatActivity#scrollToMessageId|ChatActivity#scrollToMessageIdIIZIZIIABR"}});
         ROUTES.put("Photo viewer: parent activity", new String[][]{

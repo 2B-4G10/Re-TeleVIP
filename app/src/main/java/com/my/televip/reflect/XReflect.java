@@ -361,6 +361,21 @@ public final class XReflect {
         }
     }
 
+    /** Sets an int-valued field whatever width R8 gave it (byte, short, char, int or long). */
+    public static void setNumberField(Object obj, String fieldName, int value) {
+        try {
+            Field field = instanceField(obj, fieldName);
+            Class<?> type = field.getType();
+            if (type == byte.class) field.setByte(obj, (byte) value);
+            else if (type == short.class) field.setShort(obj, (short) value);
+            else if (type == char.class) field.setChar(obj, (char) value);
+            else if (type == long.class) field.setLong(obj, value);
+            else field.setInt(obj, value);
+        } catch (Throwable t) {
+            throw unwrap(t);
+        }
+    }
+
     public static void setIntField(Object obj, String fieldName, int value) {
         try {
             instanceField(obj, fieldName).setInt(obj, value);

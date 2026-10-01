@@ -7,6 +7,9 @@ import com.my.televip.base.AbstractMethodHook;
 import com.my.televip.hooks.HMethod;
 import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.AutomationResolver;
+import com.my.televip.reflect.XReflect;
+
+import java.lang.reflect.Method;
 
 public class DisableNumberRounding {
 
@@ -17,21 +20,29 @@ public class DisableNumberRounding {
             if (!isEnable) {
                 isEnable = true;
 
-                if (ClassLoad.getClass(ClassNames.LOCALE_CONTROLLER) != null) {
-                    HMethod.hookMethod(ClassLoad.getClass(ClassNames.LOCALE_CONTROLLER), AutomationResolver.resolve("LocaleController", "formatShortNumber", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("formatShortNumber", new Class[]{int.class, int[].class}),
-                            new AbstractMethodHook() {
-                                @Override
-                                protected void beforeMethod(MethodHookParam param) {
-                                    if (ConfigManager.disableNumberRounding.isEnable()) {
-                                        int[] rounded = (int[]) param.args[1];
-                                        int number = (int) param.args[0];
-                                        if (rounded != null) {
-                                            rounded[0] = number;
-                                        }
-                                        param.setResult(String.valueOf(number));
-                                    }
+                Class<?> localeController = ClassLoad.getClass(ClassNames.LOCALE_CONTROLLER);
+                if (localeController != null) {
+                    // The build's own parameter order: R8 swaps them in some (Nekogram 12.10.5+).
+                    Method format = XReflect.findMethodExactIfExists(localeController,
+                            AutomationResolver.resolve("LocaleController", "formatShortNumber", AutomationResolver.ResolverType.Method),
+                            AutomationResolver.resolveObject("formatShortNumber", new Class[]{int.class, int[].class}));
+                    HMethod.hookMethod(format, new AbstractMethodHook() {
+                        @Override
+                        protected void beforeMethod(MethodHookParam param) {
+                            if (ConfigManager.disableNumberRounding.isEnable()) {
+                                int number = 0;
+                                int[] rounded = null;
+                                for (Object arg : param.args) {
+                                    if (arg instanceof Integer) number = (Integer) arg;
+                                    else if (arg instanceof int[]) rounded = (int[]) arg;
                                 }
-                            }));
+                                if (rounded != null) {
+                                    rounded[0] = number;
+                                }
+                                param.setResult(String.valueOf(number));
+                            }
+                        }
+                    });
                 }
             }
         } catch (Throwable t) {

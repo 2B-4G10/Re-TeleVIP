@@ -426,6 +426,7 @@ public abstract class Symbol {
         String flagHost;
         int flagBit;
         Long initialValue;
+        boolean intLike;
 
         FieldSymbol(String owner, String name) {
             this.owner = owner;
@@ -448,6 +449,15 @@ public abstract class Symbol {
          * Where R8 turned a static field into a constant: the static field of this type starting
          * with {@code value}. Consulted when nothing else locates the field.
          */
+        /**
+         * An int field R8 may have narrowed to byte, short or char where its values fit: any of
+         * those counts as its type, so write and read orders stay the same either way.
+         */
+        public FieldSymbol intLike() {
+            this.intLike = true;
+            return this;
+        }
+
         public FieldSymbol orInitialValue(long value) {
             this.initialValue = value;
             return this;
@@ -688,7 +698,8 @@ public abstract class Symbol {
                 List<String> order = new ArrayList<>();
                 for (Body.Refs.FieldRef f : Body.Refs.of(r, writer).fields) {
                     boolean typeFits = f.type.equals(typeDesc) || f.type.equals(altDesc)
-                            || (narrowed && r.index.extendsClass(f.type, typeDesc));
+                            || (narrowed && r.index.extendsClass(f.type, typeDesc))
+                            || (intLike && f.type.length() == 1 && "BSCI".contains(f.type));
                     if (f.write != ordinalOfReads && f.owner.equals(cls.descriptor) && typeFits
                             && !order.contains(f.name)) order.add(f.name);
                 }

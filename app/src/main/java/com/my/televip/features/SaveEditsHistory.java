@@ -189,17 +189,18 @@ public class SaveEditsHistory {
                                 @Override
                                 protected void beforeMethod(MethodHookParam param) {
                                     if (ConfigManager.saveEditsHistory.isEnable()) {
-                                        int load_type = (int) param.args[2];
-                                        if (ClientChecker.check(ClientChecker.ClientType.Nagram)) {
-                                            load_type = (int) param.args[0];
+                                        // R8 groups the parameters by type in some builds (Nagram, Nekogram 12.10.5+),
+                                        // keeping their order within a type: load_type is still the first int.
+                                        Integer load_type = null;
+                                        Object messagesObject = null;
+                                        Class<?> messagesClass = ClassLoad.getClass(ClassNames.TL_MESSAGES_MESSAGES);
+                                        for (Object arg : param.args) {
+                                            if (load_type == null && arg instanceof Integer) load_type = (Integer) arg;
+                                            else if (messagesObject == null && messagesClass != null && messagesClass.isInstance(arg)) messagesObject = arg;
                                         }
 
-                                        if (load_type == -2) {
+                                        if (load_type != null && load_type == -2) {
                                             Object messagesStorageObject = param.thisObject;
-                                            Object messagesObject = param.args[0];
-                                            if (ClientChecker.check(ClientChecker.ClientType.Nagram)) {
-                                                messagesObject = param.args[5];
-                                            }
 
                                             if (messagesObject != null) {
                                                 MessagesStorage messagesStorage = new MessagesStorage(messagesStorageObject);

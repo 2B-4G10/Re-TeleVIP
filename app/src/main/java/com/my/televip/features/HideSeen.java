@@ -211,7 +211,7 @@ public class HideSeen {
                     request.setChannel(MessagesController.getInputChannel(peer));
                 } else {
                     request = new TLRPC.TL_channels_readHistory(TLChannels_readHistory);
-                    request.setChannel(MessagesController.getInputChannel(getDialogId(peer)));
+                    request.setChannel(MessagesController.getInputChannel(peer.getChannel_id()));
                 }
                 request.setMax_id(messageId);
                 req = request.getTL_channels_readHistory();
@@ -232,11 +232,7 @@ public class HideSeen {
                 if (error == null) {
                     if (ClassLoad.getClass(ClassNames.TL_MESSAGES_AFFECTED).isInstance(response)) {
                         TLRPC.TL_messages_affectedMessages res = new TLRPC.TL_messages_affectedMessages(response);
-                        if (!ClientChecker.check(ClientChecker.ClientType.Nagram)) {
-                            getMessagesController().processNewDifferenceParams(-1, res.getPts(), -1, res.getPtsCount());
-                        } else {
-                            getMessagesController().processNewDifferenceParams(res.getPts(), -1, res.getPtsCount());
-                        }
+                        getMessagesController().processNewDifferenceParams(res.getPts(), -1, res.getPtsCount());
                     }
 
                 }

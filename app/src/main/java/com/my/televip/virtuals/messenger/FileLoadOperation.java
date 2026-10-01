@@ -10,20 +10,22 @@ public class FileLoadOperation {
 
     public FileLoadOperation(Object fileOperation){ this.fileOperation = fileOperation; }
 
+    // R8 narrows some of these to byte where the client's values fit (Nekogram 12.10.5+).
+
     public void setDownloadChunkSizeBig(int v){
-        XReflect.setIntField(fileOperation, AutomationResolver.resolve("FileLoadOperation", "downloadChunkSizeBig", AutomationResolver.ResolverType.Field), v);
+        XReflect.setNumberField(fileOperation, AutomationResolver.resolve("FileLoadOperation", "downloadChunkSizeBig", AutomationResolver.ResolverType.Field), v);
     }
 
     public void setMaxDownloadRequests(int v){
-        XReflect.setIntField(fileOperation, AutomationResolver.resolve("FileLoadOperation", "maxDownloadRequests", AutomationResolver.ResolverType.Field), v);
+        XReflect.setNumberField(fileOperation, AutomationResolver.resolve("FileLoadOperation", "maxDownloadRequests", AutomationResolver.ResolverType.Field), v);
     }
 
     public void setMaxDownloadRequestsBig(int v){
-        XReflect.setIntField(fileOperation, AutomationResolver.resolve("FileLoadOperation", "maxDownloadRequestsBig", AutomationResolver.ResolverType.Field), v);
+        XReflect.setNumberField(fileOperation, AutomationResolver.resolve("FileLoadOperation", "maxDownloadRequestsBig", AutomationResolver.ResolverType.Field), v);
     }
 
     public void setMaxCdnParts(int v){
-        XReflect.setIntField(fileOperation, AutomationResolver.resolve("FileLoadOperation", "maxCdnParts", AutomationResolver.ResolverType.Field), v);
+        XReflect.setNumberField(fileOperation, AutomationResolver.resolve("FileLoadOperation", "maxCdnParts", AutomationResolver.ResolverType.Field), v);
     }
 
 }

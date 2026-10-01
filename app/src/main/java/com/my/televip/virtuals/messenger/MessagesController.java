@@ -19,13 +19,16 @@ public class MessagesController {
         this.messagesController = instance;
     }
 
-    public void processNewDifferenceParams(int seq, int pts, int date, int pts_count) {
-        XReflect.callMethod(messagesController, AutomationResolver.resolve("MessagesController", "processNewDifferenceParams", AutomationResolver.ResolverType.Method), seq, pts, date, pts_count);
-    }
-
+    /** Applies a pts update the module caused itself (reading history), as the client would. */
     public void processNewDifferenceParams(int pts, int date, int pts_count) {
-        //Nagram
-        XReflect.callMethod(messagesController, "processNewDifferenceParams", pts, date, pts_count);
+        String full = AutomationResolver.resolve("MessagesController", "processNewDifferenceParams", AutomationResolver.ResolverType.Method);
+        try {
+            XReflect.callMethod(messagesController, full, -1, pts, date, pts_count);
+        } catch (Throwable withoutSeq) {
+            // seq only ever reached the log; Nagram and Nekogram 12.10.5+ dropped it.
+            XReflect.callMethod(messagesController, AutomationResolver.resolveOverload("MessagesController",
+                    "processNewDifferenceParamsIII", "processNewDifferenceParams"), pts, date, pts_count);
+        }
     }
 
     public void removePromoDialog() {
@@ -33,8 +36,14 @@ public class MessagesController {
     }
 
     public static Object getInputChannel(TLRPC.InputPeer peer) {
-        return XReflect.callStaticMethod(ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER),
-                AutomationResolver.resolveOverload("MessagesController", "getInputChannelO2", "getInputChannel"), peer.inputPeer);
+        try {
+            return XReflect.callStaticMethod(ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER),
+                    AutomationResolver.resolveOverload("MessagesController", "getInputChannelO2", "getInputChannel"), peer.inputPeer);
+        } catch (Throwable inlined) {
+            // R8 inlines the InputPeer overload where nothing else calls it (Nekogram 12.10.5+);
+            // the account's lookup by channel id gives the same input channel.
+            return getInputChannel(peer.getChannel_id());
+        }
     }
 
     public SparseArray<Object> getDialogMessagesByIds() {
@@ -49,8 +58,11 @@ public class MessagesController {
         return (SharedPreferences) XReflect.callStaticMethod(ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER), AutomationResolver.resolve("MessagesController", "getGlobalMainSettings", AutomationResolver.ResolverType.Method));
     }
 
-    public static Object getInputChannel(long id) {
-        return XReflect.callStaticMethod(ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER), AutomationResolver.resolveOverload("MessagesController", "getInputChannelJ", "getInputChannel"), id);
+    /** The input channel for a channel id (positive), from the selected account. */
+    public static Object getInputChannel(long channelId) {
+        // An instance method: it looks the chat up in this account's cache.
+        return XReflect.callMethod(getInstance(UserConfig.getSelectedAccount()).messagesController,
+                AutomationResolver.resolveOverload("MessagesController", "getInputChannelJ", "getInputChannel"), channelId);
     }
 
     public MessagesStorage getMessagesStorage() {

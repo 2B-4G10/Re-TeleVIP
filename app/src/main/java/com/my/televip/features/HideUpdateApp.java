@@ -10,6 +10,8 @@ import com.my.televip.hooks.HMethod;
 import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.AutomationResolver;
 
+import java.lang.reflect.Method;
+
 import com.my.televip.base.MethodReplacement;
 
 public class HideUpdateApp {
@@ -34,7 +36,8 @@ public class HideUpdateApp {
                             AutomationResolver.merge(AutomationResolver.resolveObject("setNewAppVersionAvailable", new Class[]{ClassLoad.getClass(ClassNames.TL_HELP_APP_UPDATE)}), new MethodReplacement() {
                                 @Override
                                 protected Object replaceHookedMethod(MethodHookParam param) {
-                                    return false;
+                                    // void in builds where it always answered true.
+                                    return ((Method) param.method).getReturnType() == void.class ? null : false;
                                 }
                             }));
 
