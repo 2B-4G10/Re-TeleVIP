@@ -88,8 +88,6 @@ public class NekogramApkTest {
         assertEquals("ut0", mapping.resolveClass("org.telegram.messenger.browser.Browser"));
         assertEquals("w32", mapping.resolveClass("org.telegram.ui.Cells.ChatMessageCell"));
         assertEquals("l", mapping.resolveMethod("ChatMessageCell", "getMessageObject"));
-        assertEquals("k", mapping.resolveMethod("AlertDialog$Builder", "setTitle"));
-        assertEquals("f", mapping.resolveMethod("AlertDialog$Builder", "setMessage"));
         // openUrlInSystemBrowser shares openUrl(Context, String)'s signature; only openUrl skips
         // straight past the ten-parameter overload.
         assertEquals("r", mapping.resolveMethod("Browser", "openUrlCS"));
@@ -153,10 +151,6 @@ public class NekogramApkTest {
     @Test
     public void lookalikesAreRefusedNotGuessed() {
         requireApk();
-        // All three button setters live behind one merged click handler; nothing separates them.
-        assertNull(mapping.resolveMethod("AlertDialog$Builder", "setPositiveButton"));
-        assertNull(mapping.resolveMethod("AlertDialog$Builder", "setNegativeButton"));
-        assertNull(mapping.resolveMethod("AlertDialog$Builder", "setNeutralButton"));
         // Inlined away in this build; the only no-arg lookalike inspects peers and must not match.
         assertNull(mapping.resolveMethod("StoriesController", "hasStories"));
         // Only the seven-argument overload survived R8.

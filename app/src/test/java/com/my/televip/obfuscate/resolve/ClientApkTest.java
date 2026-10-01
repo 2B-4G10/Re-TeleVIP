@@ -13,7 +13,6 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,72 +24,43 @@ import java.util.Map;
  */
 public class ClientApkTest {
 
-    private static final String FIELD = ".", METHOD = "#";
-
-    /** Hook point (a class, or owner + separator + key) -> the feature that stops working without it. */
-    private static final Map<String, String> HOOK_POINTS = new LinkedHashMap<>();
-
-    static {
-        hook("Ghost Mode settings page", "LaunchActivity.frameLayout");
-        hook("Hide pinned messages", "ChatActivity#updatePinnedMessageViewZI", "ChatActivity#createPinnedMessageView",
-                "ChatActivity.pinnedMessageView");
-        hook("Remove content-saving restrictions", "ChatActivity#hasSelectedNoforwardsMessage");
-        hook("Save edits history", "ChatActivity#processSelectedOption", "ChatActivity#fillMessageMenu",
-                "ChatActivity.selectedObject");
-        hook("Show deleted messages", "ChatMessageCell#measureTime", "ChatMessageCell.currentTimeString",
-                "ChatMessageCell.timeWidth", "ChatMessageCell.timeTextWidth", "Theme.chat_timePaint");
-        hook("Prevent media deletion", "ChatActivity#sendSecretMediaDelete", "ChatActivity#sendSecretMessageRead");
-        hook("Secret media save", "ChatActivity$ChatMessageCellDelegate#didPressImage");
-        hook("Save protected stories", "PeerStoriesView$StoryItemHolder#allowScreenshots");
-        hook("Always save media", "PhotoViewer#setIsAboutToSwitchToIndexIZZZ", "PhotoViewer.galleryButton");
-        hook("Chat and profile menu entries", "ActionBarMenuItem#lazilyAddSubItem", "ActionBarMenuItem#addSubItem",
-                "ChatActivity.headerItem", "ProfileActivity.otherItem", "ProfileActivity#createActionBarMenu");
-        hook("Profile user ID / online status", "ProfileActivity#updateProfileData", "ProfileActivity.userId",
-                "ProfileActivity.onlineTextView");
-        hook("Block ads", "org.telegram.tgnet.TLRPC$TL_messages_getSponsoredMessages",
-                "org.telegram.tgnet.TLRPC$TL_contacts_getSponsoredPeers", "org.telegram.tgnet.TLRPC$TL_help_getPromoData",
-                "MessagesController#checkPromoInfoInternal", "MessagesController#removePromoDialog");
-    }
-
-    private static void hook(String feature, String... points) {
-        for (String p : points) HOOK_POINTS.put(p, feature);
-    }
-
+    /**
+     * Every symbol the module's code asks for (read from its sources, see {@link CallSites})
+     * must land on something in this build, unless the module has a working fallback for it or
+     * another route to the same feature resolves.
+     */
     @Test
     public void everyFeatureHookPointResolves() throws Exception {
         String path = System.getenv("TELEVIP_CLIENT_APK");
         assumeTrue("set TELEVIP_CLIENT_APK to run", path != null && new File(path).isFile());
 
-        Resolver resolver = new Resolver(DexIndex.fromApk(new File(path)), TelegramFingerprints.owners());
+        DexIndex index = DexIndex.fromApk(new File(path));
         Resolver.Report report = new Resolver.Report();
-        Mapping mapping = resolver.resolve(TelegramFingerprints.all(), report);
-
-        Map<String, List<String>> broken = new LinkedHashMap<>();
-        for (Map.Entry<String, String> e : HOOK_POINTS.entrySet()) {
-            if (resolve(mapping, e.getKey()) == null) {
-                List<String> points = broken.get(e.getValue());
-                if (points == null) broken.put(e.getValue(), points = new ArrayList<>());
-                points.add(e.getKey());
-            }
-        }
+        Mapping mapping = new Resolver(index, TelegramFingerprints.owners()).resolve(TelegramFingerprints.all(), report);
+        List<CallSites.Site> sites = CallSites.read();
+        List<CallSites.Site> missing = CallSites.missing(index, mapping, sites);
+        CallSites.Verdict verdict = CallSites.verdict(sites, missing);
 
         StringBuilder md = new StringBuilder();
         md.append("Symbols: ").append(report.count(Resolver.Outcome.KEPT)).append(" by real name, ")
                 .append(report.count(Resolver.Outcome.FINGERPRINTED)).append(" fingerprinted, ")
                 .append(report.count(Resolver.Outcome.AMBIGUOUS)).append(" ambiguous, ")
-                .append(report.count(Resolver.Outcome.UNRESOLVED)).append(" unresolved.\n\n");
-        if (broken.isEmpty()) {
-            md.append("All ").append(HOOK_POINTS.size()).append(" feature hook points resolve.\n");
+                .append(report.count(Resolver.Outcome.UNRESOLVED)).append(" unresolved. Call sites: ")
+                .append(sites.size() - missing.size()).append(" of ").append(sites.size()).append(" resolve.\n\n");
+        if (verdict.broken.isEmpty()) {
+            md.append("Every feature reaches its code.\n");
         } else {
-            md.append("| Feature | Unresolved hook points |\n|---|---|\n");
-            for (Map.Entry<String, List<String>> e : broken.entrySet()) {
-                md.append("| ").append(e.getKey()).append(" | `")
-                        .append(String.join("`, `", e.getValue())).append("` |\n");
+            md.append("| Feature | Unresolved |\n|---|---|\n");
+            for (Map.Entry<String, List<String>> e : verdict.broken.entrySet()) {
+                md.append("| ").append(e.getKey()).append(" | `").append(String.join("`, `", e.getValue())).append("` |\n");
             }
+        }
+        if (!verdict.degraded.isEmpty()) {
+            md.append("\nUsing a fallback: ").append(String.join("; ", verdict.degraded)).append(".\n");
         }
         writeReport(md.toString());
 
-        if (!broken.isEmpty()) fail("Features broken on this build:\n" + md);
+        if (!verdict.broken.isEmpty()) fail("Features broken on this build:\n" + md);
     }
 
     /**
@@ -127,14 +97,6 @@ public class ClientApkTest {
                 wrong.add("`" + e.getKey() + "` | `" + got + "` | `" + e.getValue() + "`");
             }
         }
-    }
-
-    private static String resolve(Mapping mapping, String point) {
-        if (point.startsWith("org.")) return mapping.resolveClass(point);
-        int m = point.indexOf(METHOD);
-        if (m >= 0) return mapping.resolveMethod(point.substring(0, m), point.substring(m + 1));
-        int f = point.lastIndexOf(FIELD);
-        return mapping.resolveField(point.substring(0, f), point.substring(f + 1));
     }
 
     /** Appends, so both tests' findings end up in the one report. */

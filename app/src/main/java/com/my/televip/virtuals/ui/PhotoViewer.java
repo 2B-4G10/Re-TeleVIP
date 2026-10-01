@@ -31,7 +31,7 @@ public class PhotoViewer {
         } catch (Throwable ignored) {
             // R8 inlines the one-argument overload into setParentActivity(activity, null, null).
         }
-        callMaster("setParentActivityAOO", "setParentActivity", 3, activity, null, null);
+        callMaster(AutomationResolver.resolveOverload("PhotoViewer", "setParentActivityAOO", "setParentActivity"), 3, activity, null, null);
     }
 
     public void openPhoto(MessageObject messageObject, long l, long l2, long l3, PhotoViewerProvider provider, boolean b){
@@ -41,14 +41,12 @@ public class PhotoViewer {
         } catch (Throwable ignored) {
             // R8 inlines every openPhoto overload into the sixteen-argument one they all call.
         }
-        callMaster("openPhotoOOOOAAAIOOJJJZOI", "openPhoto", 16, messageObject.getMessageObject(), null, null, null,
+        callMaster(AutomationResolver.resolveOverload("PhotoViewer", "openPhotoOOOOAAAIOOJJJZOI", "openPhoto"), 16, messageObject.getMessageObject(), null, null, null,
                 null, null, null, 0, provider.getPhotoViewerProvider(), null, l, l2, l3, b, null, null);
     }
 
     /** Calls the overload every other one delegates to, by its mapped name and arity. */
-    private void callMaster(String key, String realName, int arity, Object... args) {
-        String name = AutomationResolver.resolve("PhotoViewer", key, AutomationResolver.ResolverType.Method);
-        if (name == null || name.equals(key)) name = realName;
+    private void callMaster(String name, int arity, Object... args) {
         for (Class<?> c = photoViewer.getClass(); c != null; c = c.getSuperclass()) {
             for (java.lang.reflect.Method m : c.getDeclaredMethods()) {
                 if (!m.getName().equals(name) || m.getParameterTypes().length != arity) continue;

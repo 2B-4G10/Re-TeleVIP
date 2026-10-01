@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public final class TelegramFingerprints {
 
-    public static final int VERSION = 8;
+    public static final int VERSION = 9;
 
     private TelegramFingerprints() {
     }
@@ -57,7 +57,6 @@ public final class TelegramFingerprints {
         METHOD_KEYS.put("SQLitePreparedStatement#bindByteBuffer", "bindByteBufferIO");
         METHOD_KEYS.put("SQLitePreparedStatement#bindLong", "bindLongIJ");
         METHOD_KEYS.put("LongSparseArray#get", "getJ");
-        METHOD_KEYS.put("AlertDialog$Builder#setView", "setViewV");
         METHOD_KEYS.put("FileLoader#getPathToMessage", "getPathToMessageO");
     }
 
@@ -73,9 +72,6 @@ public final class TelegramFingerprints {
         o.put("ActionBar", "org.telegram.ui.ActionBar.ActionBar");
         o.put("ActionBar$ActionBarMenuOnItemClick", "org.telegram.ui.ActionBar.ActionBar$ActionBarMenuOnItemClick");
         o.put("ActionBarMenuItem", "org.telegram.ui.ActionBar.ActionBarMenuItem");
-        o.put("AlertDialog", "org.telegram.ui.ActionBar.AlertDialog");
-        o.put("AlertDialog$Builder", "org.telegram.ui.ActionBar.AlertDialog$Builder");
-        o.put("AlertDialog$OnButtonClickListener", "org.telegram.ui.ActionBar.AlertDialog$OnButtonClickListener");
         o.put("AndroidUtilities", "org.telegram.messenger.AndroidUtilities");
         o.put("ApplicationLoader", "org.telegram.messenger.ApplicationLoader");
         o.put("BaseController", "org.telegram.messenger.BaseController");
@@ -170,7 +166,6 @@ public final class TelegramFingerprints {
         classes(s);
         settings(s);
         actionBar(s);
-        alertDialog(s);
         cells(s);
         chat(s);
         profile(s);
@@ -521,9 +516,6 @@ public final class TelegramFingerprints {
         s.add(cls("org.telegram.ui.ActionBar.Theme$ResourcesProvider")
                 .from(fieldTypeOf("org.telegram.ui.ActionBar.BaseFragment", "resourceProvider"))
                 .where(isInterface()));
-        s.add(cls("org.telegram.ui.ActionBar.AlertDialog")
-                .from(fieldTypesOf("org.telegram.ui.ActionBar.AlertDialog$Builder"))
-                .where(extendsType("android.app.Dialog")));
 
         s.add(cls("androidx.collection.LongSparseArray")
                 .from(fieldTypeOf("org.telegram.messenger.MessagesController", "dialogMessage"),
@@ -646,51 +638,6 @@ public final class TelegramFingerprints {
                 .narrowedStrings());
         s.add(method("ActionBarMenuItem", "lazilyAddSubItemIIDCZZ").named("lazilyAddSubItem")
                 .sig(item, "int", "int", drawable, "java.lang.CharSequence", "boolean", "boolean"));
-    }
-
-    // -------------------------------------------------------------- alert dialog
-
-    private static void alertDialog(List<Symbol> s) {
-        String dialog = "org.telegram.ui.ActionBar.AlertDialog";
-        String builder = "org.telegram.ui.ActionBar.AlertDialog$Builder";
-        String listener = "org.telegram.ui.ActionBar.AlertDialog$OnButtonClickListener";
-
-        // The dialog's own setTitle overrides android.app.Dialog's, so it keeps its name - and the
-        // field it writes tells the builder's title setter apart from its message setter.
-        s.add(method("AlertDialog", "setTitle").sig("void", "java.lang.CharSequence"));
-        s.add(cls(listener)
-                .from(paramTypeWhere(builder, "void", "java.lang.CharSequence", null),
-                        paramTypeWhere(builder, builder, "java.lang.CharSequence", null))
-                .where(isInterface(), hasMethod(false, "void", dialog, "int")));
-        s.add(method("AlertDialog$OnButtonClickListener", "onClick").sig("void", dialog, "int"));
-        s.add(method("AlertDialog", "setButton").sig("void", "int", "java.lang.CharSequence", listener)
-                .where(switchKey(-3), switchKey(-2), switchKey(-1)));
-
-        s.add(method("AlertDialog$Builder", "setTitle").sig(builder, "java.lang.CharSequence").voidable()
-                .where(writesFieldWrittenBy("AlertDialog#setTitle", "java.lang.CharSequence")));
-        s.add(method("AlertDialog$Builder", "setMessage").sig(builder, "java.lang.CharSequence").voidable()
-                .where(writesFieldOfType(dialog, "java.lang.CharSequence"),
-                        not(writesFieldWrittenBy("AlertDialog#setTitle", "java.lang.CharSequence"))));
-        s.add(method("AlertDialog$Builder", "setViewV").named("setView").sig(builder, "android.view.View").voidable());
-        s.add(method("AlertDialog$Builder", "setViewVI").named("setView").sig(builder, "android.view.View", "int").voidable());
-        s.add(method("AlertDialog$Builder", "create").sig(dialog)
-                .where(not(callsAnyNamed("show"))));
-        s.add(method("AlertDialog$Builder", "show").sig(dialog).voidable()
-                .where(callsAnyNamed("show")));
-        s.add(method("AlertDialog$Builder", "getDismissRunnable").sig("java.lang.Runnable"));
-        // Positive is pinned by meaning: its listener is the one the dialog invokes with
-        // BUTTON_POSITIVE (-1). Negative and neutral cannot be told apart that way - Telegram's
-        // neutral handler also passes BUTTON_NEGATIVE - so they are resolved only where a build
-        // leaves exactly one candidate, and otherwise refused rather than risk a swapped action.
-        s.add(method("AlertDialog$Builder", "setPositiveButton").sig(builder, "java.lang.CharSequence", listener)
-                .voidable().narrowedStrings()
-                .where(writesListenerInvokedWith(dialog, listener, -1)));
-        s.add(method("AlertDialog$Builder", "setNegativeButton").sig(builder, "java.lang.CharSequence", listener)
-                .voidable().narrowedStrings()
-                .where(not(writesListenerInvokedWith(dialog, listener, -1))));
-        s.add(method("AlertDialog$Builder", "setNeutralButton").sig(builder, "java.lang.CharSequence", listener)
-                .voidable().narrowedStrings()
-                .where(not(writesListenerInvokedWith(dialog, listener, -1))));
     }
 
     // -------------------------------------------------------------------- cells

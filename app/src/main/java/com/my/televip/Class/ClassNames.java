@@ -15,7 +15,6 @@ public class ClassNames {
     public static final String NOTIFICATIONS_CONTROLLER = "org.telegram.messenger.NotificationsController";
     public static final String NOTIFICATION_CENTER = "org.telegram.messenger.NotificationCenter";
     public static final String LAUNCH_ACTIVITY = "org.telegram.ui.LaunchActivity";
-    public static final String ALERT_DIALOG_BUILDER = "org.telegram.ui.ActionBar.AlertDialog.Builder";
     public static final String TEXT_SETTINGS_CELL = "org.telegram.ui.Cells.TextSettingsCell";
     public static final String TLRPC_ENCRYPTED_CHAT = "org.telegram.tgnet.TLRPC$EncryptedChat";
     public static final String TL_OBJECT = "org.telegram.tgnet.TLObject";
@@ -40,7 +39,6 @@ public class ClassNames {
     public static final String PHOTO_VIEWER_PROVIDER = "org.telegram.ui.PhotoViewer$PhotoViewerProvider";
     public static final String USER_CONFIG = "org.telegram.messenger.UserConfig";
     public static final String TL_MESSAGES_MESSAGES = "org.telegram.tgnet.TLRPC$messages_Messages";
-    public static final String ALERT_DIALOG_BUTTON_CLICK = "org.telegram.ui.ActionBar.AlertDialog$OnButtonClickListener";
     public static final String UTILITIES = "org.telegram.messenger.Utilities";
     public static final String TL_MESSAGES_AFFECTED = "org.telegram.tgnet.TLRPC$TL_messages_affectedMessages";
     public static final String TL_CHANNELS_READ_HISTORY = "org.telegram.tgnet.TLRPC$TL_channels_readHistory";
