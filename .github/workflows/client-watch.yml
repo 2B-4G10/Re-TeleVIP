@@ -200,8 +200,8 @@ jobs:
             tail -n +3 CHANGELOG.md
           } > CHANGELOG.new && mv CHANGELOG.new CHANGELOG.md
 
-          git config user.name mustafa
-          git config user.email mmuasfa@gmail.com
+          git config user.name "Faisal AlDossary"
+          git config user.email 62283064+2B-4G10@users.noreply.github.com
           git commit -qam "Release $next"
           git push origin HEAD:main
           echo "released=$next" >> "$GITHUB_OUTPUT"
