@@ -45,13 +45,20 @@
 ## Supported clients
 
 Telegram, Telegram Beta and Web, Plus Messenger, Nagram, NagramX, Nagram XF, **Nekogram**,
-Nekogram X, **Cherrygram**, Nicegram, iMe, X Plus, ForkClient, Forkgram, Skygram, Teegra,
-Telegraph, Telega, Momogram, Turrit and TG Connect.
+Nekogram X, **Cherrygram**, Nicegram, iMe, X Plus, ForkClient, Forkgram, Forkgram Classic,
+Mercurygram, Skygram, Teegra, Telegraph, Telega, Momogram, Turrit and TG Connect.
 
 Telegram and its forks rename their code on every release, some (Nekogram, Cherrygram) almost
 all of it. TeleVip doesn't depend on a name table for a single version. It reads the running client's own APK once
 per update and finds each hook by what the code does. Anything it can't pin down exactly is left
 off rather than guessed. Details are in the [changelog](CHANGELOG.md).
+
+Every week, the last five releases of Nekogram, Cherrygram, Nagram, NagramX, Forkgram, Forkgram
+Classic and Mercurygram are downloaded along with the latest official Telegram, and every
+feature's hook points are checked against each one. A release that breaks something opens an
+issue. Clients only published on Google Play (Plus Messenger, Nicegram, iMe and others) can't be
+downloaded automatically. To check one of them, run the *Client watch* workflow by hand with a
+link to its APK.
 
 ## Credits
 

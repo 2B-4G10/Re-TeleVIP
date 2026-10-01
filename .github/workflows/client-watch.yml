@@ -1,12 +1,13 @@
 name: Client watch
 
-# Every week, downloads the latest Telegram, Nekogram, Cherrygram, Nagram, NagramX and Forkgram
-# (the last three only when their latest GitHub release carries an APK) and checks that every
-# TeleVip feature's hook points still resolve in them (ClientApkTest). A client release that
-# breaks something fails the run (GitHub emails you) with the affected features in its summary,
-# and opens an issue if the repository has issues enabled; a release that works again closes it.
-# Run it by hand with an APK URL (e.g. a direct APKPure download) to check any
-# other build.
+# Every week, checks the last five releases of every supported client - Nekogram, Cherrygram,
+# Nagram and NagramX (GitHub releases), Forkgram, Forkgram Classic and Mercurygram (F-Droid,
+# archive included) - and the latest official Telegram (telegram.org only serves the newest),
+# and checks that every TeleVip feature's hook points still resolve in each (ClientApkTest).
+# A build that breaks something fails the run (GitHub emails you) with the affected features in
+# its summary, and opens an issue for that client if the repository has issues enabled; the issue
+# is closed once all of the client's last five releases work again.
+# Run it by hand with an APK URL (e.g. a direct APKPure download) to check any other build.
 #
 # When every client checks out on the weekly run, anything merged since the last release -
 # Dependabot's Monday updates, fingerprint fixes - is released: the patch version and
@@ -35,15 +36,18 @@ jobs:
           APK_URL: ${{ inputs.apk_url }}
         run: |
           if [ -n "$APK_URL" ]; then
-            matrix=$(jq -nc --arg u "$APK_URL" '{include: [{client: "Manual check", url: $u}]}')
+            matrix=$(jq -nc --arg u "$APK_URL" '{include: [{client: "Manual check", source: "url", from: $u}]}')
           else
+            # source/from/asset: see .github/scripts/client-builds.sh.
             matrix='{"include":[
-              {"client":"Telegram","url":"https://telegram.org/dl/android/apk","issue":true},
-              {"client":"Nekogram","repo":"Nekogram/Nekogram","asset":"arm64-v8a","issue":true},
-              {"client":"Cherrygram","repo":"arsLan4k1390/Cherrygram","asset":"arm64","issue":true},
-              {"client":"Nagram","repo":"NextAlone/Nagram","asset":"arm64","issue":true,"optional":true},
-              {"client":"NagramX","repo":"risin42/NagramX","asset":"arm64","issue":true,"optional":true},
-              {"client":"Forkgram","repo":"forkgram/TelegramAndroid","asset":"arm64","issue":true,"optional":true}]}'
+              {"client":"Telegram","source":"url","from":"https://telegram.org/dl/android/apk","issue":true},
+              {"client":"Nekogram","source":"github","from":"Nekogram/Nekogram","asset":"arm64-v8a","issue":true},
+              {"client":"Cherrygram","source":"github","from":"arsLan4k1390/Cherrygram","asset":"arm64","issue":true},
+              {"client":"Nagram","source":"github","from":"NextAlone/Nagram","asset":"arm64","issue":true},
+              {"client":"NagramX","source":"github","from":"risin42/NagramX","asset":"arm64","issue":true},
+              {"client":"Forkgram","source":"fdroid","from":"org.forkgram.messenger","issue":true},
+              {"client":"Forkgram Classic","source":"fdroid","from":"org.forkgram.classic","issue":true},
+              {"client":"Mercurygram","source":"fdroid","from":"it.belloworld.mercurygram","issue":true}]}'
           fi
           echo "matrix=$(echo "$matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
 
@@ -51,7 +55,7 @@ jobs:
     name: ${{ matrix.client }}
     needs: clients
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.clients.outputs.matrix) }}
@@ -74,66 +78,69 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
-      - name: Download the latest build
-        id: apk
+      - name: List the builds to check
         env:
-          REPO: ${{ matrix.repo }}
-          URL: ${{ matrix.url }}
+          SOURCE: ${{ matrix.source }}
+          FROM: ${{ matrix.from }}
           ASSET: ${{ matrix.asset }}
-          OPTIONAL: ${{ matrix.optional }}
         run: |
-          if [ -n "$REPO" ]; then
-            names=$(gh release view --repo "$REPO" --json assets --jq '.assets[].name' | grep -i '\.apk$' || true)
-            name=$(echo "$names" | grep -i -- "$ASSET" | head -n1)
-            [ -n "$name" ] || name=$(echo "$names" | head -n1)
-            if [ -z "$name" ]; then
-              # Variants that do not attach an APK to every release are skipped, not failed.
-              [ "$OPTIONAL" = "true" ] && { echo "::notice::No APK in the latest $REPO release; skipped."; echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0; }
-              echo "::error::No APK in the latest $REPO release."; exit 1
-            fi
-            gh release download --repo "$REPO" --pattern "$name" --output client.apk
+          if [ "$SOURCE" = github ]; then
+            bash .github/scripts/client-builds.sh github "$FROM" "$ASSET" 5 > builds.tsv
           else
+            bash .github/scripts/client-builds.sh "$SOURCE" "$FROM" 5 > builds.tsv
+          fi
+          cat builds.tsv
+          [ -s builds.tsv ] || { echo "::error::No $CLIENT build with an APK found."; exit 1; }
+
+      - name: Check every build
+        id: check
+        run: |
+          aapt2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | tail -n1)
+          : > broken.txt
+          : > summary.md
+          while IFS=$'\t' read -r label url; do
+            rm -f client.apk report.md
             # Big downloads from some servers drop mid-transfer: resume until complete.
             for attempt in 1 2 3 4 5; do
-              curl -fsSL --retry 3 --retry-all-errors -C - -o client.apk "$URL" && break
-              [ "$attempt" = 5 ] && { echo "::error::Could not download $URL."; exit 1; }
+              curl -fsSL --retry 3 --retry-all-errors -C - -o client.apk "$url" && break
+              [ "$attempt" = 5 ] && { echo "::error::Could not download $url."; echo "$label (download failed)" >> broken.txt; continue 2; }
               sleep 10
             done
-          fi
 
-          # An .xapk (APKPure) is a zip of split APKs: the code lives in the largest one.
-          if unzip -l client.apk manifest.json >/dev/null 2>&1; then
-            inner=$(unzip -Z1 client.apk '*.apk' | while read -r f; do
-              echo "$(unzip -Zl client.apk "$f" | awk 'NR==1{print $4}') $f"; done | sort -rn | head -n1 | cut -d' ' -f2-)
-            unzip -p client.apk "$inner" > base.apk && mv base.apk client.apk
-          fi
+            # An .xapk (APKPure) is a zip of split APKs: the code lives in the largest one.
+            if unzip -l client.apk manifest.json >/dev/null 2>&1; then
+              inner=$(unzip -Z1 client.apk '*.apk' | while read -r f; do
+                echo "$(unzip -Zl client.apk "$f" | awk 'NR==1{print $4}') $f"; done | sort -rn | head -n1 | cut -d' ' -f2-)
+              unzip -p client.apk "$inner" > base.apk && mv base.apk client.apk
+            fi
 
-          aapt2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | tail -n1)
-          badging=$("$aapt2" dump badging client.apk | head -n1)
-          version=$(echo "$badging" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p")
-          code=$(echo "$badging" | sed -n "s/.*versionCode='\([^']*\)'.*/\1/p")
-          echo "VERSION=$version ($code)" >> "$GITHUB_ENV"
-
-      - name: Check the hook points
-        id: check
-        if: steps.apk.outputs.skip != 'true'
-        continue-on-error: true
-        env:
-          TELEVIP_CLIENT_APK: ${{ github.workspace }}/client.apk
-          TELEVIP_CLIENT_REPORT: ${{ github.workspace }}/report.md
-        run: >-
-          ./gradlew :app:testDebugUnitTest --rerun
-          --tests 'com.my.televip.obfuscate.resolve.ClientApkTest' --stacktrace
+            badging=$("$aapt2" dump badging client.apk 2>/dev/null | sed -n 1p)
+            version="$(echo "$badging" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p") ($(echo "$badging" | sed -n "s/.*versionCode='\([^']*\)'.*/\1/p"))"
+            echo "::group::$CLIENT $version"
+            if TELEVIP_CLIENT_APK="$PWD/client.apk" TELEVIP_CLIENT_REPORT="$PWD/report.md" ./gradlew \
+                :app:testDebugUnitTest --rerun --tests 'com.my.televip.obfuscate.resolve.ClientApkTest' --stacktrace \
+                < /dev/null; then
+              outcome=ok
+            else
+              outcome=broken
+              echo "$version" >> broken.txt
+            fi
+            echo "::endgroup::"
+            [ -f report.md ] || echo "The check produced no report; see the \"Check every build\" log." > report.md
+            if [ "$outcome" = ok ]; then
+              { echo "<details><summary>$CLIENT $version: every feature resolves</summary>"; echo; cat report.md; echo; echo "</details>"; echo; } >> summary.md
+            else
+              { echo "### $CLIENT $version: broken"; echo; cat report.md; echo; } >> summary.md
+            fi
+          done < builds.tsv
+          [ -s broken.txt ] && echo "broken=true" >> "$GITHUB_OUTPUT" || true
 
       - name: Report
-        if: steps.apk.outputs.skip != 'true'
         env:
-          OUTCOME: ${{ steps.check.outcome }}
+          BROKEN: ${{ steps.check.outputs.broken }}
           OPEN_ISSUES: ${{ matrix.issue }}
         run: |
-          [ -f report.md ] || echo "The check produced no report; see the \"Check the hook points\" log." > report.md
-          { echo "## $CLIENT $VERSION"; echo; cat report.md; } > body.md
-          cat body.md | tee -a "$GITHUB_STEP_SUMMARY"
+          { echo "## $CLIENT"; echo; cat summary.md; } | tee -a "$GITHUB_STEP_SUMMARY" > body.md
           # Issues are off by default on forks; the failed run and this summary still report it.
           [ "$OPEN_ISSUES" = "true" ] || exit 0
           [ "$(gh api "repos/$GITHUB_REPOSITORY" --jq .has_issues)" = "true" ] || exit 0
@@ -141,16 +148,21 @@ jobs:
           title="Client watch: $CLIENT"
           number=$(gh issue list --state open --search "\"$title\" in:title" --json number,title \
               --jq ".[] | select(.title == \"$title\") | .number" | head -n1)
-          if [ "$OUTCOME" = "success" ]; then
-            [ -z "$number" ] || gh issue close "$number" --comment "Every hook point resolves again on $CLIENT $VERSION."
-          elif [ -z "$number" ]; then
-            gh issue create --title "$title" --body-file body.md
-          elif ! gh issue view "$number" --json body,comments --jq '.body, .comments[].body' | grep -qF "$CLIENT $VERSION"; then
-            gh issue comment "$number" --body-file body.md
+          if [ "$BROKEN" != "true" ]; then
+            [ -z "$number" ] || gh issue close "$number" --comment "Every hook point resolves again on all $(wc -l < builds.tsv) $CLIENT builds checked."
+            exit 0
+          fi
+          # The same set of broken builds is reported once; a new one adds a comment.
+          marker="Broken builds: $(paste -sd ',' broken.txt | sed 's/,/, /g')"
+          { echo "$marker"; echo; cat body.md; } > issue.md
+          if [ -z "$number" ]; then
+            gh issue create --title "$title" --body-file issue.md
+          elif ! gh issue view "$number" --json body,comments --jq '.body, .comments[].body' | grep -qF "$marker"; then
+            gh issue comment "$number" --body-file issue.md
           fi
 
       - name: Fail when a feature broke
-        if: steps.apk.outputs.skip != 'true' && steps.check.outcome != 'success'
+        if: steps.check.outputs.broken == 'true'
         run: exit 1
 
   release:
