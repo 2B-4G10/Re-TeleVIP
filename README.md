@@ -94,6 +94,8 @@
 2. In LSPosed / Vector: **Modules** → enable **TeleVip** → tick your Telegram clients.
 3. **Force stop** the client and open it again.
 
+<sub>Updating from 1.0.x? The package name changed in 1.1.0: install the new version, uninstall the old <i>TeleVip</i>, and enable it again in LSPosed.</sub>
+
   </td>
 </tr>
 </table>

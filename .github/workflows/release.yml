@@ -1,7 +1,8 @@
 name: Release
 
 # Publishes release v<versionName> with the APKs attached, when versionName changes on main,
-# when a matching v* tag is pushed, or by hand. Notes come from CHANGELOG.md.
+# when a matching v* tag is pushed, or by hand. Notes come from CHANGELOG.md. With the
+# MODULES_REPO_TOKEN secret set, the release is also published to the Xposed Modules Repo.
 on:
   push:
     branches: [main]
@@ -21,6 +22,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      MODULES_REPO_TOKEN: ${{ secrets.MODULES_REPO_TOKEN }}
 
     steps:
       - uses: actions/checkout@v7
@@ -115,3 +117,11 @@ jobs:
             gh release create "$TAG" artifacts/*.apk --target "$GITHUB_SHA" \
               --title "TeleVip $TAG" --notes-file notes.md --latest
           fi
+
+      # modules.lsposed.org: Xposed-Modules-Repo/<applicationId>. MODULES_REPO_TOKEN is a classic
+      # token with the public_repo scope from an account that maintains that repository.
+      - name: Publish to the Xposed Modules Repo
+        if: steps.version.outputs.publish == 'true' && env.MODULES_REPO_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ secrets.MODULES_REPO_TOKEN }}
+        run: .github/scripts/publish-modules-repo.sh

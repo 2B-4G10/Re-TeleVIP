@@ -29,7 +29,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.my.televip"
+        applicationId = "io.github.re_televip.televip"
         minSdk = 27
         targetSdk = 37
         versionCode = 348
