@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.0 — new package name, for the Xposed Modules Repo
+
+- **TeleVip's package name is now `io.github.re_televip.televip`** (it was `com.my.televip`).
+  The Xposed Modules Repo (modules.lsposed.org) only lists modules whose package name their
+  author owns, and this one belongs to the Re-TeleVIP organisation. Android treats it as a new
+  app, so once:
+  1. Install this version, then uninstall the old *TeleVip* (`com.my.televip`).
+  2. In LSPosed / Vector, enable TeleVip again and tick your Telegram clients.
+  3. Force stop the clients and reopen them.
+
+  Your TeleVip settings are kept: they are stored inside each Telegram client, not in TeleVip.
+- Releases are also published to TeleVip's page in the Xposed Modules Repo, so LSPosed's module
+  repository can offer updates.
+
 ## 1.0.8 — Show deleted messages on Nekogram 12.10.5+, Android 17 SDK
 
 - **Show deleted messages works on Nekogram 12.10.5 and 12.10.6.** 1.0.7 picked the wrong event
