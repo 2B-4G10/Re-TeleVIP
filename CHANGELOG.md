@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.0.8 — Show deleted messages on Nekogram 12.10.5+, Android 17 SDK
+
+- **Show deleted messages works on Nekogram 12.10.5 and 12.10.6.** 1.0.7 picked the wrong event
+  there: Nekogram numbers its events one higher than Telegram does. It also intercepted a
+  profile-screen event instead. The event is now read from the code that posts it, never
+  assumed. That is correct on all 37 builds checked, including Telegram FOSS 10.14.3, whose
+  events are numbered differently again.
+- Built against the Android 17 SDK (API 37). The weekly toolchain update now keeps the SDK
+  current too, alongside AGP, Gradle and the libxposed API, and pushes only if the build and
+  tests pass.
+- Client watch: the F-Droid listing no longer fails on clients with a long history (Forkgram).
+- Clean-up: unused resolver code removed, compiler warnings fixed, and deprecated Android calls
+  replaced (the client's version code; the audio player's stream type).
+- The builds TeleVip was last verified against are updated: Telegram Web 12.10.6, Nekogram
+  12.10.6, Cherrygram 11.3.0, Nagram 1248, NagramX 1258, Forkgram 12.10.4 and Forkgram Classic
+  12.10.8.
+
 ## 1.0.7 — Nekogram 12.10.5+ and the last five releases of every client
 
 - **Nekogram 12.10.5 and 12.10.6 are supported.** Their build renames, reorders, merges and
