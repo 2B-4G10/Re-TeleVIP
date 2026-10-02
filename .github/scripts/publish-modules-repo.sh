@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Mirrors this release to the module's own repository in the Xposed Modules Repo
 # (modules.lsposed.org, Xposed-Modules-Repo/<applicationId>):
-#   - its description and home page, and the SUMMARY and README.md from .github/modules-repo/;
+#   - its description and home page, the SUMMARY from .github/modules-repo/, and this repository's
+#     README.md with its relative images and links pointed back here, so they work over there;
 #   - a release tagged <versionCode>-<versionName> with the release APK and the changelog,
 #     which is what the repository's bot reads.
 # Expects artifacts/TeleVip-<versionName>-release.apk and notes.md from release.yml, and GH_TOKEN
@@ -27,12 +28,31 @@ fi
 gh api -X PATCH "repos/$repo" -f description=TeleVip -f homepage="https://github.com/$GITHUB_REPOSITORY" >/dev/null \
   || echo "::warning::Could not set the description of $repo; set it to TeleVip by hand."
 
+mkdir -p build/modules-repo
+cp .github/modules-repo/SUMMARY build/modules-repo/SUMMARY
+REPO="$GITHUB_REPOSITORY" BRANCH="${GITHUB_REF_NAME:-main}" python3 - <<'PY'
+import os, re
+repo, branch = os.environ["REPO"], os.environ["BRANCH"]
+def absolute(url, image):
+    if re.match(r"^(https?:|mailto:|#|data:)", url): return url
+    if url.startswith("../../"): return f"https://github.com/{repo}/" + url[6:]
+    if image: return f"https://raw.githubusercontent.com/{repo}/{branch}/{url}"
+    return f"https://github.com/{repo}/blob/{branch}/{url}"
+text = open("README.md", encoding="utf-8").read()
+text = re.sub(r'(<img\b[^>]*\bsrc=")([^"]+)"', lambda m: m.group(1) + absolute(m.group(2), True) + '"', text)
+text = re.sub(r'(\bhref=")([^"]+)"', lambda m: m.group(1) + absolute(m.group(2), False) + '"', text)
+text = re.sub(r'(!\[[^\]]*\]\()([^)\s]+)\)', lambda m: m.group(1) + absolute(m.group(2), True) + ")", text)
+# Images are absolute by now, so whatever ](...) is left is a link - badges included: [![..](..)](link)
+text = re.sub(r'(\]\()([^)\s]+)\)', lambda m: m.group(1) + absolute(m.group(2), False) + ")", text)
+open("build/modules-repo/README.md", "w", encoding="utf-8").write(text)
+PY
+
 for f in SUMMARY README.md; do
-  local_sha=$(git hash-object ".github/modules-repo/$f")
+  local_sha=$(git hash-object "build/modules-repo/$f")
   remote_sha=$(gh api "repos/$repo/contents/$f" --jq .sha 2>/dev/null || true)
   [ "$local_sha" = "$remote_sha" ] && continue
   args=(-X PUT "repos/$repo/contents/$f" -f message="Update $f for $name"
-        -f content="$(base64 -w0 ".github/modules-repo/$f")")
+        -f content="$(base64 -w0 "build/modules-repo/$f")")
   [ -n "$remote_sha" ] && args+=(-f sha="$remote_sha")
   gh api "${args[@]}" >/dev/null
 done
