@@ -15,6 +15,14 @@ repo="Xposed-Modules-Repo/$pkg"
 tag="$code-$name"
 apk="artifacts/TeleVip-$name-release.apk"
 
+# GitHub answers 404 rather than 403 when a token can see a public repository but not write to it.
+if [ "$(gh api "repos/$repo" --jq '.permissions.push // false' 2>/dev/null)" != "true" ]; then
+  echo "::error::MODULES_REPO_TOKEN cannot write to $repo. Accept the maintainer invitation at" \
+    "https://github.com/$repo/invitations, and use a classic token with the public_repo scope" \
+    "(a fine-grained token cannot reach another organisation's repositories)."
+  exit 1
+fi
+
 # The description is the module's display name there; the maintainer role may not be allowed it.
 gh api -X PATCH "repos/$repo" -f description=TeleVip -f homepage="https://github.com/$GITHUB_REPOSITORY" >/dev/null \
   || echo "::warning::Could not set the description of $repo; set it to TeleVip by hand."
