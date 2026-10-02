@@ -1,7 +1,8 @@
 name: Toolchain update
 
 # Every Monday, before Dependabot and Client watch: moves the build to the latest stable Android
-# Gradle Plugin, Gradle and libxposed API (keeping module.prop's targetApiVersion in step), and
+# Gradle Plugin, Gradle, libxposed API (keeping module.prop's targetApiVersion in step) and Android
+# SDK (compileSdk / targetSdk, and the platform every workflow installs), and
 # pushes the change to main only if the unit tests and both APK builds pass with it. A bump that
 # breaks the build is not pushed; the run fails and says which one it was. Client watch releases
 # whatever landed if every client still checks out.
@@ -36,7 +37,7 @@ jobs:
       - uses: android-actions/setup-android@v4
         if: steps.check.outputs.summary != ''
         with:
-          packages: 'platforms;android-36 build-tools;36.0.0'
+          packages: 'platforms;android-37.0 build-tools;36.0.0'
 
       - uses: gradle/actions/setup-gradle@v6
         if: steps.check.outputs.summary != ''

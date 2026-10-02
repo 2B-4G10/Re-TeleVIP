@@ -32,7 +32,7 @@ public class HidePinnedMessages {
                             });
                     HMethod.hookMethod(ClassLoad.getClass(ClassNames.CHAT_ACTIVITY), AutomationResolver.resolve("ChatActivity", "updatePinnedMessageView", AutomationResolver.ResolverType.Method),
                             // R8 may reorder (boolean, int); the runtime mapping knows the build's order.
-                            AutomationResolver.merge(AutomationResolver.resolveObject("updatePinnedMessageView", new Class[]{boolean.class, int.class}), new AbstractMethodHook() {
+                            AutomationResolver.merge(AutomationResolver.resolveObject("updatePinnedMessageView", new Class<?>[]{boolean.class, int.class}), new AbstractMethodHook() {
                         @Override
                         protected void afterMethod(MethodHookParam param) {
                             if (ConfigManager.hidePinnedMessages.isEnable()) {

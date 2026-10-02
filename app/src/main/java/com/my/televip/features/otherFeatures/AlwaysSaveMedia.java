@@ -15,7 +15,7 @@ public class AlwaysSaveMedia {
         try {
             if (ClassLoad.getClass(ClassNames.PHOTO_VIEWER) != null) {
 
-                HMethod.hookMethod(ClassLoad.getClass(ClassNames.PHOTO_VIEWER), AutomationResolver.resolve("PhotoViewer", "setIsAboutToSwitchToIndex", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("setIsAboutToSwitchToIndex", new Class[]{int.class, boolean.class, boolean.class, boolean.class}), new AbstractMethodHook() {
+                HMethod.hookMethod(ClassLoad.getClass(ClassNames.PHOTO_VIEWER), AutomationResolver.resolve("PhotoViewer", "setIsAboutToSwitchToIndex", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("setIsAboutToSwitchToIndex", new Class<?>[]{int.class, boolean.class, boolean.class, boolean.class}), new AbstractMethodHook() {
                     @Override
                     protected void afterMethod(MethodHookParam param) {
                         final PhotoViewer photoViewer = new PhotoViewer(param.thisObject);

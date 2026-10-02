@@ -61,7 +61,7 @@ public class MessageStorage {
                         long lastDialogId = cursor.longValue(2);
 
                         data.position(4);
-                        int flags = (int) data.readInt32(true);
+                        int flags = data.readInt32(true);
                         flags |= ShowDeletedMessages.FLAG_DELETED;
                         data.position(4);
                         data.writeInt32(flags);

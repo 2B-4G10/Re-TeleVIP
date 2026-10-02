@@ -64,6 +64,7 @@ public class ArrowDrawable extends Drawable {
         invalidateSelf();
     }
 
+    @SuppressWarnings("deprecation")   // still abstract in Drawable
     @Override
     public int getOpacity() {
         return paint.getAlpha() == 255 ? android.graphics.PixelFormat.OPAQUE : android.graphics.PixelFormat.TRANSLUCENT;

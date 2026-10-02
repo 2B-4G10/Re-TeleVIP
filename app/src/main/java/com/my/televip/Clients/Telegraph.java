@@ -282,7 +282,7 @@ public class Telegraph {
         methodAlias.put("HeaderCell#setText", "setTextC");
         methodAlias.put("AlertDialog$Builder#setView", "setViewV");
 
-        ParameterResolver.register("fillMessageMenu",new Class[]{ClassLoad.getClass(ClassNames.MESSAGE_OBJECT), ClassLoad.getClass(ClassNames.MESSAGE_OBJECT), ArrayList.class, ArrayList.class, ArrayList.class});
+        ParameterResolver.register("fillMessageMenu",new Class<?>[]{ClassLoad.getClass(ClassNames.MESSAGE_OBJECT), ClassLoad.getClass(ClassNames.MESSAGE_OBJECT), ArrayList.class, ArrayList.class, ArrayList.class});
     }
 
     public static void removeAd(){

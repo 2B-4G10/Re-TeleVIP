@@ -140,25 +140,38 @@ public final class CodeScanner {
         }
     }
 
+    /** What {@link #constantFlow} reports. */
+    interface ConstantSink {
+        /** An sput of a value that follows from constants. */
+        default void staticWrite(int fieldIndex, long value) {
+        }
+
+        /** Every invoke, with the constant each argument register holds (null where unknown). */
+        default void invoke(int methodIndex, Long[] registers) {
+        }
+    }
+
     /**
-     * The int value each sput in a method stores, by field index, where it follows from constants
-     * and literal additions - {@code a = total++; b = total++; ...} in a class initialiser. Values
-     * it cannot follow are left out; registers written by anything else are forgotten.
+     * Follows int constants through a method - const, move, literal and register additions, and
+     * statics this method set itself ({@code a = total++; b = total++; ...}) - to the static
+     * fields they are stored in and the calls they are passed to. A register written by anything
+     * else is forgotten, so what is reported is known; it ignores branches, which is enough for
+     * the straight-line initialisers and calls it is used on.
      */
-    static java.util.Map<Integer, Long> staticIntWrites(DexFile dex, int codeOffset) {
+    static void constantFlow(DexFile dex, int codeOffset, ConstantSink sink) {
         byte[] d = dex.data();
         int insnsSize = DexFile.u4(d, codeOffset + 12);
         int base = codeOffset + 16;
         int end = base + insnsSize * 2;
         java.util.Map<Integer, Long> regs = new java.util.HashMap<>();
         java.util.Map<Integer, Long> statics = new java.util.HashMap<>();
-        java.util.Map<Integer, Long> out = new java.util.LinkedHashMap<>();
+        Visitor none = new Visitor() { };
         int pc = base;
         while (pc < end) {
             int unit = DexFile.u2(d, pc);
             int op = unit & 0xFF;
             if (op == 0x00 && unit != 0x0000) {
-                pc += payloadWidth(d, pc, unit, new Visitor() { }) * 2;
+                pc += payloadWidth(d, pc, unit, none) * 2;
                 continue;
             }
             int a = (unit >> 8) & 0xFF, a4 = (unit >> 8) & 0xF, b4 = (unit >> 12) & 0xF;
@@ -194,18 +207,59 @@ public final class CodeScanner {
                     Long value = regs.get(a);
                     if (value != null) {
                         statics.put(field, value);
-                        out.put(field, value);
+                        sink.staticWrite(field, value);
                     }
                     break;
                 }
-                default:
-                    // Whatever else wrote a register: vA or vAA, depending on the format.
-                    regs.remove(a);
-                    regs.remove(a4);
+                case 0x6e: case 0x6f: case 0x70: case 0x71: case 0x72: {                        // invoke-kind
+                    int count = b4, words = DexFile.u2(d, pc + 4);
+                    int[] r = {words & 0xF, (words >> 4) & 0xF, (words >> 8) & 0xF, (words >> 12) & 0xF, a4};
+                    Long[] args = new Long[count];
+                    for (int i = 0; i < count; i++) args[i] = regs.get(r[i]);
+                    sink.invoke(DexFile.u2(d, pc + 2), args);
                     break;
+                }
+                case 0x74: case 0x75: case 0x76: case 0x77: case 0x78: {                        // invoke-kind/range
+                    int first = DexFile.u2(d, pc + 4);
+                    Long[] args = new Long[a];
+                    for (int i = 0; i < a; i++) args[i] = regs.get(first + i);
+                    sink.invoke(DexFile.u2(d, pc + 2), args);
+                    break;
+                }
+                default: {
+                    int dst = destination(op, a, a4);
+                    if (op == 0x03 || op == 0x06 || op == 0x09) dst = DexFile.u2(d, pc + 2);  // move*/16
+                    if (dst >= 0) {
+                        regs.remove(dst);
+                        regs.remove(dst + 1);   // the wide forms write a pair
+                    }
+                    break;
+                }
             }
             pc += WIDTH[op] * 2;
         }
+    }
+
+    /** The register an instruction writes, -1 if none: vA for the 4-bit formats, vAA otherwise. */
+    private static int destination(int op, int a, int a4) {
+        if (op == 0x04 || op == 0x07 || op == 0x21 || op == 0x20 || op == 0x23
+                || (op >= 0x52 && op <= 0x58) || (op >= 0x7b && op <= 0x8f)
+                || (op >= 0xb0 && op <= 0xd7)) return a4;
+        if (op == 0x05 || op == 0x08 || (op >= 0x0a && op <= 0x0d) || (op >= 0x16 && op <= 0x1c)
+                || op == 0x1f || op == 0x22 || (op >= 0x2d && op <= 0x31) || (op >= 0x44 && op <= 0x4a)
+                || (op >= 0x60 && op <= 0x66) || (op >= 0x90 && op <= 0xaf) || (op >= 0xd8 && op <= 0xe2)) return a;
+        return -1;
+    }
+
+    /** The int each sput in a method stores, by field index, where constants decide it. */
+    static java.util.Map<Integer, Long> staticIntWrites(DexFile dex, int codeOffset) {
+        final java.util.Map<Integer, Long> out = new java.util.LinkedHashMap<>();
+        constantFlow(dex, codeOffset, new ConstantSink() {
+            @Override
+            public void staticWrite(int fieldIndex, long value) {
+                out.put(fieldIndex, value);
+            }
+        });
         return out;
     }
 

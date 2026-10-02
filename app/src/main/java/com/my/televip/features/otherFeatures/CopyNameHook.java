@@ -22,7 +22,7 @@ public class CopyNameHook {
         try {
             if (ClassLoad.getClass(ClassNames.PROFILE_ACTIVITY) != null) {
 
-                HMethod.hookMethod(ClassLoad.getClass(ClassNames.PROFILE_ACTIVITY), AutomationResolver.resolve("ProfileActivity", "createView", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("createView", new Class[]{Context.class}), new AbstractMethodHook() {
+                HMethod.hookMethod(ClassLoad.getClass(ClassNames.PROFILE_ACTIVITY), AutomationResolver.resolve("ProfileActivity", "createView", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("createView", new Class<?>[]{Context.class}), new AbstractMethodHook() {
                     @Override
                     protected void afterMethod(MethodHookParam param) {
                         final ProfileActivity profileActivity = new ProfileActivity(param.thisObject);

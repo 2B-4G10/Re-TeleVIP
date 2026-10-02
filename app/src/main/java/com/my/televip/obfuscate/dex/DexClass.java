@@ -201,6 +201,24 @@ public final class DexClass {
             return out;
         }
 
+        /**
+         * The constant passed in argument register {@code register} (0 is {@code this} for an
+         * instance call) to each call of {@code owner.name} here, in order; null where unknown.
+         */
+        public java.util.List<Long> constantArguments(final String ownerDescriptor, final String name, final int register) {
+            final java.util.List<Long> out = new java.util.ArrayList<>();
+            if (codeOffset == 0) return out;
+            final DexFile dex = owner.dex;
+            CodeScanner.constantFlow(dex, codeOffset, new CodeScanner.ConstantSink() {
+                @Override
+                public void invoke(int methodIndex, Long[] registers) {
+                    if (register < registers.length && dex.methodClass(methodIndex).equals(ownerDescriptor)
+                            && dex.methodName(methodIndex).equals(name)) out.add(registers[register]);
+                }
+            });
+            return out;
+        }
+
         public String signature() {
             StringBuilder sb = new StringBuilder(name()).append('(');
             for (String p : parameterTypes()) sb.append(p);

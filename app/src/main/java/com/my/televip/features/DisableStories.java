@@ -26,7 +26,7 @@ public class DisableStories {
                         }
                     });
 
-                    HMethod.hookMethod(ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER), AutomationResolver.resolve("MessagesController", "storyEntitiesAllowed2", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("storyEntitiesAllowed", new Class[]{ClassLoad.getClass(ClassNames.TLRPC_USER)}), new AbstractMethodHook() {
+                    HMethod.hookMethod(ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER), AutomationResolver.resolve("MessagesController", "storyEntitiesAllowed2", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("storyEntitiesAllowed", new Class<?>[]{ClassLoad.getClass(ClassNames.TLRPC_USER)}), new AbstractMethodHook() {
                         @Override
                         protected void beforeMethod(MethodHookParam param) {
                             if (ConfigManager.disableStories.isEnable()) param.setResult(false);

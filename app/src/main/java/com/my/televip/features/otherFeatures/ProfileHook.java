@@ -25,7 +25,7 @@ public class ProfileHook {
         if (initialized) return;
         initialized = true;
 
-        HMethod.hookMethod(ClassLoad.getClass(ClassNames.PROFILE_ACTIVITY), AutomationResolver.resolve("ProfileActivity", "createActionBarMenu", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("createActionBarMenu", new Class[]{boolean.class}), new AbstractMethodHook() {
+        HMethod.hookMethod(ClassLoad.getClass(ClassNames.PROFILE_ACTIVITY), AutomationResolver.resolve("ProfileActivity", "createActionBarMenu", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("createActionBarMenu", new Class<?>[]{boolean.class}), new AbstractMethodHook() {
             @Override
             protected void afterMethod(MethodHookParam param) {
                 ProfileActivity profileActivity = new ProfileActivity(param.thisObject);

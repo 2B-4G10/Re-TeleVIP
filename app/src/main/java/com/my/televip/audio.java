@@ -1,7 +1,6 @@
 package com.my.televip;
 
 import android.media.AudioAttributes;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 
 import java.io.IOException;
@@ -14,7 +13,6 @@ public class audio {
     public static void init(){
             mediaPlayer = new MediaPlayer();
 
-            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)

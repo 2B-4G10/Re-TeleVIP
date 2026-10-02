@@ -32,7 +32,7 @@ public class EditOnlineTextView {
                 isEnable = true;
                 HMethod.hookMethod(ClassLoad.getClass(ClassNames.PROFILE_ACTIVITY),
                         AutomationResolver.resolve("ProfileActivity", "updateProfileData", AutomationResolver.ResolverType.Method),
-                        AutomationResolver.merge(AutomationResolver.resolveObject("updateProfileData", new Class[]{boolean.class}),
+                        AutomationResolver.merge(AutomationResolver.resolveObject("updateProfileData", new Class<?>[]{boolean.class}),
                                 new AbstractMethodHook() {
                                     @Override
                                     protected void afterMethod(MethodHookParam param) {

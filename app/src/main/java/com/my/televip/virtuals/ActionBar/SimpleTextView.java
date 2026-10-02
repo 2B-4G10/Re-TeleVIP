@@ -32,7 +32,7 @@ public class SimpleTextView {
 
     public void setText(CharSequence text){
         try {
-            Sig.call(simpleTextView, name("setText"), boolean.class, new Class[]{CharSequence.class}, text);
+            Sig.call(simpleTextView, name("setText"), boolean.class, new Class<?>[]{CharSequence.class}, text);
         } catch (Throwable t) {
             Logger.e(t);
         }
@@ -40,7 +40,7 @@ public class SimpleTextView {
 
     public void setText(CharSequence text, boolean force){
         try {
-            Sig.call(simpleTextView, name("setText"), boolean.class, new Class[]{CharSequence.class, boolean.class}, text, force);
+            Sig.call(simpleTextView, name("setText"), boolean.class, new Class<?>[]{CharSequence.class, boolean.class}, text, force);
         } catch (Throwable t) {
             Logger.e(t);
         }

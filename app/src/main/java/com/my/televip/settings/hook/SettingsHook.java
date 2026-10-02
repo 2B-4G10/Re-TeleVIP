@@ -48,7 +48,7 @@ public class SettingsHook {
             }
 
             HMethod.hookMethod(SettingsActivityClass, fillItems,
-                    AutomationResolver.merge(AutomationResolver.resolveObject("fillItems", new Class[]{java.util.ArrayList.class, ClassLoad.getClass(ClassNames.UNIVERSAL_ADAPTER)}), new AbstractMethodHook() {
+                    AutomationResolver.merge(AutomationResolver.resolveObject("fillItems", new Class<?>[]{java.util.ArrayList.class, ClassLoad.getClass(ClassNames.UNIVERSAL_ADAPTER)}), new AbstractMethodHook() {
                         @Override
                         protected void afterMethod(final MethodHookParam param) {
                             ArrayList<Object> arrayList = argOfType(param, ArrayList.class);
@@ -61,7 +61,7 @@ public class SettingsHook {
 
             HMethod.hookMethod(
                     SettingsActivityClass,
-                    onClick, AutomationResolver.merge(AutomationResolver.resolveObject("onClick", new Class[]{UItemClass, View.class, int.class, float.class, float.class}), new AbstractMethodHook() {
+                    onClick, AutomationResolver.merge(AutomationResolver.resolveObject("onClick", new Class<?>[]{UItemClass, View.class, int.class, float.class, float.class}), new AbstractMethodHook() {
                         @Override
                         protected void afterMethod(final MethodHookParam param) {
                             UItem uItem = new UItem(argOfType(param, UItemClass));
@@ -112,6 +112,7 @@ public class SettingsHook {
                     || !params[1].isInterface() || !params[2].isInterface()) continue;
             HMethod.hookMember(constructor, new AbstractMethodHook() {
                 @Override
+                @SuppressWarnings("unchecked")   // the client's own lists, changed in place
                 protected void beforeMethod(MethodHookParam param) {
                     if (!settingsActivity.isInstance(param.args[0])) return;
                     final Object fill = param.args[1], click = param.args[2];
@@ -199,7 +200,7 @@ public class SettingsHook {
         final Class<?> cellClass = ClassLoad.getClass(ClassNames.SETTINGS_ACTIVITY_SETTING_CELL);
         final String iconField = AutomationResolver.resolve("SettingsActivity$SettingCell", "iconView", AutomationResolver.ResolverType.Field);
         String setName = AutomationResolver.resolve("SettingsActivity$SettingCell", "set", AutomationResolver.ResolverType.Method);
-        Class<?>[] setParams = AutomationResolver.resolveObject("set", new Class[]{int.class, int.class, int.class, CharSequence.class, CharSequence.class, CharSequence.class});
+        Class<?>[] setParams = AutomationResolver.resolveObject("set", new Class<?>[]{int.class, int.class, int.class, CharSequence.class, CharSequence.class, CharSequence.class});
 
         if (cellClass != null && XReflect.findMethodExactIfExists(cellClass, setName, setParams) != null) {
             HMethod.hookMethod(cellClass, setName, AutomationResolver.merge(setParams, new AbstractMethodHook() {
@@ -247,6 +248,7 @@ public class SettingsHook {
                     AutomationResolver.resolve("DrawerLayoutAdapter", "resetItems", AutomationResolver.ResolverType.Method),
                     new AbstractMethodHook() {
                         @Override
+                        @SuppressWarnings("unchecked")   // the client's own lists, changed in place
                         protected void afterMethod(MethodHookParam param) throws Throwable {
 
                             DrawerLayoutAdapter drawerLayoutAdapter = new DrawerLayoutAdapter(param.thisObject);
@@ -254,7 +256,7 @@ public class SettingsHook {
                             ArrayList<?> items = drawerLayoutAdapter.getItems();
 
                             if (itemConstructor == null) {
-                                itemConstructor = itemClass.getDeclaredConstructor(AutomationResolver.resolveObject("item", new Class[]{int.class, CharSequence.class, int.class}));
+                                itemConstructor = itemClass.getDeclaredConstructor(AutomationResolver.resolveObject("item", new Class<?>[]{int.class, CharSequence.class, int.class}));
                                 itemConstructor.setAccessible(true);
                             }
 
@@ -301,7 +303,7 @@ public class SettingsHook {
 
                 Method onCreateMethod = null;
                 for (Method method : ClassLoad.getClass(ClassNames.LAUNCH_ACTIVITY).getDeclaredMethods()) {
-                    if (Arrays.equals(method.getParameterTypes(), AutomationResolver.resolveObject("onCreateMethod", new Class[]{android.view.View.class, int.class, float.class, float.class}))) {
+                    if (Arrays.equals(method.getParameterTypes(), AutomationResolver.resolveObject("onCreateMethod", new Class<?>[]{android.view.View.class, int.class, float.class, float.class}))) {
                         onCreateMethod = method;
                         break;
                     }

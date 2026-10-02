@@ -57,7 +57,7 @@ jobs:
       - uses: android-actions/setup-android@v4
         if: steps.version.outputs.publish == 'true'
         with:
-          packages: 'platforms;android-36 build-tools;36.0.0'
+          packages: 'platforms;android-37.0 build-tools;36.0.0'
 
       - uses: gradle/actions/setup-gradle@v6
         if: steps.version.outputs.publish == 'true'

@@ -25,7 +25,7 @@ public class DisableNumberRounding {
                     // The build's own parameter order: R8 swaps them in some (Nekogram 12.10.5+).
                     Method format = XReflect.findMethodExactIfExists(localeController,
                             AutomationResolver.resolve("LocaleController", "formatShortNumber", AutomationResolver.ResolverType.Method),
-                            AutomationResolver.resolveObject("formatShortNumber", new Class[]{int.class, int[].class}));
+                            AutomationResolver.resolveObject("formatShortNumber", new Class<?>[]{int.class, int[].class}));
                     HMethod.hookMethod(format, new AbstractMethodHook() {
                         @Override
                         protected void beforeMethod(MethodHookParam param) {

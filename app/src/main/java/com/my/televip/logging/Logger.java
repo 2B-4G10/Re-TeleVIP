@@ -8,6 +8,7 @@ import android.os.Build;
 
 import com.my.televip.application.ApplicationLoaderHook;
 import com.my.televip.ClientChecker;
+import com.my.televip.utils.Utils;
 
 import com.my.televip.xposed.XBridge;
 
@@ -34,7 +35,7 @@ public class Logger {
                 PackageManager pm = ApplicationLoaderHook.getApplicationContext().getPackageManager();
                 PackageInfo info = pm.getPackageInfo(ApplicationLoaderHook.getApplicationContext().getPackageName(), 0);
                 String versionName = info.versionName;
-                int versionCode = info.versionCode;
+                long versionCode = Utils.versionCode(info);
 
                 log.append("versionName: ").append(versionName).append("\n");
                 log.append("versionCode: ").append(versionCode).append("\n");

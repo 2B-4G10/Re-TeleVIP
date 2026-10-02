@@ -355,16 +355,14 @@ public final class TelegramFingerprints {
                 .where(refersTo("java.lang.Integer"), writesFieldOfType("org.telegram.messenger.MessageObject", "boolean")));
         // Event ids are assigned in declaration order from 1; forks append theirs after Telegram's.
         s.add(method("NotificationCenter", "<clinit>").isStatic(true).sig("void"));
-        // Deleting an ephemeral message posts messagesDeleted and no other event. Builds older
-        // than ephemeral messages: the seventh id, 7 - read from the value <clinit> stores, since
-        // R8 folds some ids into initial values (all of them in Nekogram 12.10.5+). Forks that
-        // declare ids ahead of Telegram's (Nekogram 12.10.3) only get the first rule right.
-        s.add(method("MessagesController", "deleteEphemeralMessage")
-                .sig("void", "long", "int", "org.telegram.messenger.MessageObject").anyOrder()
-                .where(callsSymbol("MessagesController#markDialogMessageAsDeleted")));
+        // deleteMessages posts messagesDeleted after any other event it reads (quickRepliesUpdated);
+        // Telegram 10.x does the work in the ten-parameter overload. Where R8 folds the read into
+        // a constant (Nekogram 12.10.5+), the id it posts picks the field holding that value. The
+        // id itself differs between builds - 7 in Telegram 12.10, 8 in Nekogram (it declares an
+        // event of its own first), 5 in Telegram 10.x - so it is never assumed.
         s.add(field("NotificationCenter", "messagesDeleted").isStatic(true).type("int")
-                .readBy("MessagesController#deleteEphemeralMessage", 0)
-                .storedBy("NotificationCenter#<clinit>", 7).orInitialValue(7));
+                .lastReadBy("MessagesController#deleteMessagesAAOJZIZJOIZI", "MessagesController#deleteMessagesAAOJZIZJOI")
+                .postedThrough("NotificationCenter#postNotificationName"));
         s.add(field("UserConfig", "clientUserId").type("long").writtenBy("UserConfig#setCurrentUser", 0));
         s.add(field("UserConfig", "selectedAccount").keyedBy("UserConfig#loadConfig", "selectedAccount"));
         s.add(field("Utilities", "stageQueue").keyedBy("Utilities#<clinit>", "stageQueue"));

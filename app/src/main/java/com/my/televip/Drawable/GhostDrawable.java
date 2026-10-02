@@ -89,6 +89,7 @@ public class GhostDrawable extends Drawable {
         invalidateSelf();
     }
 
+    @SuppressWarnings("deprecation")   // still abstract in Drawable
     @Override
     public int getOpacity() {
         return paint.getAlpha() == 255 ? PixelFormat.OPAQUE : PixelFormat.TRANSLUCENT;

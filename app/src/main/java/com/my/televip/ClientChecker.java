@@ -43,21 +43,21 @@ public class ClientChecker {
     static {
         VERIFIED_BUILD.put(ClientType.Telegram, "12.10.1 (70382)");
         VERIFIED_BUILD.put(ClientType.TelegramBeta, "12.9.0 (69579)");
-        VERIFIED_BUILD.put(ClientType.TelegramWeb, "12.8.3 (69229)");
+        VERIFIED_BUILD.put(ClientType.TelegramWeb, "12.10.6 (71129)");
         VERIFIED_BUILD.put(ClientType.TelegramPlus, "12.8.1.0 (22350)");
         VERIFIED_BUILD.put(ClientType.TGConnect, "11.13.1 (11130109)");
-        VERIFIED_BUILD.put(ClientType.Nagram, "12.8.1 (1239)");
-        VERIFIED_BUILD.put(ClientType.NagramX, "12.8.1-2bcd1bd (1253)");
+        VERIFIED_BUILD.put(ClientType.Nagram, "12.10.1 (1248)");
+        VERIFIED_BUILD.put(ClientType.NagramX, "12.9.2-ee899ef (1258)");
         VERIFIED_BUILD.put(ClientType.NagramXF, "12.7.3 (1245)");
-        VERIFIED_BUILD.put(ClientType.Nekogram, "12.8.1 (69160)");
-        VERIFIED_BUILD.put(ClientType.Cherrygram, "12.8.1 (69160)");
+        VERIFIED_BUILD.put(ClientType.Nekogram, "12.10.6 (71120)");
+        VERIFIED_BUILD.put(ClientType.Cherrygram, "12.10.6 (71120)");
         VERIFIED_BUILD.put(ClientType.Nicegram, "1.55.0 (2139)");
         VERIFIED_BUILD.put(ClientType.iMe, "12.8.1 (12080102)");
         VERIFIED_BUILD.put(ClientType.iMeWeb, "12.8.1 (12080109)");
         VERIFIED_BUILD.put(ClientType.XPlus, "12.0.1 (61669)");
-        VERIFIED_BUILD.put(ClientType.forkgram, "12.8.4.0 (691908)");
+        VERIFIED_BUILD.put(ClientType.forkgram, "12.10.4.0 (709008)");
         VERIFIED_BUILD.put(ClientType.forkgramBeta, "12.8.4.0 (691909)");
-        VERIFIED_BUILD.put(ClientType.ForkgramClassic, "12.8.10.0");
+        VERIFIED_BUILD.put(ClientType.ForkgramClassic, "12.10.8.0 (709208)");
         VERIFIED_BUILD.put(ClientType.Mercurygram, "12.10.5.1 (7105018)");
         VERIFIED_BUILD.put(ClientType.Telegraph, "12.8.1.1 (69172)");
         VERIFIED_BUILD.put(ClientType.Telega, "2.4.3 (107)");
@@ -91,7 +91,7 @@ public class ClientChecker {
 
             PackageManager pm = context.getPackageManager();
             PackageInfo info = pm.getPackageInfo(context.getPackageName(), 0);
-            String running = info.versionName + " (" + info.versionCode + ")";
+            String running = info.versionName + " (" + Utils.versionCode(info) + ")";
             String verified = VERIFIED_BUILD.get(client);
 
             if (verified == null) {

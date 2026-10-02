@@ -191,63 +191,9 @@ public interface Body {
         return (r, m) -> Refs.of(r, m).calls.isEmpty();
     }
 
-    /**
-     * Writes a field of {@code listenerType} on {@code owner} that some method of {@code owner}
-     * reads and then invokes with the integer constant {@code which} - e.g. the AlertDialog
-     * listener that gets called with BUTTON_POSITIVE (-1). Pins a setter to what it means rather
-     * than to what R8 happened to call it.
-     */
-    static Body writesListenerInvokedWith(final String owner, final String listenerType, final int which) {
-        return (r, m) -> {
-            DexClass ownerClass = r.cls(owner);
-            String listenerDesc = r.descriptor(listenerType);
-            if (ownerClass == null || listenerDesc == null) return null;
-            Set<String> invokedWithWhich = new HashSet<>();
-            for (DexClass.Method candidate : ownerClass.methods) {
-                Refs refs = Refs.of(r, candidate);
-                if (!refs.constants.contains((long) which)) continue;
-                boolean callsListener = false;
-                for (Refs.Call call : refs.calls) {
-                    if (call.owner.equals(listenerDesc)) callsListener = true;
-                }
-                if (!callsListener) continue;
-                Set<String> read = new HashSet<>();
-                for (Refs.FieldRef f : refs.fields) {
-                    if (!f.write && f.type.equals(listenerDesc)) read.add(f.owner + "." + f.name);
-                }
-                if (read.size() == 1) invokedWithWhich.addAll(read);   // one listener per handler
-            }
-            for (Refs.FieldRef f : Refs.of(r, m).fields) {
-                if (f.write && f.type.equals(listenerDesc) && invokedWithWhich.contains(f.owner + "." + f.name)) return true;
-            }
-            return false;
-        };
-    }
-
     /** Has a switch with this case key. */
     static Body switchKey(final int key) {
         return (r, m) -> Refs.of(r, m).switchKeys.contains(key);
-    }
-
-    /**
-     * Writes a field of this type that another (resolved) method also writes. Ties a renamed
-     * setter to the field a kept method is known to use, e.g. Builder.setTitle to whatever field
-     * the dialog's own framework-named setTitle writes.
-     */
-    static Body writesFieldWrittenBy(final String methodSymbolId, final String type) {
-        return (r, m) -> {
-            DexClass.Method other = r.methods.get(methodSymbolId);
-            String typeDesc = r.descriptor(type);
-            if (other == null || typeDesc == null) return null;
-            Set<String> theirs = new HashSet<>();
-            for (Refs.FieldRef f : Refs.of(r, other).fields) {
-                if (f.write && f.type.equals(typeDesc)) theirs.add(f.owner + "." + f.name);
-            }
-            for (Refs.FieldRef f : Refs.of(r, m).fields) {
-                if (f.write && f.type.equals(typeDesc) && theirs.contains(f.owner + "." + f.name)) return true;
-            }
-            return false;
-        };
     }
 
     /** Writes some field of {@code owner} whose type is {@code type}. */

@@ -32,7 +32,7 @@ public class RequestDelegate {
         if (requestDelegateClass != null) {
             return Proxy.newProxyInstance(
                     Utils.classLoader,
-                    new Class[]{requestDelegateClass},
+                    new Class<?>[]{requestDelegateClass},
                     (proxy, method, args) -> {
                         if (method.getParameterCount() == 2 && method.getParameterTypes()[0] == ClassLoad.getClass(ClassNames.TL_OBJECT)) {
                             lambda.run(args[0], args[1]);

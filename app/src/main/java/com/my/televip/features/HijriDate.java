@@ -28,7 +28,7 @@ public class HijriDate {
                 HMethod.hookMethod(
                         ClassLoad.getClass(ClassNames.LOCALE_CONTROLLER),
                         AutomationResolver.resolve("LocaleController", "formatYearMont", AutomationResolver.ResolverType.Method),
-                        AutomationResolver.merge(AutomationResolver.resolveObject("formatYearMont", new Class[]{long.class, boolean.class}), new AbstractMethodHook() {
+                        AutomationResolver.merge(AutomationResolver.resolveObject("formatYearMont", new Class<?>[]{long.class, boolean.class}), new AbstractMethodHook() {
                             @Override
                             protected void afterMethod(MethodHookParam param) {
                                 if (ConfigManager.customCalendar.getCustomCalendar() == 0) {
@@ -48,7 +48,7 @@ public class HijriDate {
                 HMethod.hookMethod(
                         ClassLoad.getClass(ClassNames.FAST_DATE_FORMAT),
                         AutomationResolver.resolve("FastDateFormat", "format", AutomationResolver.ResolverType.Method),
-                        AutomationResolver.merge(AutomationResolver.resolveObject("format", new Class[]{long.class}), new AbstractMethodHook() {
+                        AutomationResolver.merge(AutomationResolver.resolveObject("format", new Class<?>[]{long.class}), new AbstractMethodHook() {
                             @Override
                             protected void afterMethod(MethodHookParam param) {
                                 if (ConfigManager.customCalendar.getCustomCalendar() == 0) {
@@ -69,7 +69,7 @@ public class HijriDate {
                 HMethod.hookMethod(
                         ClassLoad.getClass(ClassNames.FAST_DATE_FORMAT),
                         AutomationResolver.resolve("FastDateFormat", "format", AutomationResolver.ResolverType.Method),
-                        AutomationResolver.merge(AutomationResolver.resolveObject("format", new Class[]{Calendar.class}), new AbstractMethodHook() {
+                        AutomationResolver.merge(AutomationResolver.resolveObject("format", new Class<?>[]{Calendar.class}), new AbstractMethodHook() {
                             @Override
                             protected void afterMethod(MethodHookParam param) {
                                 if (ConfigManager.customCalendar.getCustomCalendar() == 0) {
@@ -87,7 +87,7 @@ public class HijriDate {
                 HMethod.hookMethod(
                         ClassLoad.getClass(ClassNames.FAST_DATE_FORMAT),
                         AutomationResolver.resolve("FastDateFormat", "format", AutomationResolver.ResolverType.Method),
-                        AutomationResolver.merge(AutomationResolver.resolveObject("format", new Class[]{Date.class}), new AbstractMethodHook() {
+                        AutomationResolver.merge(AutomationResolver.resolveObject("format", new Class<?>[]{Date.class}), new AbstractMethodHook() {
                             @Override
                             protected void afterMethod(MethodHookParam param) {
                                 if (ConfigManager.customCalendar.getCustomCalendar() == 0) {

@@ -33,7 +33,7 @@ public class HideUpdateApp {
                     HMethod.hookMethod(
                             ClassLoad.getClass(ClassNames.SHARED_CONFIG),
                             AutomationResolver.resolve("SharedConfig", "setNewAppVersionAvailable", AutomationResolver.ResolverType.Method),
-                            AutomationResolver.merge(AutomationResolver.resolveObject("setNewAppVersionAvailable", new Class[]{ClassLoad.getClass(ClassNames.TL_HELP_APP_UPDATE)}), new MethodReplacement() {
+                            AutomationResolver.merge(AutomationResolver.resolveObject("setNewAppVersionAvailable", new Class<?>[]{ClassLoad.getClass(ClassNames.TL_HELP_APP_UPDATE)}), new MethodReplacement() {
                                 @Override
                                 protected Object replaceHookedMethod(MethodHookParam param) {
                                     // void in builds where it always answered true.

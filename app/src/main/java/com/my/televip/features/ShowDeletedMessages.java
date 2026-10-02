@@ -134,7 +134,7 @@ public class ShowDeletedMessages {
                 HMethod.hookMethod(
                         ClassLoad.getClass(ClassNames.MESSAGES_STORAGE),
                         AutomationResolver.resolve("MessagesStorage", "markMessagesAsDeleted", AutomationResolver.ResolverType.Method),
-                        AutomationResolver.merge(AutomationResolver.resolveObject("markMessagesAsDeleted", new Class[]{long.class, java.util.ArrayList.class, boolean.class, boolean.class, int.class, int.class}),
+                        AutomationResolver.merge(AutomationResolver.resolveObject("markMessagesAsDeleted", new Class<?>[]{long.class, java.util.ArrayList.class, boolean.class, boolean.class, int.class, int.class}),
                                 new AbstractMethodHook() {
                                     @Override
                                     protected void beforeMethod(MethodHookParam param) {
@@ -166,7 +166,7 @@ public class ShowDeletedMessages {
             HMethod.hookMethod(
                     ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER),
                     AutomationResolver.resolve("MessagesController", "deleteMessages", AutomationResolver.ResolverType.Method),
-                    AutomationResolver.merge(AutomationResolver.resolveObject("deleteMessages", new Class[]{java.util.ArrayList.class,
+                    AutomationResolver.merge(AutomationResolver.resolveObject("deleteMessages", new Class<?>[]{java.util.ArrayList.class,
                                     java.util.ArrayList.class,
                                     ClassLoad.getClass(ClassNames.TLRPC_ENCRYPTED_CHAT),
                                     long.class,
@@ -186,7 +186,7 @@ public class ShowDeletedMessages {
                             }
                     ));
 
-            HMethod.hookMethod(ClassLoad.getClass(ClassNames.NOTIFICATION_CENTER), AutomationResolver.resolve("NotificationCenter", "postNotificationName", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("postNotificationName", new Class[]{int.class, Object[].class}), new AbstractMethodHook() {
+            HMethod.hookMethod(ClassLoad.getClass(ClassNames.NOTIFICATION_CENTER), AutomationResolver.resolve("NotificationCenter", "postNotificationName", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("postNotificationName", new Class<?>[]{int.class, Object[].class}), new AbstractMethodHook() {
                 @Override
                 protected void beforeMethod(MethodHookParam param) {
                     if (!isDeleteMessage) {

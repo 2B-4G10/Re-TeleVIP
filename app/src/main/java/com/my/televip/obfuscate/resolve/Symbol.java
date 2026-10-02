@@ -425,9 +425,8 @@ public abstract class Symbol {
         String keyHost, key;
         String flagHost;
         int flagBit;
-        Long initialValue;
-        String storedBy;
-        long storedValue;
+        String[] lastReaders;
+        String postMethod;
         boolean intLike;
 
         FieldSymbol(String owner, String name) {
@@ -438,7 +437,7 @@ public abstract class Symbol {
         @Override
         boolean hasFingerprint() {
             return keyHost != null || flagHost != null
-                    || type != null && (uniqueOfType || writtenBy != null || storedBy != null || handedIn != null);
+                    || type != null && (uniqueOfType || writtenBy != null || lastReaders != null || handedIn != null);
         }
 
         /**
@@ -461,18 +460,21 @@ public abstract class Symbol {
         }
 
         /**
-         * The static field {@code methodSymbolId} sets to {@code value}, following constants and
-         * additions - an event id from {@code a = total++; b = total++; ...}. Counting writes
-         * instead breaks wherever R8 folds some of them into initial values.
+         * The last field of this type the first resolved {@code methodSymbolIds} reads - e.g. the
+         * event a method posts after any others.
          */
-        public FieldSymbol storedBy(String methodSymbolId, long value) {
-            this.storedBy = methodSymbolId;
-            this.storedValue = value;
+        public FieldSymbol lastReadBy(String... methodSymbolIds) {
+            this.lastReaders = methodSymbolIds;
             return this;
         }
 
-        public FieldSymbol orInitialValue(long value) {
-            this.initialValue = value;
+        /**
+         * For lastReadBy, where R8 has folded the read into a constant: the last constant those
+         * methods pass to {@code postMethodSymbolId} as its first argument, and the static field
+         * of this class that holds that value - as its initial value, or as <clinit> stores it.
+         */
+        public FieldSymbol postedThrough(String postMethodSymbolId) {
+            this.postMethod = postMethodSymbolId;
             return this;
         }
 
@@ -706,7 +708,7 @@ public abstract class Symbol {
             if (typeDesc != null && writtenBy != null) {
                 DexClass.Method writer = r.methods.get(writtenBy);
                 if (writer == null && r.isResolvedOrPending(writtenBy)) return Resolver.Attempt.waiting();
-                if (writer == null) return byStoredValue(r, cls, typeDesc);
+                if (writer == null) return Resolver.Attempt.notFound();
                 String altDesc = alternativeType == null ? null : r.descriptor(alternativeType);
                 List<String> order = new ArrayList<>();
                 for (Body.Refs.FieldRef f : Body.Refs.of(r, writer).fields) {
@@ -716,32 +718,45 @@ public abstract class Symbol {
                     if (f.write != ordinalOfReads && f.owner.equals(cls.descriptor) && typeFits
                             && !order.contains(f.name)) order.add(f.name);
                 }
-                if (writeOrdinal >= order.size()) return byStoredValue(r, cls, typeDesc);
+                if (writeOrdinal >= order.size()) return Resolver.Attempt.notFound();
                 DexClass.Field declared = cls.fieldNamed(order.get(writeOrdinal));
                 return declared == null ? Resolver.Attempt.notFound() : Resolver.Attempt.of(declared, false);
             }
-            if (typeDesc != null && storedBy != null) return byStoredValue(r, cls, typeDesc);
+            if (typeDesc != null && lastReaders != null) {
+                DexClass.Method post = postMethod == null ? null : r.methods.get(postMethod);
+                if (postMethod != null && post == null && r.isResolvedOrPending(postMethod)) return Resolver.Attempt.waiting();
+                for (String reader : lastReaders) {
+                    DexClass.Method m = r.methods.get(reader);
+                    if (m == null && r.isResolvedOrPending(reader)) return Resolver.Attempt.waiting();
+                    if (m == null) continue;
+                    String last = null;
+                    for (Body.Refs.FieldRef f : Body.Refs.of(r, m).fields) {
+                        if (!f.write && f.owner.equals(cls.descriptor) && f.type.equals(typeDesc)) last = f.name;
+                    }
+                    if (last != null) {
+                        DexClass.Field declared = cls.fieldNamed(last);
+                        return declared == null ? Resolver.Attempt.notFound() : Resolver.Attempt.of(declared, false);
+                    }
+                    if (post == null) continue;
+                    List<Long> posted = m.constantArguments(post.owner.descriptor, post.name(), 1);
+                    Long id = posted.isEmpty() ? null : posted.get(posted.size() - 1);
+                    if (id != null) return holding(cls, typeDesc, id);
+                }
+            }
             return Resolver.Attempt.notFound();
         }
 
-        private Resolver.Attempt byStoredValue(Resolver r, DexClass cls, String typeDesc) {
-            if (storedBy == null) return byInitialValue(cls, typeDesc);
-            DexClass.Method writer = r.methods.get(storedBy);
-            if (writer == null) return r.isResolvedOrPending(storedBy)
-                    ? Resolver.Attempt.waiting() : byInitialValue(cls, typeDesc);
+        /** The static field of {@code cls} holding {@code value}: its initial value, or what <clinit> stores. */
+        private static Resolver.Attempt holding(DexClass cls, String typeDesc, long value) {
             List<DexClass.Field> found = new ArrayList<>();
-            for (java.util.Map.Entry<String, Long> e : writer.staticIntWrites().entrySet()) {
-                DexClass.Field f = cls.fieldNamed(e.getKey());
-                if (f != null && f.isStatic() && f.type().equals(typeDesc) && e.getValue() == storedValue) found.add(f);
+            java.util.Map<String, Long> stored = new java.util.HashMap<>();
+            for (DexClass.Method m : cls.methods) {
+                if (m.name().equals("<clinit>")) stored = m.staticIntWrites();
             }
-            return found.isEmpty() ? byInitialValue(cls, typeDesc) : Resolver.Attempt.single(found);
-        }
-
-        private Resolver.Attempt byInitialValue(DexClass cls, String typeDesc) {
-            if (initialValue == null) return Resolver.Attempt.notFound();
-            List<DexClass.Field> found = new ArrayList<>();
             for (DexClass.Field f : cls.fields) {
-                if (f.isStatic() && f.type().equals(typeDesc) && initialValue.equals(cls.initialValue(f))) found.add(f);
+                if (!f.isStatic() || !f.type().equals(typeDesc)) continue;
+                Long v = stored.containsKey(f.name()) ? stored.get(f.name()) : cls.initialValue(f);
+                if (v != null && v == value) found.add(f);
             }
             return Resolver.Attempt.single(found);
         }

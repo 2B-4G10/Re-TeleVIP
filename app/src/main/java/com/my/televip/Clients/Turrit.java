@@ -113,7 +113,7 @@ public class Turrit {
     }
 
     public static void loadParameter() {
-        ParameterResolver.register("fillMessageMenu", new Class[]{ClassLoad.getClass(ClassNames.MESSAGE_OBJECT), ArrayList.class, ArrayList.class, ArrayList.class, CharSequence.class});
+        ParameterResolver.register("fillMessageMenu", new Class<?>[]{ClassLoad.getClass(ClassNames.MESSAGE_OBJECT), ArrayList.class, ArrayList.class, ArrayList.class, CharSequence.class});
     }
 
     public static void showGhostModeDialog(SettingsController settingsController){

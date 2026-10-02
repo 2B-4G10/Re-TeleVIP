@@ -1,11 +1,10 @@
 package com.my.televip.obfuscate;
 
 import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.os.Build;
 
 import com.my.televip.ClientChecker;
 import com.my.televip.logging.Logger;
+import com.my.televip.utils.Utils;
 import com.my.televip.obfuscate.dex.DexIndex;
 import com.my.televip.obfuscate.resolve.Mapping;
 import com.my.televip.obfuscate.resolve.Resolver;
@@ -208,8 +207,7 @@ public final class RuntimeMappings {
     }
 
     private static long versionCode(Context context) throws Exception {
-        PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-        return Build.VERSION.SDK_INT >= 28 ? info.getLongVersionCode() : info.versionCode;
+        return Utils.versionCode(context.getPackageManager().getPackageInfo(context.getPackageName(), 0));
     }
 
     private static String readText(File file) throws Exception {
