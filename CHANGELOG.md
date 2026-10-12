@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.7 — weekly update
+
+- Build: Bump gradle-wrapper from 9.8.0 to 9.8.1 in the gradle group (#5)
+
 ## 1.1.6 — the settings screen on every client, and Momogram
 
 - **Fixed: Re: TeleVIP Settings could open empty**, showing only its title bar (reported on
