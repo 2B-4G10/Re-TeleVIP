@@ -131,6 +131,12 @@ jobs:
             fi
             echo "::endgroup::"
             [ -f report.md ] || echo "The check produced no report; see the \"Check every build\" log." > report.md
+            if [ "$outcome" = broken ]; then
+              # Also as an annotation, which the API serves without the log: the build and its report.
+              message=$(printf '%s\n%s\n\n%s' "$label" "$url" "$(cat report.md)" \
+                | sed 's/%/%25/g; s/\r/%0D/g' | awk '{printf "%s%%0A", $0}')
+              echo "::error title=$CLIENT $version broken::$message"
+            fi
             if [ "$outcome" = ok ]; then
               { echo "<details><summary>$CLIENT $version: every feature resolves</summary>"; echo; cat report.md; echo; echo "</details>"; echo; } >> summary.md
             else
