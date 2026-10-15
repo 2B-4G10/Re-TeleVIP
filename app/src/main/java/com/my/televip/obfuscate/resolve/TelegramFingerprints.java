@@ -675,8 +675,10 @@ public final class TelegramFingerprints {
                         hasField(false, "java.lang.Object[]")));
         s.add(cls("org.telegram.messenger.browser.Browser")
                 .from(declaringStrings("com.duckduckgo.mobile.android", "vivaldi-browser")));
+        // Nagram 1253+ also has a settings screen reading both keys; only Theme holds the paints.
         s.add(cls("org.telegram.ui.ActionBar.Theme")
-                .from(declaringStrings("autoNightScheduleByLocation", "autoNightLastSunCheckDay")));
+                .from(declaringStrings("autoNightScheduleByLocation", "autoNightLastSunCheckDay"))
+                .where(hasField(true, "android.text.TextPaint")));
         s.add(cls("org.telegram.ui.Stories.StoriesController")
                 .from(returnTypeOf("org.telegram.messenger.MessagesController", "getStoriesController"),
                         declaringStrings("stories_stealth_mode", "last_stories_state_hidden")));
