@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.8 — Nekogram 13 and Nagram 1253
+
+- **Fixed: Re: TeleVIP on Nekogram 13.0.2**, the first build on Telegram 13.0: secret media
+  saving, keeping messages forwardable, the voice-to-music switch and reading secret messages
+  could not find their code. Telegram 13 adds a table of every message type that misled the
+  module's lookup; it now skips it.
+- **Fixed: Re: TeleVIP on Nagram 1253** (12.10.6): its colours (dark theme check, message time
+  paint) were not found because Nagram now renames the theme class.
+
 ## 1.1.7 — weekly update
 
 - Build: Bump gradle-wrapper from 9.8.0 to 9.8.1 in the gradle group (#5)
