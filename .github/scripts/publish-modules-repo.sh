@@ -24,9 +24,26 @@ if [ "$(gh api "repos/$repo" --jq '.permissions.push // false' 2>/dev/null)" != 
   exit 1
 fi
 
-# The description is the module's display name there; the maintainer role may not be allowed it.
-gh api -X PATCH "repos/$repo" -f description="Re: TeleVIP" -f homepage="https://github.com/$GITHUB_REPOSITORY" >/dev/null \
-  || echo "::warning::Could not set the description of $repo; set it to \"Re: TeleVIP\" by hand."
+# The description is the module's display name there. The maintainer role this token has may not
+# change it, so only try when it is wrong, and only warn when it stays wrong. A home page under this
+# repository's old name still counts, since GitHub redirects it here.
+want_description="Re: TeleVIP"
+want_homepage="https://github.com/$GITHUB_REPOSITORY"
+description=$(gh api "repos/$repo" --jq '.description // ""')
+homepage=$(gh api "repos/$repo" --jq '.homepage // ""')
+homepage_repo=$(printf '%s' "$homepage" | sed -n 's|^https://github.com/\([^/]*/[^/]*\)/*$|\1|p')
+if [ -n "$homepage_repo" ] && [ "$(gh api "repos/$homepage_repo" --jq .full_name 2>/dev/null)" = "$GITHUB_REPOSITORY" ]; then
+  homepage=$want_homepage
+fi
+if [ "$description" != "$want_description" ] || [ "$homepage" != "$want_homepage" ]; then
+  if ! gh api -X PATCH "repos/$repo" -f description="$want_description" -f homepage="$want_homepage" >/dev/null; then
+    if [ "$description" != "$want_description" ]; then
+      echo "::warning::Could not set the description of $repo; set it to \"$want_description\" by hand."
+    else
+      echo "The home page of $repo is $homepage; it could not be set to $want_homepage."
+    fi
+  fi
+fi
 
 mkdir -p build/modules-repo
 cp .github/modules-repo/SUMMARY build/modules-repo/SUMMARY

@@ -16,7 +16,13 @@ source=$1
 case "$source" in
   github)
     repo=$2 asset=$3 count=${4:-5} only=${5:-}
-    gh api "repos/$repo/releases?per_page=50" | jq -r --arg asset "$asset" --argjson n "$count" \
+    # The API sometimes answers 5xx or times out for a moment: try again before giving up.
+    for attempt in 1 2 3 4 5; do
+      releases=$(gh api "repos/$repo/releases?per_page=50") && break
+      [ "$attempt" = 5 ] && { echo "Could not list the releases of $repo." >&2; exit 1; }
+      sleep $((attempt * 15))
+    done
+    printf '%s' "$releases" | jq -r --arg asset "$asset" --argjson n "$count" \
         --argjson only "$([ "$only" = only ] && echo true || echo false)" '
       [ .[] | select(.draft | not)
         | {tag: .tag_name, apks: [.assets[] | select(.name | test("\\.apk$"; "i"))]}
