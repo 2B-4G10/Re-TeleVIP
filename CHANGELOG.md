@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.9 — no more broken hooks on Nagram, Nekogram and Nagram X
+
+- **Fixed: Block Ads' second barrier did nothing on Nagram and Nekogram.** When an ad request
+  got through anyway, the module could not build the "no ads" answer to put in place of the
+  server's, because those builds strip its constructor (they never create it themselves). It is
+  now made without one, with its lists empty as usual.
+- **The hook health line no longer reports code a client removed on purpose as missing.** Nagram
+  X drops search ads (`contacts.getSponsoredPeers`), some Nagram builds drop
+  `MessagesController.getSponsoredMessages` and Nekogram drops the settings row's icon cell; the
+  module already covered each another way, but logged them as "missing" and "Your Telegram client
+  may be an incompatible version". They are now listed as "not in this build (fallback in use)",
+  with the reason, and a class that is not found is logged and counted once.
+- The list of what a build may lack now lives in the module itself, so the weekly client check
+  and the module's own report always agree. Checked on Telegram 13.0.3, Nekogram 13.0.2,
+  Cherrygram 11.3.0, Nagram 1253, Nagram X 1260 and Momogram 12.10.6: every hook resolves.
+
 ## 1.1.8 — Nekogram 13 and Nagram 1253
 
 - **Fixed: Re: TeleVIP on Nekogram 13.0.2**, the first build on Telegram 13.0: secret media
