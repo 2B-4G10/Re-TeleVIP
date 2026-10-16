@@ -7,6 +7,8 @@ import com.my.televip.Class.ClassNames;
 import com.my.televip.Configs.ConfigManager;
 import com.my.televip.application.AndroidUtilities;
 import com.my.televip.base.AbstractMethodHook;
+import com.my.televip.diagnostics.HookHealth;
+import com.my.televip.diagnostics.OptionalSymbols;
 import com.my.televip.hooks.HMethod;
 import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.AutomationResolver;
@@ -128,12 +130,20 @@ public class AdBlock {
         final Class<?> empty = ClassLoad.getClass(emptyName);
         Method read = request == null || empty == null ? null : answerReader(request);
         if (read == null) return;
-        final Constructor<?> create;
+        // Builds that never create the empty answer themselves (Nagram, Nekogram) keep the class
+        // but not its constructor: it is then made without one.
+        Constructor<?> constructor = null;
         try {
-            create = empty.getDeclaredConstructor();
-            create.setAccessible(true);
+            constructor = empty.getDeclaredConstructor();
+            constructor.setAccessible(true);
         } catch (NoSuchMethodException e) {
-            Logger.e(e);
+            Logger.l(empty.getName() + " has no constructor in this build; its empty answer is made without one");
+        }
+        final Constructor<?> create = constructor;
+        try {
+            if (create == null) XReflect.allocateInstance(empty);
+        } catch (Throwable t) {
+            Logger.e(t);
             return;
         }
         HMethod.hookMethod(read, new AbstractMethodHook() {
@@ -142,7 +152,7 @@ public class AdBlock {
                 Object answer = param.getResult();
                 if (answer != null && !empty.isInstance(answer) && enabled()) {
                     // The caller handles it like any answer without ads: it shows none and moves on.
-                    param.setResult(create.newInstance());
+                    param.setResult(create != null ? create.newInstance() : XReflect.allocateInstance(empty));
                 }
             }
         });
@@ -170,6 +180,14 @@ public class AdBlock {
     private static void hideChatAds() {
         Class<?> messagesController = ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER);
         if (messagesController == null) return;
+        String getSponsoredMessages = AutomationResolver.resolve("MessagesController", "getSponsoredMessages", AutomationResolver.ResolverType.Method);
+        if (XReflect.findMethodExactIfExists(messagesController, getSponsoredMessages, long.class) == null
+                && HookHealth.isOptional("MessagesController#getSponsoredMessages")) {
+            HookHealth.missingMember("MessagesController#getSponsoredMessages");
+            Logger.l("Not in this build: MessagesController#getSponsoredMessages ("
+                    + OptionalSymbols.reason("MessagesController#getSponsoredMessages") + ")");
+            return;
+        }
         // It returns null for chats that never show ads (groups, users), which every caller handles.
         HMethod.hookMethod(messagesController,
                 AutomationResolver.resolve("MessagesController", "getSponsoredMessages", AutomationResolver.ResolverType.Method),
