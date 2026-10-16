@@ -294,6 +294,34 @@ public final class XReflect {
         }
     }
 
+    /**
+     * An instance of {@code clazz} built without calling its constructor, for classes R8 has left
+     * without one (a class the client never creates itself loses its constructors, but stays
+     * because other code still checks for it). Fields a constructor would have filled with an empty
+     * list get one, so the object reads like a freshly made one.
+     */
+    public static Object allocateInstance(Class<?> clazz) {
+        if (clazz == null) throw new NullPointerException("allocateInstance on null class");
+        try {
+            Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+            Field theUnsafe = unsafeClass.getDeclaredField("theUnsafe");
+            theUnsafe.setAccessible(true);
+            Object unsafe = theUnsafe.get(null);
+            Object instance = unsafeClass.getMethod("allocateInstance", Class.class).invoke(unsafe, clazz);
+            for (Class<?> c = clazz; c != null && c != Object.class; c = c.getSuperclass()) {
+                for (Field f : c.getDeclaredFields()) {
+                    if (Modifier.isStatic(f.getModifiers()) || !f.getType().isAssignableFrom(ArrayList.class)
+                            || f.getType() == Object.class) continue;
+                    f.setAccessible(true);
+                    if (f.get(instance) == null) f.set(instance, new ArrayList<>());
+                }
+            }
+            return instance;
+        } catch (Throwable t) {
+            throw unwrap(t);
+        }
+    }
+
     // ----------------------------------------------------------------- fields
 
     public static Field findField(Class<?> clazz, String fieldName) {

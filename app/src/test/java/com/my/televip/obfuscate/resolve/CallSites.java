@@ -109,10 +109,10 @@ final class CallSites {
     }
 
     /**
-     * Call sites a miss does not break, with the reason: the module has a working fallback of its
-     * own, or the symbol only exists in older builds and the feature has another hook there.
+     * Call sites a miss does not break, with the reason. Kept in the module itself, so its runtime
+     * hook health report and these checks agree on what a fallback is.
      */
-    static final Map<String, String> OPTIONAL = new LinkedHashMap<>();
+    static final Map<String, String> OPTIONAL = com.my.televip.diagnostics.OptionalSymbols.REASONS;
 
     /**
      * Features reached by more than one route. Each group needs one route whose entries all
@@ -121,27 +121,6 @@ final class CallSites {
     static final Map<String, String[][]> ROUTES = new LinkedHashMap<>();
 
     static {
-        OPTIONAL.put("TextCheckCell#isChecked", "inlined in some builds; the module remembers the last value it set");
-        OPTIONAL.put("org.telegram.ui.Cells.ShadowSectionCell", "merged away in some builds; a plain spacer replaces it");
-        OPTIONAL.put("SettingsActivity$SettingCell#set", "the row's icon is set from Factory.bindView instead");
-        OPTIONAL.put("SettingsActivity$SettingCell$Factory#bindView", "only paints the app icon on TeleVip's row");
-        OPTIONAL.put("SettingsActivity$SettingCell.iconView", "only paints the app icon on TeleVip's row");
-        OPTIONAL.put("org.telegram.ui.SettingsActivity$SettingCell", "only paints the app icon on TeleVip's row");
-        OPTIONAL.put("SecretMediaViewer#openMedia", "the old secret media viewer; ChatActivity's hooks cover current builds");
-        OPTIONAL.put("SecretMediaViewer.onClose", "belt and braces: the read and delete requests are blocked already");
-        OPTIONAL.put("MessageObject#isSecret", "inlined by Nekogram 12.9-12.10.1, which does not offer Secret media save;"
-                + " the didPressImage hook clears the timer either way");
-        OPTIONAL.put("FileLoader#getLocalFile", "only used inside the old secret media viewer's hook (see openMedia)");
-        OPTIONAL.put("ImageReceiver#getImageLocation", "only used inside the old secret media viewer's hook (see openMedia)");
-        OPTIONAL.put("org.telegram.messenger.R$drawable", "stripped by some builds; icons are looked up in the resource table");
-        OPTIONAL.put("org.telegram.tgnet.TLRPC$TL_contacts_getSponsoredPeers",
-                "R8 drops it from builds that never send it (NagramX removes search ads itself)");
-        OPTIONAL.put("org.telegram.tgnet.TLRPC$TL_contacts_sponsoredPeersEmpty",
-                "dropped along with contacts.getSponsoredPeers from builds that never send it (NagramX)");
-        OPTIONAL.put("MessagesController#getSponsoredMessages",
-                "Nagram and NagramX return no sponsored posts from it themselves, which R8 leaves nothing of;"
-                        + " the ad requests and their answers are still blocked");
-
         String[] row = {"org.telegram.ui.SettingsActivity", "org.telegram.ui.SettingsActivity$SettingCell$Factory",
                 "SettingsActivity$SettingCell$Factory#of|SettingsActivity$SettingCell$Factory#ofIIIICCC",
                 "org.telegram.ui.Components.UItem", "UItem.id", "UItem.text", "UItem.subtext"};

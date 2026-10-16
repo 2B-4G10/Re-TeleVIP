@@ -10,7 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Records how each hook landed and logs one line at startup: how many resolved, how many were
- * recovered after their signature drifted, and which could not be found at all.
+ * recovered after their signature drifted, which the build lacks but the module covers another
+ * way ({@link OptionalSymbols}), and which could not be found at all.
  */
 public final class HookHealth {
 
@@ -23,6 +24,7 @@ public final class HookHealth {
     private static final AtomicInteger resolvedCount = new AtomicInteger();
     private static final AtomicInteger driftedCount = new AtomicInteger();
     private static final AtomicInteger missingCount = new AtomicInteger();
+    private static final AtomicInteger fallbackCount = new AtomicInteger();
 
     // Counters stay exact; these sets only hold the names the report has room to print.
     private static final Set<String> drifted =
@@ -30,6 +32,8 @@ public final class HookHealth {
     private static final Set<String> missingMembers =
             Collections.synchronizedSet(new LinkedHashSet<String>());
     private static final Set<String> missingClasses =
+            Collections.synchronizedSet(new LinkedHashSet<String>());
+    private static final Set<String> fallbacks =
             Collections.synchronizedSet(new LinkedHashSet<String>());
 
     /** A hook resolved exactly as the call site described it. */
@@ -46,16 +50,29 @@ public final class HookHealth {
 
     /** A method or constructor the call site asked for does not exist any more. */
     public static void missingMember(String symbol) {
-        if (symbol == null) return;
+        if (symbol == null || fallback(symbol)) return;
         missingCount.incrementAndGet();
         add(missingMembers, symbol);
     }
 
     /** A class name no longer resolves in the client. */
     public static void missingClass(String name) {
-        if (name == null) return;
+        if (name == null || fallback(name)) return;
         missingCount.incrementAndGet();
         add(missingClasses, name);
+    }
+
+    /** Counts a miss on an optional symbol as a fallback in use; false when the symbol is needed. */
+    private static boolean fallback(String symbol) {
+        if (OptionalSymbols.reason(symbol) == null) return false;
+        // Several call sites can ask for the same symbol: count it once.
+        if (fallbacks.add(symbol)) fallbackCount.incrementAndGet();
+        return true;
+    }
+
+    /** True when {@code symbol} is one a build may lack: callers log its miss as a fallback, not a fault. */
+    public static boolean isOptional(String symbol) {
+        return OptionalSymbols.reason(symbol) != null;
     }
 
     private static void add(Set<String> target, String value) {
@@ -67,11 +84,13 @@ public final class HookHealth {
         StringBuilder summary = new StringBuilder("hook health: ")
                 .append(resolvedCount.get()).append(" resolved, ")
                 .append(driftedCount.get()).append(" drifted, ")
-                .append(missingCount.get()).append(" missing");
+                .append(missingCount.get()).append(" missing, ")
+                .append(fallbackCount.get()).append(" not in this build (fallback in use)");
 
         append(summary, "drifted (signature changed, hooked anyway)", drifted);
         append(summary, "missing methods (feature inactive)", missingMembers);
         append(summary, "missing classes (feature inactive)", missingClasses);
+        append(summary, "not in this build (covered another way)", fallbacks);
         return summary.toString();
     }
 

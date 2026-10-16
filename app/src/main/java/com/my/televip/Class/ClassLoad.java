@@ -1,7 +1,7 @@
 package com.my.televip.Class;
 
-import com.my.televip.ClientChecker;
 import com.my.televip.diagnostics.HookHealth;
+import com.my.televip.diagnostics.OptionalSymbols;
 import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.AutomationResolver;
 import com.my.televip.utils.Utils;
@@ -27,13 +27,9 @@ public class ClassLoad {
                     resolved,
                     Utils.classLoader
             );
-            if (cls != null) {
-                cache.put(resolved, cls);
-            } else {
-                if ((ClientChecker.check(ClientChecker.ClientType.Nagram) || ClientChecker.check(ClientChecker.ClientType.Momogram)) && name.equals(ClassNames.DRAWABLE)) return null;
-                HookHealth.missingClass(resolved);
-                Logger.w("Not found " + name + ", " + resolved + " " + Utils.issue);
-            }
+            // A miss is remembered too, so it is counted and logged once, not at every lookup.
+            cache.put(resolved, cls);
+            if (cls == null) notFound(name, resolved);
             return cls;
 
         } catch (Throwable e) {
@@ -54,18 +50,26 @@ public class ClassLoad {
                     resolved,
                     classLoader
             );
-            if (cls != null) {
-                cache.put(resolved, cls);
-            } else {
-                HookHealth.missingClass(resolved);
-                Logger.w("Not found Class " + name + ", " + resolved + " " + Utils.issue);
-            }
+            // A miss is remembered too, so it is counted and logged once, not at every lookup.
+            cache.put(resolved, cls);
+            if (cls == null) notFound(name, resolved);
             return cls;
 
         } catch (Throwable e) {
             Logger.e(e);
             return null;
         }
+    }
+
+    /** A class the build lacks: a fallback when it is one builds may drop, a fault otherwise. */
+    private static void notFound(String name, String resolved) {
+        if (HookHealth.isOptional(name)) {
+            HookHealth.missingClass(name);
+            Logger.l("Not in this build: " + name + " (" + OptionalSymbols.reason(name) + ")");
+            return;
+        }
+        HookHealth.missingClass(resolved);
+        Logger.w("Not found " + name + ", " + resolved + " " + Utils.issue);
     }
 
 }
