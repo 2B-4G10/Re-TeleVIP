@@ -26,7 +26,7 @@ public class ChatHook {
     private static boolean initialized = false;
 
     public static void init(Context context) {
-        if (initialized || ClientChecker.check(ClientChecker.ClientType.Nagram) || ClientChecker.check(ClientChecker.ClientType.TelegramPlus)) return;
+        if (initialized || ClientChecker.check(ClientChecker.ClientType.Nagram)) return;
 
         try {
             initialized = true;
