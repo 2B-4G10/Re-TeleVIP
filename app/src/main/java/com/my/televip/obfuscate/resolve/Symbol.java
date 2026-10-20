@@ -426,6 +426,8 @@ public abstract class Symbol {
         String flagHost;
         int flagBit;
         String[] lastReaders;
+        String[] alsoReaders;
+        int ordinalWithoutAlsoReaders;
         String postMethod;
         boolean intLike;
 
@@ -544,6 +546,18 @@ public abstract class Symbol {
         public FieldSymbol keyedBy(String methodSymbolId, String key) {
             this.keyHost = methodSymbolId;
             this.key = key;
+            return this;
+        }
+
+        /**
+         * For writtenBy / readBy: count only the fields one of these (resolved) methods also reads,
+         * where a fork adds look-alikes of the same type to the first method - Plus Messenger clears
+         * a dozen extra folder lists in cleanup(). Where none of them resolves, the unfiltered
+         * {@code ordinalWithout}-th field is taken instead.
+         */
+        public FieldSymbol alsoReadBy(int ordinalWithout, String... methodSymbolIds) {
+            this.alsoReaders = methodSymbolIds;
+            this.ordinalWithoutAlsoReaders = ordinalWithout;
             return this;
         }
 
@@ -722,8 +736,23 @@ public abstract class Symbol {
                     if (f.write != ordinalOfReads && f.owner.equals(cls.descriptor) && typeFits
                             && !order.contains(f.name)) order.add(f.name);
                 }
-                if (writeOrdinal >= order.size()) return Resolver.Attempt.notFound();
-                DexClass.Field declared = cls.fieldNamed(order.get(writeOrdinal));
+                int ordinal = writeOrdinal;
+                if (alsoReaders != null) {
+                    java.util.Set<String> read = null;
+                    for (String reader : alsoReaders) {
+                        DexClass.Method m = r.methods.get(reader);
+                        if (m == null && r.isResolvedOrPending(reader)) return Resolver.Attempt.waiting();
+                        if (m == null) continue;
+                        if (read == null) read = new java.util.HashSet<>();
+                        for (Body.Refs.FieldRef f : Body.Refs.of(r, m).fields) {
+                            if (!f.write && f.owner.equals(cls.descriptor)) read.add(f.name);
+                        }
+                    }
+                    if (read != null) order.retainAll(read);
+                    else ordinal = ordinalWithoutAlsoReaders;
+                }
+                if (ordinal >= order.size()) return Resolver.Attempt.notFound();
+                DexClass.Field declared = cls.fieldNamed(order.get(ordinal));
                 return declared == null ? Resolver.Attempt.notFound() : Resolver.Attempt.of(declared, false);
             }
             if (typeDesc != null && lastReaders != null) {
