@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- **Works without root through LSPatch 1.2.** Patch your Telegram client with JingMatrix's
+  LSPatch, in Local or Integrated mode, and add Re: TeleVIP to it. The README has the steps.
+  Re: TeleVIP now also finds the client's real code under LSPatch straight away, so the first
+  launch after patching or updating the client isn't held up.
+
 ## 1.1.10 — a clearer settings screen
 
 - **Redesigned settings.** Each group (Ghost Mode, Stories, Messages, Connections, Media, UI and

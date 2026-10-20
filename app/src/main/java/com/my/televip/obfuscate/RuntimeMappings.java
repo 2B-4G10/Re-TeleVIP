@@ -57,13 +57,14 @@ public final class RuntimeMappings {
 
     /**
      * Starts resolving in the background. Called when the client's class loader is ready, well
-     * before any activity.
+     * before any activity. {@code apkPath} is the framework's word for where the client's code
+     * lives; the class loader is asked when it has none.
      */
-    public static void prefetch(String packageName, ClassLoader classLoader) {
+    public static void prefetch(String packageName, ClassLoader classLoader, String apkPath) {
         try {
             ClientChecker.ClientType client = ClientChecker.ClientType.fromPackage(packageName);
             if (client == null) return;
-            final String apk = apkPathOf(classLoader);
+            final String apk = isReadable(apkPath) ? apkPath : apkPathOf(classLoader);
             if (apk == null) return;
             final File cache = cacheFile(defaultCacheDir(packageName), packageName, new File(apk));
             FutureTask<Mapping> task = new FutureTask<>(new Callable<Mapping>() {
@@ -179,14 +180,28 @@ public final class RuntimeMappings {
 
     /**
      * The client's own APK, from its class loader's description - public, stable behaviour of
-     * BaseDexClassLoader - so it is available before any Context exists.
+     * BaseDexClassLoader - so it is available before any Context exists. The first APK on the dex
+     * path is the base one. It is not always under /data/app: LSPatch runs the client from the
+     * original APK it extracted into the client's own cache.
      */
     static String apkPathOf(ClassLoader classLoader) {
         String description = String.valueOf(classLoader);
-        int start = description.indexOf("/data/app/");
+        int start = description.indexOf("zip file \"");
+        if (start >= 0) {
+            start += "zip file \"".length();
+            int end = description.indexOf('"', start);
+            if (end > start && description.startsWith(".apk", end - 4)) {
+                return description.substring(start, end);
+            }
+        }
+        start = description.indexOf("/data/");
         if (start < 0) return null;
         int end = description.indexOf(".apk", start);
         return end > start ? description.substring(start, end + 4) : null;
+    }
+
+    private static boolean isReadable(String path) {
+        return path != null && !path.isEmpty() && new File(path).canRead();
     }
 
     /** The client's cache directory, computed from the process uid (100000 uids per user). */
