@@ -20,6 +20,7 @@ public class Keys {
     public static final String HideOnline = "HideOnline";
     public static final String PreventMedia = "PreventMedia";
     public static final String HidePhone = "HidePhone";
+    public static final String PhoneHidden = "PhoneHidden";
     public static final String ShowDeletedMessages = "ShowDeletedMessages";
     public static final String Deleted = "Deleted";
     public static final String Copied = "Copied";
