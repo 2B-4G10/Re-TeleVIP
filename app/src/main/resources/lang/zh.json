@@ -21,6 +21,7 @@
   "HideOnline": "隐藏 '在线' 状态",
   "PreventMedia": "防止删除秘密媒体",
   "HidePhone": "隐藏 '电话' 号码",
+  "PhoneHidden": "号码已隐藏",
   "ShowDeletedMessages": "显示已删除的消息",
   "Deleted": "已删除",
   "Copied": "已复制“%s”到剪贴板",

@@ -21,6 +21,7 @@
   "HideOnline": "إخفاء حالة الاتصال بالإنترنت",
   "PreventMedia": "تعطيل حذف الوسائط السرية",
   "HidePhone": "اخفاء رقم هاتف",
+  "PhoneHidden": "الرقم مخفي",
   "ShowDeletedMessages": "إظهار الرسائل المحذوفة",
   "Deleted": "محذوفه",
   "Copied": "تم نسخ '%s' إلى الحافظة",

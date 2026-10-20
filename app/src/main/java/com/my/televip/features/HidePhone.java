@@ -4,6 +4,8 @@ import com.my.televip.Class.ClassNames;
 import com.my.televip.Configs.ConfigManager;
 import com.my.televip.base.AbstractMethodHook;
 import com.my.televip.hooks.HMethod;
+import com.my.televip.language.Keys;
+import com.my.televip.language.Translator;
 import com.my.televip.Class.ClassLoad;
 import com.my.televip.obfuscate.AutomationResolver;
 import com.my.televip.logging.Logger;
@@ -31,6 +33,19 @@ public class HidePhone {
                                         user.setPhone(null);
                                     }
                                 }
+                            }
+                        }
+                    });
+                }
+
+                // With the number taken away, screens that print "+" + phone show "+null"
+                // (the Settings header in Telegram 13 and its forks): show "Number hidden".
+                if (ClassLoad.getClass(ClassNames.PHONE_FORMAT) != null) {
+                    HMethod.hookMethod(ClassLoad.getClass(ClassNames.PHONE_FORMAT), AutomationResolver.resolve("PhoneFormat", "format", AutomationResolver.ResolverType.Method), String.class, new AbstractMethodHook() {
+                        @Override
+                        protected void beforeMethod(MethodHookParam param) {
+                            if (ConfigManager.hidePhone.isEnable() && "+null".equals(param.args[0])) {
+                                param.setResult(Translator.get(Keys.PhoneHidden));
                             }
                         }
                     });

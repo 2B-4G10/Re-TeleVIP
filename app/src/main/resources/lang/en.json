@@ -21,6 +21,7 @@
   "HideOnline": "Hide 'Online' status",
   "PreventMedia": "Prevent Deletion of Secret Media",
   "HidePhone": "Hide 'Phone' number",
+  "PhoneHidden": "Number hidden",
   "ShowDeletedMessages": "Show 'Deleted Messages'",
   "Deleted": "deleted",
   "Copied": "Copied '%s' to the clipboard",
