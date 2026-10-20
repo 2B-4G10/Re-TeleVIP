@@ -350,11 +350,14 @@ public final class TelegramFingerprints {
                 .writtenBy("LocaleController#onDeviceConfigurationChange", 1));
         s.add(field("LocaleController", "isRTL").keyedBy("LocaleController#recreateFormatters", "iw_"));
         // cleanup() clears the per-account state field by field; its SparseArrays come in the
-        // order dialogsByFolder, dialogMessagesByIds, dialogFiltersById.
+        // order dialogsByFolder, dialogMessagesByIds, dialogFiltersById. Plus Messenger clears its
+        // own folder lists in between, so only those deleteMessages also reads count: of
+        // cleanup's, it reads dialogMessagesByIds alone. Without deleteMessages, the second one.
         s.add(method("MessagesController", "cleanup").sig("void")
                 .where(string("transcribeButtonPressed"), string("shortcut_widget")));
         s.add(field("MessagesController", "dialogMessagesByIds").type("android.util.SparseArray")
-                .readBy("MessagesController#cleanup", 1));
+                .readBy("MessagesController#cleanup", 0)
+                .alsoReadBy(1, "MessagesController#deleteMessagesAAOJZIZJOIZI", "MessagesController#deleteMessagesAAOJZIZJOIZIB"));
         // Marks a dialog's cached messages deleted: dialogMessage.get(id), then obj.deleted = true
         // for each Integer id that matches.
         s.add(method("MessagesController", "markDialogMessageAsDeleted").sig("void", "long", "java.util.ArrayList")
@@ -656,8 +659,10 @@ public final class TelegramFingerprints {
                 .from(declaringStrings("WelcomeMessagesLimit", "processLoadedDiscussionMessage reset history",
                         "AwaitingEncryption"),
                         declaringStrings("processLoadedDiscussionMessage reset history", "AwaitingEncryption")));
+        // Plus Messenger copies the debug menu holding both strings into PlusUtils and ProfileActivity.
         s.add(cls("org.telegram.ui.SettingsActivity")
-                .from(declaringStrings("disable shadows in settings", "enable debug view metrics")));
+                .from(declaringStrings("disable shadows in settings", "enable debug view metrics"))
+                .where(inherits("org.telegram.ui.ActionBar.BaseFragment")));
 
         // Helpers: not used by call sites directly, but other fingerprints anchor on them.
         s.add(cls("org.telegram.ui.ActionBar.BaseFragment")
