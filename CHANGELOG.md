@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.10 — a clearer settings screen
+
+- **Redesigned settings.** Each group (Ghost Mode, Stories, Messages, Connections, Media, UI and
+  Other Features) is now its own card with an icon, and every option has a short line under it
+  saying what it does, in English, Arabic, Persian and Chinese. "Restart required" sits on its own
+  line. Your saved settings are kept.
+- **Join the Re: TeleVIP group.** The developer channel button is replaced by the new group,
+  [t.me/Re_TeleVIP](https://t.me/Re_TeleVIP), shown with the app's logo. The join prompt points
+  there too.
+
 ## 1.1.9 — no more broken hooks on Nagram, Nekogram and Nagram X
 
 - **Fixed: Block Ads' second barrier did nothing on Nagram and Nekogram.** When an ad request
