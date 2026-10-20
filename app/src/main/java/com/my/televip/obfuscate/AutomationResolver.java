@@ -2,11 +2,14 @@ package com.my.televip.obfuscate;
 
 
 import com.my.televip.base.AbstractMethodHook;
+import com.my.televip.obfuscate.resolve.TelegramFingerprints;
 import com.my.televip.obfuscate.struct.ResolverRegistry;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 
@@ -16,6 +19,14 @@ public class AutomationResolver {
 
     /** Method names that came out of an obfuscated client's mapping - R8's, not the source's. */
     private static final Set<String> OBFUSCATED_NAMES = Collections.synchronizedSet(new HashSet<String>());
+
+    /**
+     * "runtime class#name" to the "Owner#name" a call site asked for, for names the mapping did
+     * not resolve. In a build that renames its classes the runtime class says nothing ("o5"), and
+     * the health report and the list of optional symbols go by the call site's name.
+     */
+    private static final Map<String, String> SYMBOLS = new ConcurrentHashMap<>();
+    private static Map<String, String> owners;
 
     /**
      * True for a method name this resolver produced from an obfuscation mapping. Such names carry
@@ -61,7 +72,23 @@ public class AutomationResolver {
         name = name.replace("storyEntitiesAllowed2", "storyEntitiesAllowed");
         name = name.replace("hasStories2", "hasStories");
 
+        if (type == ResolverType.Method) remember(className, name);
         return name;
+    }
+
+    private static void remember(String className, String name) {
+        try {
+            if (owners == null) owners = TelegramFingerprints.owners();
+            String owner = owners.get(className);
+            if (owner != null) SYMBOLS.put(resolve(owner) + "#" + name, className + "#" + name);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** The call site's "Owner#name" for a method of {@code clazz}, whatever the build named the class. */
+    public static String symbol(Class<?> clazz, String name) {
+        String known = SYMBOLS.get(clazz.getName() + "#" + name);
+        return known != null ? known : clazz.getSimpleName() + "#" + name;
     }
 
 
