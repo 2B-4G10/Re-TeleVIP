@@ -45,7 +45,7 @@ public final class ModuleEntry {
      */
     private static final AtomicBoolean STARTED = new AtomicBoolean();
 
-    public static void attach(String packageName, ClassLoader classLoader) {
+    public static void attach(String packageName, ClassLoader classLoader, String apkPath) {
         try {
             if (packageName == null || classLoader == null) return;
             if (!ClientChecker.ClientType.containsPackage(packageName)) return;
@@ -57,7 +57,7 @@ public final class ModuleEntry {
 
             // An obfuscated client's names are worked out from its own APK. Start now, off the main
             // thread, so it is normally done before the first activity needs it.
-            RuntimeMappings.prefetch(packageName, classLoader);
+            RuntimeMappings.prefetch(packageName, classLoader, apkPath);
 
             Logger.l("attached to " + packageName
                     + " | backend=" + XBridge.backendId()

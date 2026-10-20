@@ -83,8 +83,9 @@
 <tr>
   <td valign="top">
 
-- **LSPosed 1.10+** or **Vector 2.2+**<br><sub>libxposed API 102. LSPosed 1.9.x, EdXposed and LSPatch are not supported.</sub>
+- **LSPosed 1.10+** or **Vector 2.2+**<br><sub>libxposed API 102. LSPosed 1.9.x and EdXposed are not supported.</sub>
 - Any Zygisk provider<br><sub>Magisk, KernelSU, Zygisk Next or NeoZygisk</sub>
+- No root? **[LSPatch 1.2](https://github.com/JingMatrix/LSPatch/releases/latest)** by JingMatrix<br><sub>Android 9 or newer. See <i>Without root</i> below.</sub>
 - Android 8.1 or newer
 - On Android 17: Magisk 31.0+ and a Vector canary (3112 or newer)<br><sub>Magisk 30.7 and Vector 2.2 stable don't load modules on Android 17.</sub>
 
@@ -100,6 +101,24 @@
   </td>
 </tr>
 </table>
+
+<details>
+<summary><b>Without root (LSPatch)</b></summary>
+<br>
+
+<div align="left">
+
+1. Install **Re: TeleVIP** and the **LSPatch** manager.
+2. In LSPatch, tap **+**, pick your Telegram client and choose a patch mode:
+   - **Local**: LSPatch serves the module. Updating Re: TeleVIP only needs a restart of the client.
+   - **Integrated**: tick **Embed modules** → **Re: TeleVIP**. The patched app runs on its own, but every Re: TeleVIP update means patching again.
+3. Patch, then install the result. In Local mode, also tick Re: TeleVIP on the client's page in LSPatch.
+
+<sub>The patched client is signed by LSPatch, so Android has to uninstall the original one first. That deletes what the client keeps on the phone, Re: TeleVIP's settings and secret chats included: you'll sign in again and your cloud chats come back. Updates from the Play Store or the client's own updater won't install over it; patch each new version instead.</sub>
+
+</div>
+
+</details>
 
 <br>
 
