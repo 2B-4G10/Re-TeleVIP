@@ -108,6 +108,50 @@ public final class XReflect {
     }
 
     /**
+     * The one method named {@code name} taking exactly these parameter types in any order, for a
+     * call site that reads its arguments by type, not position (R8 groups parameters by type in
+     * some builds, and a fork's table can record the other order). Null when none or several.
+     */
+    public static Method findMethodAnyOrderIfExists(Class<?> clazz, String name, Class<?>... parameterTypes) {
+        if (clazz == null || name == null || hasUnresolvedType(parameterTypes)) return null;
+        java.util.List<String> want = sortedNames(parameterTypes);
+        Method found = null;
+        for (Method method : clazz.getDeclaredMethods()) {
+            if (!method.getName().equals(name) || !sortedNames(method.getParameterTypes()).equals(want)) continue;
+            if (found != null) return null;
+            found = method;
+        }
+        if (found != null) found.setAccessible(true);
+        return found;
+    }
+
+    /**
+     * The one method named {@code name} whose parameters start with these and carry more after
+     * them, as when a fork appends a parameter (Momogram's fillMessageMenu gains a View). The
+     * arguments the call site indexes keep their positions. Null when none or several.
+     */
+    public static Method findMethodWithMoreParamsIfExists(Class<?> clazz, String name, Class<?>... parameterTypes) {
+        if (clazz == null || name == null || hasUnresolvedType(parameterTypes)) return null;
+        Method found = null;
+        for (Method method : clazz.getDeclaredMethods()) {
+            Class<?>[] have = method.getParameterTypes();
+            if (!method.getName().equals(name) || have.length <= parameterTypes.length) continue;
+            if (!java.util.Arrays.equals(java.util.Arrays.copyOf(have, parameterTypes.length), parameterTypes)) continue;
+            if (found != null) return null;
+            found = method;
+        }
+        if (found != null) found.setAccessible(true);
+        return found;
+    }
+
+    private static java.util.List<String> sortedNames(Class<?>[] types) {
+        java.util.List<String> names = new java.util.ArrayList<>();
+        for (Class<?> type : types) names.add(type.getName());
+        java.util.Collections.sort(names);
+        return names;
+    }
+
+    /**
      * Finds a method whose signature has drifted since the call site was written.
      *
      * <p>Telegram is not obfuscated, so hooks address it by plain name — but a method keeping its
