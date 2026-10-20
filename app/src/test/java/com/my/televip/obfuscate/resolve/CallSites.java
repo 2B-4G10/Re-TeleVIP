@@ -87,7 +87,6 @@ final class CallSites {
             NOT_ON.put(pkg, new String[]{"HideUpdateApp"});   // Momogram has its own updater
         }
         NOT_ON.put("xyz.nextalone.nagram", new String[]{"ChatHook"});
-        NOT_ON.put("org.telegram.plus", new String[]{"ChatHook"});
     }
 
     /** Module classes a client runs: everything reachable from the classes ConfigManager does not turn off. */
