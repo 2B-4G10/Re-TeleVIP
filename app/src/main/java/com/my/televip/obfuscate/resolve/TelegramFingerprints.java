@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public final class TelegramFingerprints {
 
-    public static final int VERSION = 14;
+    public static final int VERSION = 15;
 
     private TelegramFingerprints() {
     }
@@ -1055,6 +1055,12 @@ public final class TelegramFingerprints {
         // anonymous subclass, leaving the tablet-only shadowTablet as the sole plain FrameLayout.
         s.add(field("LaunchActivity", "frameLayout").type("android.widget.FrameLayout")
                 .handedTo("onCreate", "setContentView"));
+
+        // The drawer's item list (Forkgram Classic's settings entry): the one void() building Items.
+        s.add(method("DrawerLayoutAdapter", "resetItems").sig("void")
+                .where(callsNamed("org.telegram.ui.Adapters.DrawerLayoutAdapter$Item", "<init>"), notSynthetic()));
+        // resetItems clears and refills accountNumbers first, then items.
+        s.add(field("DrawerLayoutAdapter", "items").type("java.util.ArrayList").readBy("DrawerLayoutAdapter#resetItems", 1));
 
         s.add(method("SecretMediaViewer", "closePhoto").sig("boolean", "boolean", "boolean"));
         s.add(method("SecretMediaViewer", "openMedia")
