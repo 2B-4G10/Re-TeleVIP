@@ -155,6 +155,22 @@ public class Translator {
         return key;
     }
 
+    /** The text for {@code key}, or null when no language pack has it (unlike get, never the key). */
+    public static String optional(String key) {
+        if (key == null) return null;
+        try {
+            if (localeController != null && localeController.getCurrentLocale() != null) {
+                JSONObject langJson = langMap.get(localeController.getCurrentLocale().getLanguage());
+                if (langJson != null && langJson.has(key)) return langJson.optString(key);
+            }
+            JSONObject enJson = langMap.get("en");
+            if (enJson != null && enJson.has(key)) return enJson.optString(key);
+        } catch (Throwable e) {
+            Logger.e(e);
+        }
+        return null;
+    }
+
     public static String get(String key, Object... args) {
         if (localeController == null) return key;
         try {
