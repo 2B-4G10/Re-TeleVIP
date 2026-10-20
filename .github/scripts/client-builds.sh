@@ -8,6 +8,10 @@
 #       Needs gh and GH_TOKEN.
 #   client-builds.sh fdroid <package> [count]
 #       the latest versions on f-droid.org, its archive included, as arm64 or universal APKs.
+#   client-builds.sh apkpure <package> [count]
+#       the latest versions APKPure has of a closed-source client (Plus Messenger), through its
+#       app API with apkeep: its website answers CI runners with a Cloudflare challenge. The URL
+#       printed is apkpure:<package>@<version>, which apkpure-download.sh fetches.
 #   client-builds.sh url <URL>
 #       a single build at a fixed address (only ever the newest one, e.g. telegram.org).
 set -euo pipefail
@@ -50,6 +54,17 @@ case "$source" in
     done | sort -t $'\t' -k1,1rn | awk -F '\t' -v n="$count" '!seen[$2]++ && shown++ < n { print $2 "\t" $3 }'
     # (awk counts rather than head: head would close the pipe early, which pipefail reports.)
     rm -rf "$work"
+    ;;
+  apkpure)
+    package=$2 count=${3:-5}
+    apkeep=$(bash "$(dirname "$0")/apkeep.sh")
+    for attempt in 1 2 3 4 5; do
+      versions=$("$apkeep" -l -a "$package" -d apk-pure 2>/dev/null | sed -n 's/^| //p') && [ -n "$versions" ] && break
+      [ "$attempt" = 5 ] && { echo "Could not list the APKPure versions of $package." >&2; exit 1; }
+      sleep $((attempt * 15))
+    done
+    printf '%s\n' "$versions" | tr ',' '\n' | sed 's/^ *//; s/ *$//' | grep . | sort -rV \
+        | awk -v n="$count" -v p="$package" 'shown++ < n { print $0 "\tapkpure:" p "@" $0 }'
     ;;
   url)
     printf 'latest\t%s\n' "$2"
