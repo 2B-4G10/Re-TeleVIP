@@ -37,6 +37,14 @@ public class TeleVipModule extends XposedModule {
         if (!param.isFirstPackage()) return;
         // getClassLoader() rather than getDefaultClassLoader(): it is correct even for clients
         // shipping a custom AppComponentFactory, and it carries no minSdk 29 requirement.
-        ModuleEntry.attach(param.getPackageName(), param.getClassLoader());
+        // The ApplicationInfo names the APK the client's code really runs from. Under LSPatch that
+        // is the original APK it extracted into the client's cache, not the patched one installed
+        // in /data/app, whose only dex is LSPatch's own loader.
+        String apkPath = null;
+        try {
+            apkPath = param.getApplicationInfo().sourceDir;
+        } catch (Throwable ignored) {
+        }
+        ModuleEntry.attach(param.getPackageName(), param.getClassLoader(), apkPath);
     }
 }

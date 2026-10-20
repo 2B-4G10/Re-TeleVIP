@@ -14,7 +14,7 @@ import java.util.Arrays;
 
 /**
  * The single seam between TeleVip and the Xposed implementation hosting it. The backend is
- * {@link ModernBackend} (libxposed API 102: LSPosed 1.10+, Vector 2.2+); one is installed per
+ * {@link ModernBackend} (libxposed API 102: Vector 2.2+, LSPatch 1.2); one is installed per
  * process and the first to arrive wins.
  */
 public final class XBridge {
