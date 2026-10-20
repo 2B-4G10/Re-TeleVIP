@@ -11,6 +11,7 @@ import com.my.televip.virtuals.ui.SecretMediaViewer;
 import com.my.televip.xposed.XBridge;
 
 import com.my.televip.reflect.XReflect;
+import com.my.televip.utils.Utils;
 
 public class PreventMedia {
 
@@ -40,7 +41,10 @@ public class PreventMedia {
                 // ART compiles them into the chat's tap handlers (Telegram 13.1 on Android 15):
                 // the hooks above then never run and an opened photo still expires. Running the
                 // handlers interpreted makes them call the hooked methods.
-                Class<?> cellDelegate = ClassLoad.getClass(ClassNames.CHAT_MESSAGE_CELL_DELEGATE);
+                // Looked up quietly: builds that rename it (Nekogram) keep it under another name,
+                // and a miss here is not worth the health report's "incompatible version" warning.
+                Class<?> cellDelegate = XReflect.findClassIfExists(
+                        AutomationResolver.resolve(ClassNames.CHAT_MESSAGE_CELL_DELEGATE), Utils.classLoader);
                 if (cellDelegate != null) {
                     for (java.lang.reflect.Method method : cellDelegate.getDeclaredMethods()) {
                         XBridge.deoptimize(method);
