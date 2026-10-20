@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1 — no false "incompatible version" warning on Nekogram
+
+- **Fixed: Nekogram showed "Your Telegram client may be an incompatible version"** in the log
+  with Prevent media on, after 1.2. Nothing was broken, and the warning is gone.
+
 ## 1.2 — Ghost Mode fixed, tested on more phones, and no root needed
 
 - **Ghost Mode works again with Block ads on.** With both switched on, Ghost Mode quietly did
