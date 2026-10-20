@@ -273,11 +273,28 @@ public final class Classes {
         return new ConstantAnchored(value);
     }
 
+    /**
+     * The current class of a TL type whose older layout has constructor id {@code value}. When a
+     * layer changes a type, Telegram gives the class a new id and keeps the old layout as
+     * {@code X_layerNNN extends X} (Telegram 13.1 did this to TL_channel), so the class writing
+     * the old id is then a concrete subclass of the one wanted. Where the class writing it still
+     * extends the abstract base, it is the current one.
+     */
+    public static Symbol.ClassSource serializingConstantOrItsNewerLayer(final long value) {
+        return new ConstantAnchored(value, true);
+    }
+
     static final class ConstantAnchored implements Symbol.ClassSource {
         final long value;
+        final boolean newerLayer;
 
         ConstantAnchored(long value) {
+            this(value, false);
+        }
+
+        ConstantAnchored(long value, boolean newerLayer) {
             this.value = value;
+            this.newerLayer = newerLayer;
         }
 
         @Override
@@ -287,7 +304,13 @@ public final class Classes {
                 if (!m.isStatic() && m.returnType().equals("V") && m.parameterTypes().length == 1
                         && m.parameterTypes()[0].startsWith("L") && !m.name().equals("<init>")) owners.add(m.owner);
             }
-            return owners;
+            if (!newerLayer) return owners;
+            java.util.Set<DexClass> current = new java.util.LinkedHashSet<>();
+            for (DexClass c : owners) {
+                DexClass parent = r.index.byDescriptor(c.superclass);
+                current.add(parent != null && !parent.isAbstract() && !parent.isInterface() ? parent : c);
+            }
+            return current;
         }
     }
 
