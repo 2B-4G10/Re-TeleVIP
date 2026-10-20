@@ -192,6 +192,11 @@ public final class XBridge {
             String symbol = clazz.getSimpleName() + "#" + methodName;
             if (method == null) {
                 HookHealth.missingMember(symbol);
+                if (HookHealth.isOptional(symbol)) {
+                    // Expected on some builds and covered another way: a note, not an error.
+                    log("[TeleVip] not in this build (fallback in use): " + symbol);
+                    return;
+                }
                 throw new NoSuchMethodError(symbol + " not found in " + clazz.getName());
             }
             HookHealth.drifted(symbol);

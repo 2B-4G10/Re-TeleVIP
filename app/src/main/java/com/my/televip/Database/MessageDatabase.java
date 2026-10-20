@@ -11,6 +11,8 @@ import com.my.televip.messages.MessageStorage;
 
 import java.io.File;
 import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Set;
 
 public class MessageDatabase extends SQLiteOpenHelper {
 
@@ -47,22 +49,49 @@ public class MessageDatabase extends SQLiteOpenHelper {
         onCreate(db);
     }
 
+    @Override
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // Another TeleVip build can leave a newer version of this file behind, and Android's
+        // default is to refuse to open it. Keep its rows when the table still has every column
+        // used here, otherwise start the table over.
+        if (!hasColumns(db, COLUMN_ID, COLUMN_MSG_ID, COLUMN_MSG_COUNT, COLUMN_MESSAGE, COLUMN_MESSAGE_DATE)) {
+            onUpgrade(db, oldVersion, newVersion);
+        }
+    }
+
+    private boolean hasColumns(SQLiteDatabase db, String... columns) {
+        Set<String> present = new HashSet<>();
+        try (Cursor cursor = db.rawQuery("PRAGMA table_info(" + TABLE_MESSAGES + ")", null)) {
+            int name = cursor.getColumnIndex("name");
+            while (cursor.moveToNext()) present.add(cursor.getString(name));
+        }
+        for (String column : columns) {
+            if (!present.contains(column)) return false;
+        }
+        return true;
+    }
+
     public void addMessage(long id, int msgID, String message) {
         try {
             MessageStorage.getStorage().post(() -> {
-                SQLiteDatabase database = getWritableDatabase();
-                if (!searchMessage(id, msgID, message)) {
-                    ContentValues values = new ContentValues();
-                    values.put(COLUMN_ID, id);
-                    values.put(COLUMN_MSG_ID, msgID);
-                    values.put(COLUMN_MESSAGE, message);
+                // This runs on the storage thread: an error here must not take the client down.
+                try {
+                    SQLiteDatabase database = getWritableDatabase();
+                    if (!searchMessage(id, msgID, message)) {
+                        ContentValues values = new ContentValues();
+                        values.put(COLUMN_ID, id);
+                        values.put(COLUMN_MSG_ID, msgID);
+                        values.put(COLUMN_MESSAGE, message);
 
-                    int maxMsgCount = getMaxMessageCount(id, msgID);
-                    values.put(COLUMN_MSG_COUNT, maxMsgCount + 1);
+                        int maxMsgCount = getMaxMessageCount(id, msgID);
+                        values.put(COLUMN_MSG_COUNT, maxMsgCount + 1);
 
-                    values.put(COLUMN_MESSAGE_DATE, Calendar.getInstance().getTimeInMillis());
+                        values.put(COLUMN_MESSAGE_DATE, Calendar.getInstance().getTimeInMillis());
 
-                    database.insert(TABLE_MESSAGES, null, values);
+                        database.insert(TABLE_MESSAGES, null, values);
+                    }
+                } catch (Throwable t) {
+                    Logger.e(t);
                 }
             });
         } catch (Throwable t) {

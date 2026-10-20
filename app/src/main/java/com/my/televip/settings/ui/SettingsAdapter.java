@@ -125,6 +125,7 @@ public class SettingsAdapter {
                         title.setMaxLines(0);
                         title.setSingleLine(false);
                         title.setEllipsize(null);
+                        if (explanation != null) SettingsCells.keepValueBelowTitle(textCheck);
                     }
                     break;
                 case ConfigItem.EXPANDABLE_SWITCH:
