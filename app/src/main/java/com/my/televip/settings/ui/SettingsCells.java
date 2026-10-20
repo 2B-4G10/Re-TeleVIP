@@ -5,12 +5,10 @@ import android.util.TypedValue;
 
 import com.my.televip.virtuals.Theme;
 import com.my.televip.virtuals.ui.Cells.ExpandableTextCheckCell;
-import com.my.televip.virtuals.ui.Cells.HeaderCell;
 import com.my.televip.virtuals.ui.Cells.TextCheckCell;
 import com.my.televip.virtuals.ui.Cells.TextInfoCell;
-import com.my.televip.virtuals.ui.Cells.TextSettingsCell;
 
-/** The client's own cells, set up as rows of TeleVip's settings list. */
+/** The cells of TeleVip's settings list, the client's own and TeleVip's, set up as its rows. */
 public class SettingsCells {
 
     /** The client theme's selectableItemBackground, for the rows' touch feedback. */
@@ -40,24 +38,20 @@ public class SettingsCells {
         return expandableTextCheckCell;
     }
 
-    public static TextSettingsCell createTextSettingsCell(Context context) {
-        TextSettingsCell textSettingsCell = new TextSettingsCell(context);
-        textSettingsCell.getView().setBackgroundColor(Theme.getBackgroundWhiteOrBlueColor());
-        textSettingsCell.getView().setBackgroundResource(rowBackground.resourceId);
-        textSettingsCell.getView().setClickable(true);
-        textSettingsCell.getView().setFocusable(true);
-        return textSettingsCell;
+    public static ActionRowView createActionRow(Context context) {
+        ActionRowView row = new ActionRowView(context);
+        row.setBackgroundResource(rowBackground.resourceId);
+        row.setClickable(true);
+        row.setFocusable(true);
+        return row;
     }
 
-    public static HeaderCell createHeaderCell(Context context) {
-        HeaderCell header = new HeaderCell(context);
-        header.getView().setBackgroundColor(Theme.getBackgroundWhiteOrBlueColor());
-        return header;
+    public static SectionHeaderView createHeaderCell(Context context) {
+        return new SectionHeaderView(context);
     }
 
     public static TextInfoCell createTextInfoCell(Context context) {
-        TextInfoCell textInfoCell = new TextInfoCell(context);
-        textInfoCell.setBackgroundColor(Theme.getBackgroundGrayColor());
-        return textInfoCell;
+        // No background: it sits under its group's card, on the list's.
+        return new TextInfoCell(context);
     }
 }

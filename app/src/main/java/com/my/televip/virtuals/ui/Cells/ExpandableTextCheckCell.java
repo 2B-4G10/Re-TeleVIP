@@ -58,7 +58,12 @@ public class ExpandableTextCheckCell extends LinearLayout {
             if (child.getType() != ConfigItem.SWITCH) continue;
 
             TextCheckCell textCheckCell1 = new TextCheckCell(context);
-            textCheckCell1.setTextAndCheck(Translator.get(child.getKey()), child.isEnable(), false);
+            String explanation = SettingsAdapter.describe(child);
+            if (explanation != null) {
+                textCheckCell1.setTextAndValueAndCheck(Translator.get(child.getKey()), explanation, child.isEnable(), true, false);
+            } else {
+                textCheckCell1.setTextAndCheck(Translator.get(child.getKey()), child.isEnable(), false);
+            }
 
             LinearLayout row = new LinearLayout(context);
             row.setOrientation(HORIZONTAL);
@@ -129,7 +134,13 @@ public class ExpandableTextCheckCell extends LinearLayout {
         for (ChildRow c : children) {
             if (c.textCheckCell.isChecked()) { i++; }
         }
-        textCheckCell.setTextAndCheck(Translator.get(item.getKey()) + " " +i +"/" + children.size(), item.isEnable(),false);
+        String title = Translator.get(item.getKey()) + " " + i + "/" + children.size();
+        String explanation = SettingsAdapter.describe(item);
+        if (explanation != null) {
+            textCheckCell.setTextAndValueAndCheck(title, explanation, item.isEnable(), true, true);
+        } else {
+            textCheckCell.setTextAndCheck(title, item.isEnable(), true);
+        }
     }
 
     private void animateHeight(int from, int to) {

@@ -20,11 +20,8 @@ import com.my.televip.utils.Utils;
 import com.my.televip.virtuals.Theme;
 import com.my.televip.virtuals.messenger.browser.Browser;
 import com.my.televip.virtuals.ui.Cells.ExpandableTextCheckCell;
-import com.my.televip.virtuals.ui.Cells.HeaderCell;
-import com.my.televip.virtuals.ui.Cells.ShadowSectionCell;
 import com.my.televip.virtuals.ui.Cells.TextCheckCell;
 import com.my.televip.virtuals.ui.Cells.TextInfoCell;
-import com.my.televip.virtuals.ui.Cells.TextSettingsCell;
 
 /** Turns each of ConfigManager's items into a row of TeleVip's settings list. */
 public class SettingsAdapter {
@@ -38,9 +35,9 @@ public class SettingsAdapter {
     /** One row: its view, and the cell inside it that {@link #bind} fills in. */
     public static final class Row {
         final View itemView;
-        HeaderCell header;
+        SectionHeaderView header;
         TextCheckCell check;
-        TextSettingsCell settings;
+        ActionRowView action;
         ExpandableTextCheckCell expandable;
         TextInfoCell info;
 
@@ -49,7 +46,11 @@ public class SettingsAdapter {
         }
     }
 
-    /** An empty row for the item at {@code position}, made of the client's own cells. */
+    /**
+     * An empty row for the item at {@code position}: the client's own cells for switches, so they
+     * look and toggle like the client's, and TeleVip's for headers and buttons. Dividers are not
+     * rows; SettingsActivity ends a group's card at one.
+     */
     public static Row createRow(Context context, int position) {
         Row row;
         switch (ConfigManager.getItems().get(position).getType()) {
@@ -60,14 +61,11 @@ public class SettingsAdapter {
                 break;
             }
             case ConfigItem.TEXT: {
-                TextSettingsCell cell = SettingsCells.createTextSettingsCell(context);
-                row = new Row(cell.getView());
-                row.settings = cell;
+                ActionRowView cell = SettingsCells.createActionRow(context);
+                row = new Row(cell);
+                row.action = cell;
                 break;
             }
-            case ConfigItem.DIVIDER:
-                row = new Row(new ShadowSectionCell(context).getView());
-                break;
             case ConfigItem.INFO: {
                 TextInfoCell cell = SettingsCells.createTextInfoCell(context);
                 row = new Row(cell);
@@ -82,8 +80,8 @@ public class SettingsAdapter {
             }
             case ConfigItem.HEADER:
             default: {
-                HeaderCell cell = SettingsCells.createHeaderCell(context);
-                row = new Row(cell.getView());
+                SectionHeaderView cell = SettingsCells.createHeaderCell(context);
+                row = new Row(cell);
                 row.header = cell;
                 break;
             }
@@ -99,32 +97,26 @@ public class SettingsAdapter {
 
             switch (viewType) {
                 case ConfigItem.HEADER:
-                    row.header.setText(Translator.get(item.getKey()));
+                    row.header.set(Translator.get(item.getKey()), SettingsIcons.forGroup(item.getKey()));
                     break;
 
                 case ConfigItem.SWITCH:
                     TextCheckCell textCheck = row.check;
-                    if (item.getValue() != null) {
+                    String explanation = describe(item);
+                    boolean divider = hasRowBelow(position);
+                    if (explanation != null) {
                         textCheck.setTextAndValueAndCheck(
                                 Translator.get(item.getKey()),
-                                item.getValue(),
+                                explanation,
                                 item.isEnable(),
                                 true,
-                                false
-                        );
-                    } else if (item.isRestartRequired()) {
-                        textCheck.setTextAndValueAndCheck(
-                                Translator.get(item.getKey()),
-                                Translator.get(Keys.RestartRequired),
-                                item.isEnable(),
-                                true,
-                                false
+                                divider
                         );
                     } else {
                         textCheck.setTextAndCheck(
                                 Translator.get(item.getKey()),
                                 item.isEnable(),
-                                false
+                                divider
                         );
                     }
                     TextView title = textCheck.getTextView();
@@ -140,28 +132,8 @@ public class SettingsAdapter {
 
                     break;
                 case ConfigItem.TEXT:
-                    TextSettingsCell settingsCell = row.settings;
-                    if (item.getKey().equals(Keys.Calendar)) {
-                        String value = null;
-                        switch (item.getCustomCalendar()) {
-                            case 0:
-                                value = Translator.get(Keys.Gregorian);
-                                break;
-                            case 1:
-                                value = Translator.get(Keys.Hijri);
-                                break;
-                            case 2:
-                                value = Translator.get(Keys.Persian);
-                                break;
-                        }
-                        settingsCell.setTextAndValue(Translator.get(item.getKey()), value, false, false);
-                    } else {
-                        settingsCell.setText(Translator.get(item.getKey()), false);
-                        settingsCell.getTextView().setTextColor(Theme.getTextBlueColor());
-                    }
-                    break;
-                case ConfigItem.DIVIDER:
-                    row.itemView.setBackgroundColor(Theme.getBackgroundGrayColor());
+                    bindAction(row.action, item);
+                    row.action.setDivider(hasRowBelow(position));
                     break;
                 case ConfigItem.INFO:
                     TextView textView = row.info.getTextView();
@@ -201,8 +173,8 @@ public class SettingsAdapter {
                     item.run();
                 } else if (viewType == ConfigItem.TEXT) {
                     switch (item.getKey()) {
-                        case Keys.DeveloperChannel:
-                            Browser.openUrl(settingsController.getContext(), "https://t.me/t_l0_e");
+                        case Keys.TeleVipGroup:
+                            Browser.openUrl(settingsController.getContext(), SettingsController.GROUP_URL);
                             settingsController.hide();
                             break;
                         case Keys.RestartApp:
@@ -236,6 +208,60 @@ public class SettingsAdapter {
             Logger.e(t);
         }
 
+    }
+
+    /**
+     * What the switch does, shown under its title: the item's "Desc" text, else its fixed value,
+     * with a note on its own line when it only takes effect after a restart. Null for none.
+     */
+    public static String describe(ConfigItem item) {
+        String text = Translator.optional(item.getKey() + "Desc");
+        if (text == null) text = item.getValue();
+        if (item.isRestartRequired()) {
+            String restart = Translator.get(Keys.RestartRequired);
+            text = text == null ? restart : text + "\n" + restart;
+        }
+        return text;
+    }
+
+    /** Whether the item after {@code position} is a row of the same group, so needs a divider. */
+    private static boolean hasRowBelow(int position) {
+        if (position + 1 >= ConfigManager.getItems().size()) return false;
+        int next = ConfigManager.getItems().get(position + 1).getType();
+        return next == ConfigItem.SWITCH || next == ConfigItem.EXPANDABLE_SWITCH || next == ConfigItem.TEXT;
+    }
+
+    private static void bindAction(ActionRowView view, ConfigItem item) {
+        String title = Translator.get(item.getKey());
+        String explanation = Translator.optional(item.getKey() + "Desc");
+        switch (item.getKey()) {
+            case Keys.Calendar: {
+                String value = null;
+                switch (item.getCustomCalendar()) {
+                    case 0:
+                        value = Translator.get(Keys.Gregorian);
+                        break;
+                    case 1:
+                        value = Translator.get(Keys.Hijri);
+                        break;
+                    case 2:
+                        value = Translator.get(Keys.Persian);
+                        break;
+                }
+                view.set(title, explanation, value, null);
+                break;
+            }
+            case Keys.TeleVipGroup:
+                view.set(title, SettingsController.GROUP_LINK, null, SettingsIcons.logo());
+                view.getTitleView().setTextColor(Theme.getTextBlueColor());
+                break;
+            case Keys.RestartApp:
+                view.set(title, explanation, null, SettingsIcons.restart());
+                break;
+            default:
+                view.set(title, explanation, null, null);
+                break;
+        }
     }
 
     public static void playAudio(Context context) {
