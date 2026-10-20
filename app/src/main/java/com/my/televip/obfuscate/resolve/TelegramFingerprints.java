@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public final class TelegramFingerprints {
 
-    public static final int VERSION = 13;
+    public static final int VERSION = 16;
 
     private TelegramFingerprints() {
     }
@@ -100,6 +100,7 @@ public final class TelegramFingerprints {
         o.put("NotificationCenter", "org.telegram.messenger.NotificationCenter");
         o.put("NotificationsController", "org.telegram.messenger.NotificationsController");
         o.put("PeerStoriesView$StoryItemHolder", "org.telegram.ui.Stories.PeerStoriesView$StoryItemHolder");
+        o.put("PhoneFormat", "org.telegram.PhoneFormat.PhoneFormat");
         o.put("PhotoViewer", "org.telegram.ui.PhotoViewer");
         o.put("PhotoViewer$PhotoViewerProvider", "org.telegram.ui.PhotoViewer$PhotoViewerProvider");
         o.put("PhotoViewer$PlaceProviderObject", "org.telegram.ui.PhotoViewer$PlaceProviderObject");
@@ -210,6 +211,9 @@ public final class TelegramFingerprints {
                         declaringStrings(" file reference expired ", "setIsPreloadVideoOperation ")));
         s.add(cls("org.telegram.messenger.FileLoader")
                 .from(declaringStrings("create load operation fileName=", "fileUploadQueue")));
+        // Formats every number the app shows; it alone loads the formats table.
+        s.add(cls("org.telegram.PhoneFormat.PhoneFormat").from(declaringStrings("PhoneFormats.dat")));
+        s.add(method("PhoneFormat", "format").sig("java.lang.String", "java.lang.String").isStatic(false));
         s.add(cls("org.telegram.messenger.LocaleController")
                 .from(declaringStrings("LOC_ERR: formatDateChat", "formatterBannedUntil24H")));
         // Builds that look their strings up by resource id (Momogram) keep its music-search query.
@@ -400,7 +404,8 @@ public final class TelegramFingerprints {
                 .readBy("TLRPC$TL_inputPeerChannel#serializeToStream", 0));
         // Boolean flags, by the bit their class's serializer folds them into its flags word with.
         s.add(tl("org.telegram.tgnet.TLRPC$TL_message", 0x7600b9d3));
-        s.add(tl("org.telegram.tgnet.TLRPC$TL_channel", 0xd49f34c6));
+        // 0xd49f34c6 is TL_channel_layer232 from Telegram 13.1 on, a subclass of the new TL_channel.
+        s.add(cls("org.telegram.tgnet.TLRPC$TL_channel").from(serializingConstantOrItsNewerLayer(0xd49f34c6)));
         for (String c : new String[]{"TLRPC$TL_message", "TLRPC$TL_channel", "TL_stories$TL_storyItem",
                 "TLRPC$TL_documentAttributeAudio"}) {
             s.add(method(c, "serializeToStream").sig("void", "org.telegram.tgnet.OutputSerializedData"));
@@ -1054,6 +1059,12 @@ public final class TelegramFingerprints {
         // anonymous subclass, leaving the tablet-only shadowTablet as the sole plain FrameLayout.
         s.add(field("LaunchActivity", "frameLayout").type("android.widget.FrameLayout")
                 .handedTo("onCreate", "setContentView"));
+
+        // The drawer's item list (Forkgram Classic's settings entry): the one void() building Items.
+        s.add(method("DrawerLayoutAdapter", "resetItems").sig("void")
+                .where(callsNamed("org.telegram.ui.Adapters.DrawerLayoutAdapter$Item", "<init>"), notSynthetic()));
+        // resetItems clears and refills accountNumbers first, then items.
+        s.add(field("DrawerLayoutAdapter", "items").type("java.util.ArrayList").readBy("DrawerLayoutAdapter#resetItems", 1));
 
         s.add(method("SecretMediaViewer", "closePhoto").sig("boolean", "boolean", "boolean"));
         s.add(method("SecretMediaViewer", "openMedia")

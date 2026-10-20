@@ -1,11 +1,28 @@
 # Changelog
 
-## Unreleased
+## 1.2 — Ghost Mode fixed, tested on more phones, and no root needed
 
+- **Ghost Mode works again with Block ads on.** With both switched on, Ghost Mode quietly did
+  nothing: chats were marked as read and others could see you typing and online. Now your
+  "seen", typing and online status stay hidden.
+- **Self-destructing photos stay.** On Telegram 13.1, a timed photo still expired after you
+  opened it. It now stays, as "Prevent media" promises.
 - **Works without root through LSPatch 1.2.** Patch your Telegram client with JingMatrix's
   LSPatch, in Local or Integrated mode, and add Re: TeleVIP to it. The README has the steps.
-  Re: TeleVIP now also finds the client's real code under LSPatch straight away, so the first
-  launch after patching or updating the client isn't held up.
+- **Plus Messenger is supported**, and checked every week like the other clients.
+- **Telegram 13.1 and 13.0.3 (Play Store) are supported.** The error about the secret media
+  viewer is gone.
+- **Save edits history works in Nagram 1253 and Momogram 13**, where it found nothing to hook.
+- **Forkgram Classic 13 shows the Re: TeleVIP entry in its side menu again.**
+- **No more crash from the edits-history storage** ("Can't downgrade database from version 2
+  to 1") after switching from another TeleVip build. Your saved edits are kept.
+- **Hide phone number shows "Number hidden"** instead of "+null" in Settings.
+- **Hide app update also hides the update pop-up** that Nekogram shows when you open the app.
+- **Long setting titles wrap neatly** and no longer cover the line under them, in every
+  language.
+- **Checked on Android 13 to 16** with Magisk, KernelSU, KernelSU Next, BakaSU and APatch,
+  and Vector, in all 12 supported clients. The README shows which ones were tried on each
+  Android version.
 
 ## 1.1.10 — a clearer settings screen
 

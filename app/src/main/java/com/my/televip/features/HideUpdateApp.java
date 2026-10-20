@@ -1,6 +1,7 @@
 package com.my.televip.features;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.my.televip.Class.ClassNames;
@@ -11,6 +12,7 @@ import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.AutomationResolver;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 import com.my.televip.base.MethodReplacement;
 
@@ -50,9 +52,36 @@ public class HideUpdateApp {
                                 }
                             });
                 }
+
+                // Nekogram shows the update pop-up (and the full-screen "update now" page) straight
+                // from its own update check, without asking SharedConfig, so both are switched off
+                // too. They are found by their parameters: the pop-up is on the client's own
+                // ApplicationLoader subclass, which a hook on ApplicationLoader's would miss.
+                Class<?> appUpdate = ClassLoad.getClass(ClassNames.TL_HELP_APP_UPDATE);
+                if (appUpdate != null) {
+                    Context application = ApplicationLoaderHook.getApplicationContext();
+                    for (Class<?> c = application == null ? null : application.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+                        hookAll(c, Context.class, appUpdate, int.class);
+                    }
+                    hookAll(ClassLoad.getClass(ClassNames.LAUNCH_ACTIVITY), int.class, appUpdate, boolean.class);
+                }
             }
         } catch (Throwable t){
             Logger.e(t);
+        }
+    }
+
+    /** Turns every method of {@code owner} declared with exactly {@code params} into a no-op. */
+    private static void hookAll(Class<?> owner, Class<?>... params) {
+        if (owner == null) return;
+        for (Method method : owner.getDeclaredMethods()) {
+            if (!Arrays.equals(method.getParameterTypes(), params)) continue;
+            HMethod.hookMethod(method, new MethodReplacement() {
+                @Override
+                protected Object replaceHookedMethod(MethodHookParam param) {
+                    return method.getReturnType() == boolean.class ? false : null;
+                }
+            });
         }
     }
 }

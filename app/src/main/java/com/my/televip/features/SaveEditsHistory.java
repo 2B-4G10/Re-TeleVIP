@@ -12,11 +12,13 @@ import com.my.televip.Configs.ConfigManager;
 import com.my.televip.Database.MessageDatabase;
 import com.my.televip.base.AbstractMethodHook;
 import com.my.televip.calendar.ConverterCalendar;
+import com.my.televip.diagnostics.HookHealth;
 import com.my.televip.hooks.HMethod;
 import com.my.televip.language.Keys;
 import com.my.televip.language.Translator;
 import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.AutomationResolver;
+import com.my.televip.reflect.XReflect;
 import com.my.televip.virtuals.ActionBar.AlertDialog;
 import com.my.televip.virtuals.SQLite.SQLiteCursor;
 import com.my.televip.virtuals.SQLite.SQLiteDatabase;
@@ -30,6 +32,7 @@ import com.my.televip.virtuals.tgnet.NativeByteBuffer;
 import com.my.televip.virtuals.tgnet.TLRPC;
 import com.my.televip.virtuals.ui.ChatActivity;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -47,8 +50,8 @@ public class SaveEditsHistory {
 
                 if (ClassLoad.getClass(ClassNames.CHAT_ACTIVITY) != null) {
 
-                    HMethod.hookMethod(
-                            ClassLoad.getClass(ClassNames.CHAT_ACTIVITY), AutomationResolver.resolve("ChatActivity", "fillMessageMenu", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("fillMessageMenu", new Class<?>[]{ClassLoad.getClass(ClassNames.MESSAGE_OBJECT), ArrayList.class, ArrayList.class, ArrayList.class}), new AbstractMethodHook() {
+                    hookTolerant(false,
+                            ClassLoad.getClass(ClassNames.CHAT_ACTIVITY), AutomationResolver.resolve("ChatActivity", "fillMessageMenu", AutomationResolver.ResolverType.Method), AutomationResolver.resolveObject("fillMessageMenu", new Class<?>[]{ClassLoad.getClass(ClassNames.MESSAGE_OBJECT), ArrayList.class, ArrayList.class, ArrayList.class}), new AbstractMethodHook() {
                                 @Override
                                 @SuppressWarnings("unchecked")   // the client's own lists, changed in place
                                 protected void afterMethod(MethodHookParam param) {
@@ -102,7 +105,7 @@ public class SaveEditsHistory {
                                         }
                                     }
                                 }
-                            }));
+                            });
 
                     HMethod.hookMethod(
                             ClassLoad.getClass(ClassNames.CHAT_ACTIVITY), AutomationResolver.resolve("ChatActivity", "processSelectedOption", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("processSelectedOption", new Class<?>[]{int.class}), new AbstractMethodHook() {
@@ -185,8 +188,8 @@ public class SaveEditsHistory {
                 }
 
                 if (ClassLoad.getClass(ClassNames.MESSAGES_STORAGE) != null) {
-                    HMethod.hookMethod(
-                            ClassLoad.getClass(ClassNames.MESSAGES_STORAGE), AutomationResolver.resolve("MessagesStorage", "putMessages", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("putMessages", new Class<?>[]{ClassLoad.getClass(ClassNames.TL_MESSAGES_MESSAGES), long.class, int.class, int.class, boolean.class, int.class, long.class}), new AbstractMethodHook() {
+                    hookTolerant(true,
+                            ClassLoad.getClass(ClassNames.MESSAGES_STORAGE), AutomationResolver.resolve("MessagesStorage", "putMessages", AutomationResolver.ResolverType.Method), AutomationResolver.resolveObject("putMessages", new Class<?>[]{ClassLoad.getClass(ClassNames.TL_MESSAGES_MESSAGES), long.class, int.class, int.class, boolean.class, int.class, long.class}), new AbstractMethodHook() {
                                 @Override
                                 protected void beforeMethod(MethodHookParam param) {
                                     if (ConfigManager.saveEditsHistory.isEnable()) {
@@ -243,11 +246,33 @@ public class SaveEditsHistory {
                                         }
                                     }
                                 }
-                            }));
+                            });
                 }
             }
         } catch (Throwable t) {
             Logger.e(t);
+        }
+    }
+
+    /**
+     * Hooks {@code name} with these parameters, or - when a build has changed them - the one
+     * method of that name taking them in another order ({@code anyOrder}, for a hook that reads
+     * its arguments by type) or followed by more (a fork's extra parameter: Momogram's
+     * fillMessageMenu). Anything else is left to the usual lookup, which reports it.
+     */
+    private static void hookTolerant(boolean anyOrder, Class<?> owner, String name, Class<?>[] params, AbstractMethodHook hook) {
+        if (owner == null) return;
+        Method method = XReflect.findMethodExactIfExists(owner, name, params);
+        if (method == null) {
+            method = anyOrder ? XReflect.findMethodAnyOrderIfExists(owner, name, params)
+                    : XReflect.findMethodWithMoreParamsIfExists(owner, name, params);
+            if (method != null) Logger.l("signature differs, hooking " + method);
+        }
+        if (method != null) {
+            HMethod.hookMethod(method, hook);
+            HookHealth.resolved();
+        } else {
+            HMethod.hookMethod(owner, name, AutomationResolver.merge(params, hook));
         }
     }
 

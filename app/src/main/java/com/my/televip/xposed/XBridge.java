@@ -181,7 +181,7 @@ public final class XBridge {
         } else if (AutomationResolver.isObfuscatedName(methodName)) {
             // A name from an obfuscation mapping means nothing on its own, so a same-named method
             // with another signature is not the same method. Exact or nothing.
-            String symbol = clazz.getSimpleName() + "#" + methodName;
+            String symbol = AutomationResolver.symbol(clazz, methodName);
             HookHealth.missingMember(symbol);
             throw new NoSuchMethodError(symbol + " (obfuscated name) has no exact match in " + clazz.getName());
         } else {
@@ -189,9 +189,14 @@ public final class XBridge {
             // so before giving the feature up entirely, see whether the method is still there
             // under the same name with a signature the call site can safely be attached to.
             method = XReflect.findMethodCompatibleIfExists(clazz, methodName, parameterTypes);
-            String symbol = clazz.getSimpleName() + "#" + methodName;
+            String symbol = AutomationResolver.symbol(clazz, methodName);
             if (method == null) {
                 HookHealth.missingMember(symbol);
+                if (HookHealth.isOptional(symbol)) {
+                    // Expected on some builds and covered another way: a note, not an error.
+                    log("[TeleVip] not in this build (fallback in use): " + symbol);
+                    return;
+                }
                 throw new NoSuchMethodError(symbol + " not found in " + clazz.getName());
             }
             HookHealth.drifted(symbol);

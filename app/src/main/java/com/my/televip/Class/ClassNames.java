@@ -46,6 +46,7 @@ public class ClassNames {
     public static final String TL_CHANNELS_READ_HISTORY = "org.telegram.tgnet.TLRPC$TL_channels_readHistory";
     public static final String TL_MESSAGES_READ_HISTORY = "org.telegram.tgnet.TLRPC$TL_messages_readHistory";
     public static final String SHARED_CONFIG = "org.telegram.messenger.SharedConfig";
+    public static final String PHONE_FORMAT = "org.telegram.PhoneFormat.PhoneFormat";
     public static final String TLRPC_CHAT = "org.telegram.tgnet.TLRPC$Chat";
     public static final String CHAT_MESSAGE_CELL_DELEGATE = "org.telegram.ui.ChatActivity$ChatMessageCellDelegate";
     public static final String FILE_LOADER = "org.telegram.messenger.FileLoader";
