@@ -86,6 +86,7 @@
 - **LSPosed 1.10+** or **Vector 2.2+**<br><sub>libxposed API 102. LSPosed 1.9.x, EdXposed and LSPatch are not supported.</sub>
 - Any Zygisk provider<br><sub>Magisk, KernelSU, Zygisk Next or NeoZygisk</sub>
 - Android 8.1 or newer
+- On Android 17: Magisk 31.0+ and a Vector canary (3112 or newer)<br><sub>Magisk 30.7 and Vector 2.2 stable don't load modules on Android 17.</sub>
 
   </td>
   <td valign="top">
