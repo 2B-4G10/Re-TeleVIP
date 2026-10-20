@@ -3,7 +3,7 @@ name: Client watch
 # Every week, checks the last five releases of every supported client - Nekogram, Cherrygram,
 # Nagram, NagramX (full and base) and Momogram (GitHub releases), Forkgram, Forkgram Classic and
 # Mercurygram (F-Droid, archive included) - and the latest official Telegram (telegram.org only
-# serves the newest) and Plus Messenger (closed source, so APKPure's newest build), and checks that every TeleVip feature's hook points still resolve in each
+# serves the newest) and Plus Messenger (closed source: APKPure, through its app API), and checks that every TeleVip feature's hook points still resolve in each
 # (ClientApkTest).
 # A build that breaks something fails the run (GitHub emails you) with the affected features in
 # its summary, and opens an issue for that client if the repository has issues enabled; the issue
@@ -56,7 +56,7 @@ jobs:
               {"client":"Forkgram Classic","source":"fdroid","from":"org.forkgram.classic","issue":true},
               {"client":"Mercurygram","source":"fdroid","from":"it.belloworld.mercurygram","issue":true},
               {"client":"Momogram","source":"github","from":"im030/Momogram","asset":"arm64-v8a","issue":true},
-              {"client":"Plus Messenger","source":"url","from":"https://d.apkpure.com/b/APK/org.telegram.plus?version=latest","issue":true}]}'
+              {"client":"Plus Messenger","source":"apkpure","from":"org.telegram.plus","issue":true}]}'
           fi
           echo "matrix=$(echo "$matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
 
@@ -113,7 +113,11 @@ jobs:
             rm -f client.apk report.md
             # Big downloads from some servers drop mid-transfer: resume until complete.
             for attempt in 1 2 3 4 5; do
-              curl -fsSL --retry 3 --retry-all-errors -C - -o client.apk "$url" && break
+              if [[ "$url" == apkpure:* ]]; then
+                bash .github/scripts/apkpure-download.sh "$url" client.apk && break
+              else
+                curl -fsSL --retry 3 --retry-all-errors -C - -o client.apk "$url" && break
+              fi
               # Unreachable is not broken: no issue is opened, but the run still fails (and so releases nothing).
               [ "$attempt" = 5 ] && { echo "::error::Could not download $url."; echo "$label (download failed)" >> unchecked.txt
                 echo "### $CLIENT $label: not checked, the download failed" >> summary.md; echo >> summary.md; continue 2; }
