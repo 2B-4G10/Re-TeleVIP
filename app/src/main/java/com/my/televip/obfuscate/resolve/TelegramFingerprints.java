@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public final class TelegramFingerprints {
 
-    public static final int VERSION = 15;
+    public static final int VERSION = 16;
 
     private TelegramFingerprints() {
     }
@@ -100,6 +100,7 @@ public final class TelegramFingerprints {
         o.put("NotificationCenter", "org.telegram.messenger.NotificationCenter");
         o.put("NotificationsController", "org.telegram.messenger.NotificationsController");
         o.put("PeerStoriesView$StoryItemHolder", "org.telegram.ui.Stories.PeerStoriesView$StoryItemHolder");
+        o.put("PhoneFormat", "org.telegram.PhoneFormat.PhoneFormat");
         o.put("PhotoViewer", "org.telegram.ui.PhotoViewer");
         o.put("PhotoViewer$PhotoViewerProvider", "org.telegram.ui.PhotoViewer$PhotoViewerProvider");
         o.put("PhotoViewer$PlaceProviderObject", "org.telegram.ui.PhotoViewer$PlaceProviderObject");
@@ -210,6 +211,9 @@ public final class TelegramFingerprints {
                         declaringStrings(" file reference expired ", "setIsPreloadVideoOperation ")));
         s.add(cls("org.telegram.messenger.FileLoader")
                 .from(declaringStrings("create load operation fileName=", "fileUploadQueue")));
+        // Formats every number the app shows; it alone loads the formats table.
+        s.add(cls("org.telegram.PhoneFormat.PhoneFormat").from(declaringStrings("PhoneFormats.dat")));
+        s.add(method("PhoneFormat", "format").sig("java.lang.String", "java.lang.String").isStatic(false));
         s.add(cls("org.telegram.messenger.LocaleController")
                 .from(declaringStrings("LOC_ERR: formatDateChat", "formatterBannedUntil24H")));
         // Builds that look their strings up by resource id (Momogram) keep its music-search query.
