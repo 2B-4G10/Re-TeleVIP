@@ -102,7 +102,7 @@ jobs:
           ### Install
 
           1. Download **TeleVip-…-release.apk** below and install it (uninstall a debug build first).
-          2. In **LSPosed 1.10+** or **Vector 2.2+**: **Modules** → enable **TeleVip** → tick your Telegram clients.
+          2. In **Vector 2.2+**: **Modules** → enable **Re: TeleVIP** → tick your Telegram clients.
           3. **Force stop** the client and reopen it.
 
           No root? Patch your Telegram client with **LSPatch 1.2** (JingMatrix) and add Re: TeleVIP to it.
@@ -117,7 +117,7 @@ jobs:
             gh release edit "$TAG" --notes-file notes.md
           else
             gh release create "$TAG" artifacts/*.apk --target "$GITHUB_SHA" \
-              --title "TeleVip $TAG" --notes-file notes.md --latest
+              --title "Re: TeleVIP $TAG" --notes-file notes.md --latest
           fi
 
       # modules.lsposed.org: Xposed-Modules-Repo/<applicationId>. MODULES_REPO_TOKEN is a classic
