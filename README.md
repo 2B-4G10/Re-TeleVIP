@@ -125,7 +125,7 @@ A release that breaks something opens an issue.
   <td align="center" width="140"><img src=".github/assets/clients/momogram.png" width="56" height="56" alt=""><br><b>Momogram</b><br><sub>GitHub · last 5</sub></td>
 </tr>
 <tr>
-  <td align="center" width="140"><img src=".github/assets/clients/plus.png" width="56" height="56" alt=""><br><b>Plus Messenger</b><br><sub>APKPure · newest</sub></td>
+  <td align="center" width="140"><img src=".github/assets/clients/plus.png" width="56" height="56" alt=""><br><b>Plus Messenger</b><br><sub>APKPure · last 5</sub></td>
 </tr>
 </table>
 
