@@ -20,9 +20,10 @@ public class TextInfoCell extends FrameLayout {
         textView = new TextView(context);
         textView.setTextColor(Theme.getTextGrayColor());
         textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
-        textView.setGravity(Gravity.CENTER);
-        textView.setPadding(0, AndroidUtilities.dp(19), 0, AndroidUtilities.dp(19));
-        addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER, 17, 0, 17, 0));
+        // A footnote to the group card above it, lined up with the card's text.
+        textView.setGravity(Gravity.START);
+        textView.setPadding(0, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(4));
+        addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.START, 33, 0, 33, 0));
     }
 
     @Override

@@ -16,6 +16,10 @@ import com.my.televip.virtuals.ui.LaunchActivity;
 
 public class SettingsController {
 
+    /** The Re: TeleVIP group, opened from the settings' invite row and the join prompt. */
+    public static final String GROUP_LINK = "t.me/Re_TeleVIP";
+    public static final String GROUP_URL = "https://" + GROUP_LINK;
+
     public FrameLayout settingsView;
     private final Context context;
 
@@ -53,7 +57,7 @@ public class SettingsController {
 
                 alertDialog.setPositiveButton(Translator.get(Keys.Join), AlertDialog.click(() -> {
                     try {
-                        Browser.openUrl(context, "https://t.me/t_l0_e");
+                        Browser.openUrl(context, GROUP_URL);
                     } catch (Throwable t) {
                         Logger.e(t);
                     }

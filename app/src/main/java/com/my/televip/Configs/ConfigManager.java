@@ -253,10 +253,9 @@ public class ConfigManager {
 
         items.add(shadows);
 
-        btnChannel = new ConfigItem(ConfigItem.TEXT, Keys.DeveloperChannel);
+        // The invite and restart buttons share a card.
+        btnChannel = new ConfigItem(ConfigItem.TEXT, Keys.TeleVipGroup);
         items.add(btnChannel);
-
-        items.add(shadows);
 
         btnRestartApp = new ConfigItem(ConfigItem.TEXT, Keys.RestartApp);
         items.add(btnRestartApp);
