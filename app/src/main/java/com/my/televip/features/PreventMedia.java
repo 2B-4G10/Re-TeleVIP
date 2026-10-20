@@ -8,6 +8,7 @@ import com.my.televip.Class.ClassLoad;
 import com.my.televip.obfuscate.AutomationResolver;
 import com.my.televip.logging.Logger;
 import com.my.televip.virtuals.ui.SecretMediaViewer;
+import com.my.televip.xposed.XBridge;
 
 import com.my.televip.reflect.XReflect;
 
@@ -33,6 +34,17 @@ public class PreventMedia {
                             if (ConfigManager.preventMedia.isEnable()) param.setResult(null);
                         }
                     }));
+                }
+
+                // sendSecretMessageRead and sendSecretMediaDelete are small private methods, and
+                // ART compiles them into the chat's tap handlers (Telegram 13.1 on Android 15):
+                // the hooks above then never run and an opened photo still expires. Running the
+                // handlers interpreted makes them call the hooked methods.
+                Class<?> cellDelegate = ClassLoad.getClass(ClassNames.CHAT_MESSAGE_CELL_DELEGATE);
+                if (cellDelegate != null) {
+                    for (java.lang.reflect.Method method : cellDelegate.getDeclaredMethods()) {
+                        XBridge.deoptimize(method);
+                    }
                 }
 
                 if (ClassLoad.getClass(ClassNames.SECRET_MEDIA_VIEWER) != null) {
