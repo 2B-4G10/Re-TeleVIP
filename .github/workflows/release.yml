@@ -104,6 +104,8 @@ jobs:
           1. Download **TeleVip-…-release.apk** below and install it (uninstall a debug build first).
           2. In **LSPosed 1.10+** or **Vector 2.2+**: **Modules** → enable **TeleVip** → tick your Telegram clients.
           3. **Force stop** the client and reopen it.
+
+          No root? Patch your Telegram client with **LSPatch 1.2** (JingMatrix) and add Re: TeleVIP to it.
           EOF
 
       # gh creates the tag on this commit if it does not exist yet.
