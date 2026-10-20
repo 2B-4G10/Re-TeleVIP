@@ -61,9 +61,13 @@ public final class ModernBackend implements XBridge.Backend {
             log("cannot hook non-executable member: " + member);
             return;
         }
+        // A hook replaces any earlier one with the same id on the same method, so each call site
+        // gets its own: Block ads and Ghost Mode both hook ConnectionsManager.sendRequestInternal,
+        // and with one shared id only the last of them ran (Ghost Mode then sent read receipts,
+        // typing and online status as usual).
         xposed.hook((Executable) member)
                 .setPriority(callback.getPriority())
-                .setId(TAG)
+                .setId(TAG + ":" + callback.getClass().getName())
                 .intercept(new Interceptor(callback));
     }
 
