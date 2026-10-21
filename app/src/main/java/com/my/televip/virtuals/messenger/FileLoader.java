@@ -22,13 +22,32 @@ public class FileLoader {
 
     /** Where the client keeps the message's photo or video, downloaded or not. */
     public File getPathToMessage(Object message) {
+        Class<?> tlMessage = ClassLoad.getClass(ClassNames.TL_MESSAGE);
         java.lang.reflect.Method method = XReflect.findMethodExactIfExists(fileLoader.getClass(),
                 AutomationResolver.resolve("FileLoader", "getPathToMessage", AutomationResolver.ResolverType.Method),
-                ClassLoad.getClass(ClassNames.TL_MESSAGE));
+                tlMessage);
+        File path = invoke(method != null && method.getReturnType() == File.class ? method : null, message);
+        if (path != null && (path.exists() || new File(path.getPath() + ".enc").exists())) return path;
+        // Renamed builds may map the name to another method (Nekogram 12.10.5): try every
+        // File(Message) method of FileLoader, and keep the one whose file is there.
+        // R8 may also make it static, or type its parameter as a superclass.
+        for (java.lang.reflect.Method m : fileLoader.getClass().getDeclaredMethods()) {
+            Class<?>[] p = m.getParameterTypes();
+            if (m.equals(method) || m.getReturnType() != File.class || p.length != 1
+                    || p[0] == Object.class || !p[0].isInstance(message)) continue;
+            m.setAccessible(true);
+            File candidate = invoke(m, message);
+            if (candidate != null && (candidate.exists() || new File(candidate.getPath() + ".enc").exists())) return candidate;
+            if (path == null) path = candidate;
+        }
+        return path;
+    }
+
+    private File invoke(java.lang.reflect.Method method, Object message) {
         if (method == null) return null;
         try {
             return (File) method.invoke(fileLoader, message);
-        } catch (ReflectiveOperationException e) {
+        } catch (ReflectiveOperationException | RuntimeException e) {
             return null;
         }
     }
