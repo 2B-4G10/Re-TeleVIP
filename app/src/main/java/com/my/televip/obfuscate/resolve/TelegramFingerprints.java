@@ -976,8 +976,10 @@ public final class TelegramFingerprints {
 
         // ChatActivity's cell delegate. Many screens implement the delegate interface; this one
         // holds its ChatActivity, and its didPressImage flags media for the downloads list.
-        // R8 may drop didPressImage's fullPreview flag, so look for both shapes.
-        Body pressesImage = touchesField("org.telegram.messenger.MessageObject", "putInDownloadsStore");
+        // R8 may drop didPressImage's fullPreview flag, so look for both shapes. Nekogram 12.10.5
+        // renames putInDownloadsStore too: there it is the tap handler that sets a flag on the message.
+        Body pressesImage = any(touchesField(mo, "putInDownloadsStore"),
+                Body.all(shaped("void", 3, cell, "float", "float", "boolean"), writesFieldOfType(mo, "boolean")));
         s.add(cls("org.telegram.ui.ChatActivity$ChatMessageCellDelegate")
                 .from(declaringMethod("void", cell, "float", "float", "boolean"),
                         declaringMethod("void", cell, "float", "float"))
