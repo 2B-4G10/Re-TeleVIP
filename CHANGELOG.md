@@ -1,10 +1,21 @@
 # Changelog
 
-## 1.2.2 — Nekogram 12.10.5 supported
+## 1.2.2 — Nekogram 12.10.5, fair secret media, and smoother settings
 
 - **Prevent media and Save secret media work on Nekogram 12.10.5.** Nekogram renamed part of
   the chat in that version, so tapping a photo no longer reached Re: TeleVIP. Newer Nekogram
   versions keep working as before.
+- **The sender sees your secret photos and videos as opened.** With Prevent media on, you
+  still keep your copy, but the sender's copy now expires as usual.
+- **"Delete for both" in the secret media viewer.** After you confirm, the photo or video is
+  deleted for you and the sender, as the timer would have done.
+- **No more photos downloading over and over** in groups while Save secret media is on.
+- **Night mode and theme colours work right after closing Re: TeleVIP settings.** Until now
+  they did nothing until you restarted the app.
+- **Dialogs follow light and dark mode.** No more white text on a white background in the
+  calendar and other Re: TeleVIP dialogs.
+- **Show deleted messages and Voice messages as music turn off right away**, without a
+  restart. Save edits history and Show deleted messages are also gentler on the chat database.
 
 ## 1.2.1 — no false "incompatible version" warning on Nekogram
 
