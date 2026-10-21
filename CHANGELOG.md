@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.2 — Nekogram 12.10.5 supported
+
+- **Prevent media and Save secret media work on Nekogram 12.10.5.** Nekogram renamed part of
+  the chat in that version, so tapping a photo no longer reached Re: TeleVIP. Newer Nekogram
+  versions keep working as before.
+
 ## 1.2.1 — no false "incompatible version" warning on Nekogram
 
 - **Fixed: Nekogram showed "Your Telegram client may be an incompatible version"** in the log
