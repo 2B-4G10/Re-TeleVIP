@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.3 — save secret media, and you choose when it counts as seen
 
 - **You decide when the sender sees your secret media as opened.** With Prevent media on,
   opening a self-destructing photo or video tells the sender nothing. Tap **Mark as seen** in
