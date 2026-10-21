@@ -30,11 +30,11 @@ public class FileLoader {
         if (path != null && (path.exists() || new File(path.getPath() + ".enc").exists())) return path;
         // Renamed builds may map the name to another method (Nekogram 12.10.5): try every
         // File(Message) method of FileLoader, and keep the one whose file is there.
-        if (tlMessage == null) return path;
+        // R8 may also make it static, or type its parameter as a superclass.
         for (java.lang.reflect.Method m : fileLoader.getClass().getDeclaredMethods()) {
             Class<?>[] p = m.getParameterTypes();
-            if (m.equals(method) || m.getReturnType() != File.class || p.length != 1 || p[0] != tlMessage
-                    || java.lang.reflect.Modifier.isStatic(m.getModifiers())) continue;
+            if (m.equals(method) || m.getReturnType() != File.class || p.length != 1
+                    || p[0] == Object.class || !p[0].isInstance(message)) continue;
             m.setAccessible(true);
             File candidate = invoke(m, message);
             if (candidate != null && (candidate.exists() || new File(candidate.getPath() + ".enc").exists())) return candidate;
