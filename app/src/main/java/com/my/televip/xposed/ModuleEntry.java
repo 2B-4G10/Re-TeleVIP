@@ -7,6 +7,7 @@ import com.my.televip.ClientChecker;
 import com.my.televip.Class.ClassLoad;
 import com.my.televip.Class.ClassNames;
 import com.my.televip.TeleVip;
+import com.my.televip.settings.controller.SettingsController;
 import com.my.televip.base.AbstractMethodHook;
 import com.my.televip.hooks.HMethod;
 import com.my.televip.logging.Logger;
@@ -67,8 +68,9 @@ public final class ModuleEntry {
             AbstractMethodHook bootstrap = new AbstractMethodHook() {
                 @Override
                 protected void beforeMethod(MethodHookParam param) {
-                    if (!STARTED.compareAndSet(false, true)) return;
                     Activity activity = (Activity) param.thisObject;
+                    SettingsController.setActivity(activity);
+                    if (!STARTED.compareAndSet(false, true)) return;
                     ClientChecker.checkClientVersion(activity);
                     TeleVip.startHook(activity);
                 }
