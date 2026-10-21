@@ -233,6 +233,17 @@ public final class SecretMediaButtons {
         if (file != null && !encrypted.isFile() && app.getExternalCacheDir() != null) {
             encrypted = new File(app.getExternalCacheDir(), file.getName() + ".enc");
         }
+        if (file == null || (!file.isFile() && !encrypted.isFile())) {
+            // Nothing maps the path on some renamed builds (Nekogram 12.10.5). The viewer just
+            // loaded this media, so it is most likely the newest encrypted file in the cache.
+            File newest = newestEncrypted(app);
+            if (newest != null) {
+                Logger.w("Save secret media: no path for the message, using the newest cached " + newest.getName());
+                encrypted = newest;
+                String name = newest.getName();
+                file = new File(newest.getParentFile(), name.substring(0, name.length() - ".enc".length()));
+            }
+        }
         File key = file == null ? null : new File(app.getCacheDir(), file.getName() + ".enc.key");
         boolean plain = file != null && file.isFile() && file.length() > 0;
         if (!plain && (encrypted == null || !encrypted.isFile() || !key.isFile())) {
@@ -251,6 +262,19 @@ public final class SecretMediaButtons {
     }
 
     /** Pictures/Telegram or Movies/Telegram, where the client saves media too. */
+    /** The newest <name>.enc in the external cache that has its key. */
+    private static File newestEncrypted(Context app) {
+        File dir = app.getExternalCacheDir();
+        File[] files = dir == null ? null : dir.listFiles((d, n) -> n.endsWith(".enc"));
+        if (files == null) return null;
+        File newest = null;
+        for (File f : files) {
+            if (!new File(app.getCacheDir(), f.getName() + ".key").isFile()) continue;
+            if (newest == null || f.lastModified() > newest.lastModified()) newest = f;
+        }
+        return newest;
+    }
+
     private interface Source {
         InputStream open() throws Exception;
     }
