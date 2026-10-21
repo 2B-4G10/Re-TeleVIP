@@ -9,8 +9,9 @@
 #   client-builds.sh fdroid <package> [count]
 #       the latest versions on f-droid.org, its archive included, as arm64 or universal APKs.
 #   client-builds.sh apkpure <package> [count]
-#       the latest versions APKPure has of a closed-source client (Plus Messenger), through its
-#       app API with apkeep: its website answers CI runners with a Cloudflare challenge. The URL
+#       the latest versions APKPure has of a closed-source client (Plus Messenger, Graph
+#       Messenger), through its app API with apkeep: its website answers CI runners with a
+#       Cloudflare challenge. The URL
 #       printed is apkpure:<package>@<version>, which apkpure-download.sh fetches.
 #   client-builds.sh url <URL>
 #       a single build at a fixed address (only ever the newest one, e.g. telegram.org).
