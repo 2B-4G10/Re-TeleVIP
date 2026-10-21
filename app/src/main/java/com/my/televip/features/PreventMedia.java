@@ -41,8 +41,15 @@ public class PreventMedia {
                     HMethod.hookMethod(ClassLoad.getClass(ClassNames.CHAT_ACTIVITY), AutomationResolver.resolve("ChatActivity", "sendSecretMessageRead", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("sendSecretMessageRead", new Class<?>[]{ClassLoad.getClass(ClassNames.MESSAGE_OBJECT), boolean.class}), new AbstractMethodHook() {
                         @Override
                         protected void beforeMethod(MethodHookParam param) {
+                            if (!ConfigManager.preventMedia.isEnable()) return;
                             // Opening it reports nothing: the sender is told only on "Mark as seen".
-                            if (ConfigManager.preventMedia.isEnable()) param.setResult(null);
+                            param.setResult(null);
+                            // readNow false: a viewer is about to open it. Current builds show it
+                            // in PhotoViewer, older ones in SecretMediaViewer (which also calls this).
+                            Object message = messageArg(param.args);
+                            if (message != null && !readNowArg(param.args)) {
+                                SecretMediaButtons.showFor(message, new MessageObject(message).getMessageOwner().getTtl());
+                            }
                         }
                     }));
                     HMethod.hookMethod(ClassLoad.getClass(ClassNames.CHAT_ACTIVITY), AutomationResolver.resolve("ChatActivity", "sendSecretMediaDelete", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("sendSecretMediaDelete", new Class<?>[]{ClassLoad.getClass(ClassNames.MESSAGE_OBJECT)}), new AbstractMethodHook() {
@@ -100,7 +107,7 @@ public class PreventMedia {
                                             for (int a = messages.size() - 1; a >= 0; a--) {
                                                 TLRPC.Message message = new TLRPC.Message(messages.get(a));
                                                 int mid = message.getID();
-                                                if (KeptSecretMedia.containsMid(mid) && KeptSecretMedia.contains(MessageObject.getDialogId(message), mid)) {
+                                                if (KeptSecretMedia.containsMid(mid) && KeptSecretMedia.contains(dialogIdOf(message), mid)) {
                                                     messages.remove(a);
                                                 }
                                             }
@@ -172,6 +179,43 @@ public class PreventMedia {
         });
         found.setAccessible(true);
         return found;
+    }
+
+    /** The MessageObject argument, wherever R8 put it (it may make the method static). */
+    private static Object messageArg(Object[] args) {
+        Class<?> messageObject = ClassLoad.getClass(ClassNames.MESSAGE_OBJECT);
+        for (Object arg : args) {
+            if (messageObject != null && messageObject.isInstance(arg)) return arg;
+        }
+        return null;
+    }
+
+    private static boolean readNowArg(Object[] args) {
+        for (Object arg : args) {
+            if (arg instanceof Boolean) return (Boolean) arg;
+        }
+        return false;
+    }
+
+    /**
+     * The chat of a message. Some renamed builds (Nekogram 12.10.5) map getDialogId to the wrong
+     * method; secret media only comes in private chats, where the chat is the sender.
+     */
+    static long dialogIdOf(TLRPC.Message message) {
+        try {
+            return MessageObject.getDialogId(message);
+        } catch (Throwable t) {
+            return message.getFrom_id().getUser_id();
+        }
+    }
+
+    static long dialogIdOf(Object messageObject) {
+        MessageObject message = new MessageObject(messageObject);
+        try {
+            return message.getDialogId();
+        } catch (Throwable t) {
+            return message.getMessageOwner().getFrom_id().getUser_id();
+        }
     }
 
     /** Messages of secret (end-to-end encrypted) chats have negative ids on the phone. */

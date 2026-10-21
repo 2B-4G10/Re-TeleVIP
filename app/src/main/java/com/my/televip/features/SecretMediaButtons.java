@@ -35,6 +35,7 @@ import com.my.televip.virtuals.messenger.FileLoader;
 import com.my.televip.virtuals.messenger.MessageObject;
 import com.my.televip.virtuals.messenger.MessagesController;
 import com.my.televip.virtuals.messenger.UserConfig;
+import com.my.televip.virtuals.tgnet.TLRPC;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -62,59 +63,88 @@ public final class SecretMediaButtons {
     private SecretMediaButtons() {
     }
 
+    /** How long to wait for the viewer's window to show, checked every RETRY_MS. */
+    private static final int RETRIES = 15;
+    private static final int RETRY_MS = 100;
+
     /**
-     * The viewer is opening {@code messageObject}; {@code ttl} is its timer, read before the
-     * viewer's hook cleared it. Runs once the viewer is showing it.
+     * A viewer is opening {@code messageObject}; {@code ttl} is its timer, read before anything
+     * cleared it. Attaches once the viewer is on screen.
      */
     public static void showFor(Object messageObject, int ttl) {
-        new Handler(Looper.getMainLooper()).post(() -> {
-            try {
-                attach(messageObject, ttl);
-            } catch (Throwable t) {
-                Logger.e(t);
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
+            int tries;
+
+            @Override
+            public void run() {
+                try {
+                    if (!attach(messageObject, ttl) && ++tries < RETRIES) handler.postDelayed(this, RETRY_MS);
+                } catch (Throwable t) {
+                    Logger.e(t);
+                }
             }
         });
     }
 
-    private static void attach(Object messageObject, int ttl) {
-        Class<?> viewerClass = ClassLoad.getClass(ClassNames.SECRET_MEDIA_VIEWER);
-        Class<?> actionBarClass = ClassLoad.getClass(ClassNames.ACTION_BAR);
-        if (viewerClass == null || actionBarClass == null) return;
-        Object viewer = staticInstance(viewerClass);
-        View actionBar = viewer == null ? null : (View) fieldOfType(viewer, actionBarClass);
-        if (actionBar == null || !(actionBar.getParent() instanceof FrameLayout)) return;
+    private static boolean attach(Object messageObject, int ttl) {
+        Object[] target = findViewer();
+        if (target == null) return false;
+        Object viewer = target[0];
+        View actionBar = (View) target[1];
+        boolean photoViewer = target[2] != null;
         FrameLayout container = (FrameLayout) actionBar.getParent();
 
         LinearLayout row = container.findViewWithTag(TAG);
         if (row == null) {
-            row = create(container, actionBar);
+            row = create(container, actionBar, photoViewer);
         }
         TextView save = (TextView) row.getChildAt(0);
         TextView seen = (TextView) row.getChildAt(1);
         TextView delete = (TextView) row.getChildAt(2);
 
-        MessageObject message = new MessageObject(messageObject);
-        long dialogId = message.getDialogId();
-        int mid = message.getMessageOwner().getID();
+        TLRPC.Message owner = new MessageObject(messageObject).getMessageOwner();
+        int mid = owner.getID();
         // Secret chats are left as they were: their files are encrypted, and their read receipt
         // would start the deletion on this phone too.
         boolean show = ConfigManager.preventMedia.isEnable() && mid > 0;
         row.setVisibility(show ? View.VISIBLE : View.GONE);
-        if (!show) return;
+        if (!show) return true;
+        long dialogId = PreventMedia.dialogIdOf(messageObject);
 
         boolean seenAlready = KeptSecretMedia.contains(dialogId, mid);
         seen.setVisibility(PreventMedia.canMarkSeen() && !seenAlready ? View.VISIBLE : View.GONE);
-        save.setOnClickListener(v -> save(v.getContext(), messageObject));
+        save.setOnClickListener(v -> save(v.getContext(), owner.message));
         seen.setOnClickListener(v -> {
             if (PreventMedia.markSeen(dialogId, mid, ttl)) {
                 v.setVisibility(View.GONE);
                 toast(v.getContext(), Translator.get(Keys.SecretMediaMarkedSeen));
             }
         });
-        delete.setOnClickListener(v -> confirm(v, viewer, dialogId, mid));
+        delete.setOnClickListener(v -> confirm(v, viewer, photoViewer, dialogId, mid));
+        return true;
     }
 
-    private static LinearLayout create(FrameLayout container, View actionBar) {
+    /**
+     * {viewer, its action bar, non-null for PhotoViewer} for the viewer on screen: PhotoViewer in
+     * current builds ("Disappearing Photo"), SecretMediaViewer in older ones. Each is the static
+     * instance of its class, so nothing has to be mapped by name.
+     */
+    private static Object[] findViewer() {
+        Class<?> actionBarClass = ClassLoad.getClass(ClassNames.ACTION_BAR);
+        if (actionBarClass == null) return null;
+        Class<?>[] viewers = {ClassLoad.getClass(ClassNames.SECRET_MEDIA_VIEWER), ClassLoad.getClass(ClassNames.PHOTO_VIEWER)};
+        for (int i = 0; i < viewers.length; i++) {
+            if (viewers[i] == null) continue;
+            for (Object viewer : staticInstances(viewers[i])) {
+                View actionBar = shownActionBar(viewer, actionBarClass);
+                if (actionBar != null) return new Object[]{viewer, actionBar, i == 1 ? Boolean.TRUE : null};
+            }
+        }
+        return null;
+    }
+
+    private static LinearLayout create(FrameLayout container, View actionBar, boolean photoViewer) {
         Context context = container.getContext();
         LinearLayout row = new LinearLayout(context);
         row.setTag(TAG);
@@ -128,9 +158,21 @@ public final class SecretMediaButtons {
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
                 Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-        params.bottomMargin = dp(64);
+        // PhotoViewer has its own bar along the bottom.
+        params.bottomMargin = dp(photoViewer ? 112 : 64);
         container.addView(row, params);
         final LinearLayout view = row;
+        // PhotoViewer shows every other photo too: the row is only for the secret one it opened.
+        row.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View v) {
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View v) {
+                v.setVisibility(View.GONE);
+            }
+        });
         row.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @Override
             public boolean onPreDraw() {
@@ -165,11 +207,10 @@ public final class SecretMediaButtons {
         return button;
     }
 
-    private static void save(Context context, Object messageObject) {
+    private static void save(Context context, Object message) {
         File file;
         try {
-            file = FileLoader.getInstance(UserConfig.getSelectedAccount())
-                    .getPathToMessage(new MessageObject(messageObject).getMessageOwner().message);
+            file = FileLoader.getInstance(UserConfig.getSelectedAccount()).getPathToMessage(message);
         } catch (Throwable t) {
             Logger.e(t);
             file = null;
@@ -237,19 +278,23 @@ public final class SecretMediaButtons {
         Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
     }
 
-    private static void confirm(View button, Object viewer, long dialogId, int mid) {
+    private static void confirm(View button, Object viewer, boolean photoViewer, long dialogId, int mid) {
         AlertDialog dialog = new AlertDialog(button.getContext());
         dialog.setTitle(Translator.get(Keys.SecretMediaDeleteTitle));
         dialog.setMessage(Translator.get(Keys.SecretMediaDeleteMessage));
-        dialog.setPositiveButton(Translator.get(Keys.Delete), AlertDialog.click(() -> delete(button, viewer, dialogId, mid)));
+        dialog.setPositiveButton(Translator.get(Keys.Delete), AlertDialog.click(() -> delete(button, viewer, photoViewer, dialogId, mid)));
         dialog.setNegativeButton(Translator.get(Keys.Cancel), null);
         dialog.show();
     }
 
-    private static void delete(View button, Object viewer, long dialogId, int mid) {
+    private static void delete(View button, Object viewer, boolean photoViewer, long dialogId, int mid) {
         ((View) button.getParent()).setVisibility(View.GONE);
         try {
-            XReflect.callMethod(viewer, AutomationResolver.resolve("SecretMediaViewer", "closePhoto", AutomationResolver.ResolverType.Method), true, false);
+            if (photoViewer) {
+                closePhotoViewer(viewer);
+            } else {
+                XReflect.callMethod(viewer, AutomationResolver.resolve("SecretMediaViewer", "closePhoto", AutomationResolver.ResolverType.Method), true, false);
+            }
         } catch (Throwable t) {
             Logger.e(t);
         }
@@ -261,28 +306,42 @@ public final class SecretMediaButtons {
         }
     }
 
-    private static Object staticInstance(Class<?> type) {
+    /**
+     * PhotoViewer.closePhoto(animated, fromEditMode) where the build keeps the name. Renamed
+     * builds are not mapped for it, and need not be: PhotoViewer closes itself once the message
+     * it shows is deleted.
+     */
+    private static void closePhotoViewer(Object viewer) throws ReflectiveOperationException {
+        java.lang.reflect.Method close = XReflect.findMethodExactIfExists(viewer.getClass(), "closePhoto", boolean.class, boolean.class);
+        if (close != null) close.invoke(viewer, true, false);
+    }
+
+    private static ArrayList<Object> staticInstances(Class<?> type) {
+        ArrayList<Object> found = new ArrayList<>();
         for (Field field : type.getDeclaredFields()) {
             if (Modifier.isStatic(field.getModifiers()) && field.getType() == type) {
                 try {
                     field.setAccessible(true);
                     Object value = field.get(null);
-                    if (value != null) return value;
+                    if (value != null && !found.contains(value)) found.add(value);
                 } catch (Throwable ignored) {
                 }
             }
         }
-        return null;
+        return found;
     }
 
-    /** R8 may narrow the field to the anonymous ActionBar subclass the viewer creates. */
-    private static Object fieldOfType(Object owner, Class<?> type) {
+    /** The viewer's action bar while it is on screen. R8 may narrow the field to a subclass. */
+    private static View shownActionBar(Object owner, Class<?> type) {
         for (Field field : owner.getClass().getDeclaredFields()) {
             if (!Modifier.isStatic(field.getModifiers()) && type.isAssignableFrom(field.getType())) {
                 try {
                     field.setAccessible(true);
                     Object value = field.get(owner);
-                    if (value != null) return value;
+                    if (value instanceof View && ((View) value).isAttachedToWindow()
+                            && ((View) value).getParent() instanceof FrameLayout) {
+                        return (View) value;
+                    }
                 } catch (Throwable ignored) {
                 }
             }
