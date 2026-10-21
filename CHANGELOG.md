@@ -8,8 +8,9 @@
   keep yours.
 - **Save secret media from the viewer.** A **Save** button puts the photo or video in your
   gallery, next to **Mark as seen** and **Delete for both**.
-- **Graph Messenger is supported.** Re: TeleVIP now works with Graph Messenger and checks its
-  latest releases every week, like the other clients.
+- **Graph Messenger is supported.** Re: TeleVIP shows up in its settings and its features work
+  on Graph's current versions (12.10 and 13.0), which are checked every week like the other
+  clients.
 - **Hide seen works smoothly on Nekogram 12.10.5.** Reading a chat with Ghost Mode on could
   run into an error there, which got in the way of chats loading. Chats now open normally, and
   the sender still doesn't see that you read them.

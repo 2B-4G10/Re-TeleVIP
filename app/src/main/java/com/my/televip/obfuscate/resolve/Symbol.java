@@ -430,6 +430,7 @@ public abstract class Symbol {
         int ordinalWithoutAlsoReaders;
         String postMethod;
         boolean intLike;
+        FieldSymbol fallback;
 
         FieldSymbol(String owner, String name) {
             this.owner = owner;
@@ -439,7 +440,8 @@ public abstract class Symbol {
         @Override
         boolean hasFingerprint() {
             return keyHost != null || flagHost != null
-                    || type != null && (uniqueOfType || writtenBy != null || lastReaders != null || handedIn != null);
+                    || type != null && (uniqueOfType || writtenBy != null || lastReaders != null || handedIn != null)
+                    || fallback != null && fallback.hasFingerprint();
         }
 
         /**
@@ -577,6 +579,16 @@ public abstract class Symbol {
             return this;
         }
 
+        /**
+         * Another way to find the same field, tried where this one finds nothing or more than one -
+         * for a fork that drops what this fingerprint anchors on (Graph Messenger keeps no
+         * "selectedAccount" preference and a second static Context).
+         */
+        public FieldSymbol orElse(FieldSymbol other) {
+            this.fallback = other;
+            return this;
+        }
+
 
         @Override
         String id() {
@@ -585,6 +597,14 @@ public abstract class Symbol {
 
         @Override
         Resolver.Attempt attempt(Resolver r) {
+            Resolver.Attempt own = attemptAlone(r);
+            if (fallback == null || own.kind == Resolver.Attempt.Kind.FOUND
+                    || own.kind == Resolver.Attempt.Kind.WAITING) return own;
+            Resolver.Attempt other = fallback.attempt(r);
+            return other.kind == Resolver.Attempt.Kind.NOT_FOUND ? own : other;
+        }
+
+        private Resolver.Attempt attemptAlone(Resolver r) {
             DexClass cls = r.cls(r.fullName(owner));
             if (cls == null) {
                 return r.pendingOrResolvable(r.fullName(owner))
