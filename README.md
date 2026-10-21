@@ -134,6 +134,9 @@ A release that breaks something opens an issue.
   <td align="center" valign="top" width="150"><img src=".github/assets/clients/momogram.png" width="56" height="56" alt=""><br><b>Momogram</b><br><sub>GitHub</sub></td>
   <td align="center" valign="top" width="150"><img src=".github/assets/clients/plus.png" width="56" height="56" alt=""><br><b>Plus Messenger</b><br><sub>APKPure</sub></td>
 </tr>
+<tr>
+  <td align="center" valign="top" width="150"><img src=".github/assets/clients/graph.png" width="56" height="56" alt=""><br><b>Graph Messenger</b><br><sub>APKPure</sub></td>
+</tr>
 </table>
 
 <sub>Telegram: its newest build. The others: their last five releases.</sub>
