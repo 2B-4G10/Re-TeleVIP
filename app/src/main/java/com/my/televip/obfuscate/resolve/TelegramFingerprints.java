@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public final class TelegramFingerprints {
 
-    public static final int VERSION = 16;
+    public static final int VERSION = 17;
 
     private TelegramFingerprints() {
     }
@@ -137,6 +137,7 @@ public final class TelegramFingerprints {
         o.put("TLRPC$TL_channels_readMessageContents", "org.telegram.tgnet.TLRPC$TL_channels_readMessageContents");
         o.put("TLRPC$TL_inputPeerChannel", "org.telegram.tgnet.TLRPC$TL_inputPeerChannel");
         o.put("TLRPC$TL_messages_affectedMessages", "org.telegram.tgnet.TLRPC$TL_messages_affectedMessages");
+        o.put("TLRPC$TL_messages_getUnreadReactions", "org.telegram.tgnet.TLRPC$TL_messages_getUnreadReactions");
         o.put("TLRPC$TL_messages_readDiscussion", "org.telegram.tgnet.TLRPC$TL_messages_readDiscussion");
         o.put("TLRPC$TL_messages_readEncryptedHistory", "org.telegram.tgnet.TLRPC$TL_messages_readEncryptedHistory");
         o.put("TLRPC$TL_messages_readHistory", "org.telegram.tgnet.TLRPC$TL_messages_readHistory");
@@ -328,6 +329,8 @@ public final class TelegramFingerprints {
         s.add(cls("org.telegram.tgnet.TLRPC$TL_messages_getSponsoredMessages").from(serializingConstant(0x3d6ce850)));
         s.add(cls("org.telegram.tgnet.TLRPC$TL_contacts_getSponsoredPeers").from(serializingConstant(0xb6c8c393)));
         s.add(cls("org.telegram.tgnet.TLRPC$TL_help_getPromoData").from(serializingConstant(0xc0977421)));
+        // messages.getUnreadReactions: the next liked message, which a forum topic's reactions button asks for.
+        s.add(tl("org.telegram.tgnet.TLRPC$TL_messages_getUnreadReactions", 0xbd7f90ac));
         // The "no ads" answers to the first two, which stand in for a real answer that gets through.
         s.add(tl("org.telegram.tgnet.TLRPC$TL_messages_sponsoredMessagesEmpty", 0x1839490f));
         s.add(tl("org.telegram.tgnet.TLRPC$TL_contacts_sponsoredPeersEmpty", 0xea32b4b1));
@@ -387,7 +390,8 @@ public final class TelegramFingerprints {
                 "TL_inputPeerChat", "TL_inputPeerChannel", "TL_message_secret", "TL_user", "TL_messages_messages",
                 "TL_messages_readHistory", "TL_channels_readHistory", "TL_messages_affectedMessages",
                 "TL_messages_readDiscussion", "TL_messages_sendMedia", "TL_messages_sendMessage",
-                "TL_messages_sendMultiMedia", "TL_messages_sendPaidReaction", "TL_messages_sendReaction"}) {
+                "TL_messages_sendMultiMedia", "TL_messages_sendPaidReaction", "TL_messages_sendReaction",
+                "TL_messages_getUnreadReactions"}) {
             s.add(method("TLRPC$" + c, "serializeToStream").sig("void", "org.telegram.tgnet.OutputSerializedData"));
         }
         s.add(tl("org.telegram.tgnet.TLRPC$TL_peerChat", 0x36c6019a));
@@ -437,6 +441,11 @@ public final class TelegramFingerprints {
                 .readBy("TLRPC$TL_messages_affectedMessages#serializeToStream", 1));
         s.add(field("TLRPC$TL_messages_readHistory", "max_id").type("int")
                 .readBy("TLRPC$TL_messages_readHistory#serializeToStream", 0));
+        // getUnreadReactions: flags, peer, then top_msg_id when flag 0 is set.
+        String unreadReactions = "TLRPC$TL_messages_getUnreadReactions";
+        s.add(field(unreadReactions, "flags").type("int").readBy(unreadReactions + "#serializeToStream", 0));
+        s.add(field(unreadReactions, "top_msg_id").type("int").readBy(unreadReactions + "#serializeToStream", 1));
+        s.add(field(unreadReactions, "peer").type(inputPeer).readBy(unreadReactions + "#serializeToStream", 0));
         for (String c : new String[]{"TL_messages_readHistory", "TL_messages_readDiscussion", "TL_messages_sendMedia",
                 "TL_messages_sendMessage", "TL_messages_sendMultiMedia", "TL_messages_sendPaidReaction",
                 "TL_messages_sendReaction"}) {
@@ -555,6 +564,14 @@ public final class TelegramFingerprints {
         // is an inner class nothing else names.
         s.add(method("MessagesController", "getSponsoredMessages").sig(Symbol.ANY, "long")
                 .where(refersTo("org.telegram.tgnet.TLRPC$TL_messages_getSponsoredMessages")));
+        // The next message with unread reactions in a chat or topic: (dialogId, topicId, count, callback).
+        // Its lambda takes the same parameters and makes the request; the method itself does not.
+        // Telegram 13.x shares it with poll votes as getNextReactionMentionInternal, with a flag.
+        s.add(method("MessagesController", "getNextReactionMention").sig("void", "long", "long", "int", Symbol.ANY)
+                .anyOrder().where(notSynthetic(), not(refersTo("org.telegram.tgnet.TLRPC$TL_messages_getUnreadReactions"))));
+        s.add(method("MessagesController", "getNextReactionMentionInternal")
+                .sig("void", "long", "long", "int", "boolean", Symbol.ANY).anyOrder()
+                .where(notSynthetic(), not(refersTo("org.telegram.tgnet.TLRPC$TL_messages_getUnreadReactions"))));
         s.add(method("MessagesController", "isChatNoForwardsJ").named("isChatNoForwards").sig("boolean", "long")
                 .where(callsSymbol("MessagesController#isChatNoForwardsO")));
         s.add(method("MessagesController", "isChatNoForwardsO").named("isChatNoForwards")
