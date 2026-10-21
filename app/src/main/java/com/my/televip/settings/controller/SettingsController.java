@@ -14,6 +14,9 @@ import com.my.televip.virtuals.ActionBar.AlertDialog;
 import com.my.televip.virtuals.messenger.browser.Browser;
 import com.my.televip.virtuals.ui.LaunchActivity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SettingsController {
 
     /** The Re: TeleVIP group, opened from the settings' invite row and the join prompt. */
@@ -24,6 +27,14 @@ public class SettingsController {
     private final Context context;
 
     public SettingsActivity settingsActivity;
+
+    /**
+     * The client's views that were showing when the settings opened, and that the settings hid.
+     * Only these are shown again on close: the client keeps views of its own there that are meant
+     * to stay hidden, such as the day/night switch's screenshot, which blocks every later theme
+     * or colour change while it is showing.
+     */
+    private final List<View> hiddenViews = new ArrayList<>();
 
     public SettingsController(Context context) {
         this.context = context;
@@ -86,7 +97,12 @@ public class SettingsController {
 
             for (int i = 0; i < root.getChildCount(); i++) {
                 View child = root.getChildAt(i);
-                child.setVisibility(child == target ? View.VISIBLE : View.GONE);
+                if (child == target) {
+                    child.setVisibility(View.VISIBLE);
+                } else if (child.getVisibility() != View.GONE) {
+                    hiddenViews.add(child);
+                    child.setVisibility(View.GONE);
+                }
             }
 
             target.bringToFront();
@@ -104,10 +120,11 @@ public class SettingsController {
             if (parent == null) parent = new LaunchActivity(settingsView.getContext()).frameLayout;
             if (parent == null) return;
 
-            for (int i = 0; i < parent.getChildCount(); i++) {
-                View child = parent.getChildAt(i);
-                child.setVisibility(child == settingsView ? View.GONE : View.VISIBLE);
+            settingsView.setVisibility(View.GONE);
+            for (View child : hiddenViews) {
+                if (child.getParent() == parent) child.setVisibility(View.VISIBLE);
             }
+            hiddenViews.clear();
             if (settingsView.getParent() == parent) {
                 parent.removeView(settingsView);
             }
