@@ -42,7 +42,9 @@ public class MessageStorage {
 
     public static void markMessagesDeleted(MessagesStorage messagesStorage, final long dialogId, ArrayList<Integer> delMsg) {
         try {
-            storage.post(() -> {
+            // On the client's own storage queue, in turn with its database work: run from a thread
+            // of our own, this raced it, and left a statement open each time.
+            messagesStorage.getStorageQueue().postRunnable(() -> {
                 SQLiteDatabase db = messagesStorage.getDatabase();
                 for (int i = 0; i < 2; ++i) {
                     final String table = i == 0 ? "messages_v2" : "messages_topics";
@@ -52,31 +54,38 @@ public class MessageStorage {
                             "WHERE " + (dialogId == 0 ? "is_channel" : "uid") + " = " + dialogId + " AND mid IN (" + TextUtils.join(",", delMsg) + ");";
 
                     String update = "UPDATE " + table +" SET data = ? WHERE uid = ? AND mid = ?";
-                    SQLiteCursor cursor = db.queryFinalized(query, new Object[]{});
-                    SQLitePreparedStatement state = db.executeFast(update);
+                    SQLiteCursor cursor = null;
+                    SQLitePreparedStatement state = null;
+                    try {
+                        cursor = db.queryFinalized(query, new Object[]{});
+                        state = db.executeFast(update);
 
-                    while (cursor.next()) {
-                        NativeByteBuffer data = cursor.byteBufferValue(0);
-                        int mid = cursor.intValue(1);
-                        long lastDialogId = cursor.longValue(2);
+                        while (cursor.next()) {
+                            NativeByteBuffer data = cursor.byteBufferValue(0);
+                            int mid = cursor.intValue(1);
+                            long lastDialogId = cursor.longValue(2);
 
-                        data.position(4);
-                        int flags = data.readInt32(true);
-                        flags |= ShowDeletedMessages.FLAG_DELETED;
-                        data.position(4);
-                        data.writeInt32(flags);
-                        data.position(0);
+                            data.position(4);
+                            int flags = data.readInt32(true);
+                            flags |= ShowDeletedMessages.FLAG_DELETED;
+                            data.position(4);
+                            data.writeInt32(flags);
+                            data.position(0);
 
-                        state.requery();
-                        state.bindByteBuffer(1, data);
-                        state.bindLong(2, lastDialogId);
-                        state.bindInteger(3, mid);
-                        state.step();
+                            state.requery();
+                            state.bindByteBuffer(1, data);
+                            state.bindLong(2, lastDialogId);
+                            state.bindInteger(3, mid);
+                            state.step();
 
-                        data.reuse();
+                            data.reuse();
+                        }
+                    } catch (Throwable e) {
+                        Logger.e(e);
+                    } finally {
+                        if (cursor != null) cursor.dispose();
+                        if (state != null) state.dispose();
                     }
-                    cursor.dispose();
-                    state.step();
                 }
             });
         } catch (Throwable e){

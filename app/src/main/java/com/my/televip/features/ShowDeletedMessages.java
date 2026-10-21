@@ -36,6 +36,11 @@ public class ShowDeletedMessages {
 
     public static boolean isEnable = false;
 
+    /** Switching it off takes effect at once: the hooks stay, and let everything through. */
+    private static boolean enabled() {
+        return ConfigManager.showDeletedMessages != null && ConfigManager.showDeletedMessages.isEnable();
+    }
+
     public static void markMessagesDeletedForController(MessagesStorage messagesStorage, long dialogId, ArrayList<Integer> delMsg) {
         MessageStorage.markMessagesDeleted(messagesStorage, dialogId, delMsg);
     }
@@ -59,6 +64,7 @@ public class ShowDeletedMessages {
                     HMethod.hookMethod(ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER), methodName, ArrayList.class, ArrayList.class, ArrayList.class, boolean.class, int.class, new AbstractMethodHook() {
                         @Override
                         protected void beforeMethod(MethodHookParam param) {
+                            if (!enabled()) return;
                             try {
                                 MessagesController messagesController = new MessagesController(param.thisObject);
                                 CopyOnWriteArrayList<Object> updates = new CopyOnWriteArrayList<>(Utils.castList(param.args[0], Object.class));
@@ -141,7 +147,7 @@ public class ShowDeletedMessages {
                                 new AbstractMethodHook() {
                                     @Override
                                     protected void beforeMethod(MethodHookParam param) {
-                                        if (!isDeleteMessage) {
+                                        if (!isDeleteMessage && enabled()) {
                                             param.setResult(null);
                                         }
                                     }
@@ -201,7 +207,7 @@ public class ShowDeletedMessages {
             HMethod.hookMethod(ClassLoad.getClass(ClassNames.NOTIFICATION_CENTER), AutomationResolver.resolve("NotificationCenter", "postNotificationName", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("postNotificationName", new Class<?>[]{int.class, Object[].class}), new AbstractMethodHook() {
                 @Override
                 protected void beforeMethod(MethodHookParam param) {
-                    if (!isDeleteMessage) {
+                    if (!isDeleteMessage && enabled()) {
                         int id = (int) param.args[0];
                         if (id == NotificationCenter.getMessagesDeleted()) {
                             param.setResult(null);
