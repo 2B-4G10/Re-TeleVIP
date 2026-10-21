@@ -3,6 +3,7 @@ package com.my.televip.features;
 
 import com.my.televip.Class.ClassLoad;
 import com.my.televip.Class.ClassNames;
+import com.my.televip.Configs.ConfigManager;
 import com.my.televip.base.AbstractMethodHook;
 import com.my.televip.hooks.HMethod;
 import com.my.televip.logging.Logger;
@@ -14,6 +15,10 @@ public class VoiceToMusicHook {
     public static boolean isEnable = false;
     private static boolean stop = false;
 
+    private static boolean enabled() {
+        return ConfigManager.enableVoiceMessageSaving != null && ConfigManager.enableVoiceMessageSaving.isEnable();
+    }
+
     public static void init() {
         try {
             if (!isEnable) {
@@ -22,7 +27,7 @@ public class VoiceToMusicHook {
                 HMethod.hookMethod(ClassLoad.getClass(ClassNames.MESSAGE_OBJECT), AutomationResolver.resolve("MessageObject", "isVoice", AutomationResolver.ResolverType.Method), new AbstractMethodHook() {
                     @Override
                     protected void beforeMethod(MethodHookParam param) {
-                        if (!stop) param.setResult(false);
+                        if (!stop && enabled()) param.setResult(false);
                     }
                     @Override
                     protected void afterMethod(MethodHookParam param) {
@@ -32,6 +37,7 @@ public class VoiceToMusicHook {
                 HMethod.hookMethod(ClassLoad.getClass(ClassNames.MESSAGE_OBJECT),  AutomationResolver.resolve("MessageObject", "isMusic", AutomationResolver.ResolverType.Method), new AbstractMethodHook() {
                     @Override
                     protected void beforeMethod(MethodHookParam param) {
+                        if (!enabled()) return;
                         MessageObject messageObject = new MessageObject(param.thisObject);
                         stop = true;
                         if (messageObject.isVoice()) param.setResult(true);
