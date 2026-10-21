@@ -165,6 +165,7 @@ public final class TelegramFingerprints {
         o.put("TextSettingsCell", "org.telegram.ui.Cells.TextSettingsCell");
         o.put("Theme", "org.telegram.ui.ActionBar.Theme");
         o.put("Theme$ResourcesProvider", "org.telegram.ui.ActionBar.Theme$ResourcesProvider");
+        o.put("SearchAdapterHelper", "org.telegram.ui.Adapters.SearchAdapterHelper");
         o.put("UItem", "org.telegram.ui.Components.UItem");
         o.put("UItem$UItemFactory", "org.telegram.ui.Components.UItem$UItemFactory");
         o.put("UniversalAdapter", "org.telegram.ui.Components.UniversalAdapter");
@@ -229,13 +230,16 @@ public final class TelegramFingerprints {
                 .from(declaringStrings("addObserver allowed only from MAIN thread", "postNotificationName allowed only from MAIN thread"),
                         withStaticFields("int", 300))
                 .where(anyOf(hasMethod(false, "void", "int", "boolean", "java.lang.Object[]"),
-                        hasMethod(false, "void", "boolean", "int", "java.lang.Object[]"))));   // Momogram
+                        hasMethod(false, "void", "boolean", "int", "java.lang.Object[]"),     // Momogram
+                        hasMethod(false, "void", "java.lang.Object[]", "int", "boolean"))));  // Graph Messenger
         s.add(cls("org.telegram.messenger.NotificationsController")
                 .from(declaringStrings("showExtraNotifications: [", "resetNotificationSound")));
         s.add(cls("org.telegram.messenger.SharedConfig")
                 .from(declaringStrings("devicePerformanceClass", "forceDisableTabletMode")));
+        // Graph Messenger keeps its dialog offsets under keys of its own, "3dialogsLoadOffset...".
         s.add(cls("org.telegram.messenger.UserConfig")
-                .from(declaringStrings("2dialogsLoadOffsetChatId", "sharingMyLocationUntil")));
+                .from(declaringStrings("2dialogsLoadOffsetChatId", "sharingMyLocationUntil"),
+                        declaringStrings("3dialogsLoadOffsetChatId", "sharingMyLocationUntil")));
         s.add(cls("org.telegram.messenger.time.FastDateFormat")
                 .from(declaringStrings("FastDateFormat[")));
         s.add(cls("org.telegram.tgnet.TLRPC$Message")
@@ -337,8 +341,12 @@ public final class TelegramFingerprints {
         s.add(cls("org.telegram.tgnet.tl.TL_update$TL_updateDeleteChannelMessages")
                 .from(serializingConstant(-1020437742)));
         s.add(cls("org.telegram.tgnet.tl.TL_update$TL_updateDeleteMessages").from(serializingConstant(-1576161051)));
+        // Graph Messenger keeps a copy in a second static Context; onCreate sets the real one first.
         s.add(field("ApplicationLoader", "applicationContext").isStatic(true)
-                .type("android.content.Context").onlyOneOfType());
+                .type("android.content.Context").onlyOneOfType()
+                .orElse(field("ApplicationLoader", "applicationContext").isStatic(true)
+                        .type("android.content.Context").writtenBy("ApplicationLoader#onCreate", 0)));
+        s.add(method("ApplicationLoader", "onCreate").sig("void"));   // Application#onCreate: never renamed
         // Nekogram 12.10.5+ narrows the request counts to byte.
         s.add(field("FileLoadOperation", "downloadChunkSizeBig").type("int").intLike()
                 .writtenBy("FileLoadOperation#updateParams", 0));
@@ -357,11 +365,16 @@ public final class TelegramFingerprints {
         // order dialogsByFolder, dialogMessagesByIds, dialogFiltersById. Plus Messenger clears its
         // own folder lists in between, so only those deleteMessages also reads count: of
         // cleanup's, it reads dialogMessagesByIds alone. Without deleteMessages, the second one.
+        // Graph Messenger 12.10 builds take an int there.
         s.add(method("MessagesController", "cleanup").sig("void")
                 .where(string("transcribeButtonPressed"), string("shortcut_widget")));
+        s.add(method("MessagesController", "cleanupI").named("cleanup").sig("void", "int")
+                .where(string("transcribeButtonPressed"), string("shortcut_widget")));
+        String[] deleters = {"MessagesController#deleteMessagesAAOJZIZJOIZI", "MessagesController#deleteMessagesAAOJZIZJOIZIB"};
         s.add(field("MessagesController", "dialogMessagesByIds").type("android.util.SparseArray")
-                .readBy("MessagesController#cleanup", 0)
-                .alsoReadBy(1, "MessagesController#deleteMessagesAAOJZIZJOIZI", "MessagesController#deleteMessagesAAOJZIZJOIZIB"));
+                .readBy("MessagesController#cleanup", 0).alsoReadBy(1, deleters)
+                .orElse(field("MessagesController", "dialogMessagesByIds").type("android.util.SparseArray")
+                        .readBy("MessagesController#cleanupI", 0).alsoReadBy(1, deleters)));
         // Marks a dialog's cached messages deleted: dialogMessage.get(id), then obj.deleted = true
         // for each Integer id that matches.
         s.add(method("MessagesController", "markDialogMessageAsDeleted").sig("void", "long", "java.util.ArrayList")
@@ -378,7 +391,12 @@ public final class TelegramFingerprints {
                         "MessagesController#deleteMessagesAAOJZIZJOI")
                 .postedThrough("NotificationCenter#postNotificationName"));
         s.add(field("UserConfig", "clientUserId").type("long").writtenBy("UserConfig#setCurrentUser", 0));
-        s.add(field("UserConfig", "selectedAccount").keyedBy("UserConfig#loadConfig", "selectedAccount"));
+        // Graph Messenger keeps no "selectedAccount" preference; SearchAdapterHelper, whose names
+        // it keeps, starts on the selected account.
+        s.add(field("UserConfig", "selectedAccount").keyedBy("UserConfig#loadConfig", "selectedAccount")
+                .orElse(field("UserConfig", "selectedAccount").isStatic(true).type("int")
+                        .readBy("SearchAdapterHelper#<init>", 0)));
+        s.add(method("SearchAdapterHelper", "<init>").sig("void", "boolean"));
         s.add(field("Utilities", "stageQueue").keyedBy("Utilities#<clinit>", "stageQueue"));
         // TL fields, for builds that rename them (Nekogram 12.9-12.10.1, 12.10.5+): the n-th
         // field of a type that a class's serializeToStream reads, in the order the schema writes them.
@@ -534,9 +552,10 @@ public final class TelegramFingerprints {
                 .writtenBy("MessagesController#<init>", 0));
         s.add(field("MessagesController", "mainPreferences").type("android.content.SharedPreferences")
                 .writtenBy("MessagesController#<init>", 1));
+        // Graph Messenger opens "mainconfig" itself instead of returning mainPreferences.
         s.add(method("MessagesController", "getGlobalMainSettings").isStatic(true)
                 .sig("android.content.SharedPreferences")
-                .where(touchesFieldSymbol("MessagesController.mainPreferences")));
+                .where(Body.any(touchesFieldSymbol("MessagesController.mainPreferences"), string("mainconfig"))));
         s.add(method("MessagesController", "getNotificationsSettings").sig("android.content.SharedPreferences", "int")
                 .where(touchesFieldSymbol("MessagesController.notificationsPreferences")));
         // Queues the "delete after viewing" task: a 16-byte buffer tagged 102.
@@ -601,7 +620,8 @@ public final class TelegramFingerprints {
                 .where(touchesFieldSymbol("MessagesStorage.storageQueue")));   // not its body's lambda
         s.add(method("NotificationCenter", "postNotificationName").sig("void", "int", "java.lang.Object[]")
                 .where(Body.any(callsSibling("void", "int", "boolean", "java.lang.Object[]"),
-                        callsSibling("void", "boolean", "int", "java.lang.Object[]"))));   // Momogram
+                        callsSibling("void", "boolean", "int", "java.lang.Object[]"),     // Momogram
+                        callsSibling("void", "java.lang.Object[]", "int", "boolean"))));  // Graph Messenger
         s.add(method("NotificationsController", "removeDeletedMessagesFromNotifications")
                 .sig("void", "androidx.collection.LongSparseArray", "boolean"));
         s.add(method("SharedConfig", "isAppUpdateAvailable").sig("boolean")
@@ -665,8 +685,11 @@ public final class TelegramFingerprints {
                         "AwaitingEncryption"),
                         declaringStrings("processLoadedDiscussionMessage reset history", "AwaitingEncryption")));
         // Plus Messenger copies the debug menu holding both strings into PlusUtils and ProfileActivity.
+        // Graph Messenger names the debug menu's items by their string keys and copies the menu
+        // into another screen, which has no premium grace-period check.
         s.add(cls("org.telegram.ui.SettingsActivity")
-                .from(declaringStrings("disable shadows in settings", "enable debug view metrics"))
+                .from(declaringStrings("disable shadows in settings", "enable debug view metrics"),
+                        declaringStrings("DebugMenuEnableLogs", "app start time = ", "PREMIUM_GRACE"))
                 .where(inherits("org.telegram.ui.ActionBar.BaseFragment")));
 
         // Helpers: not used by call sites directly, but other fingerprints anchor on them.
@@ -1139,7 +1162,8 @@ public final class TelegramFingerprints {
         s.add(method("Theme", "isCurrentThemeDark").isStatic(true).sig("boolean")
                 .where(callCount(1), not(usesOpcode(0xdf)), not(callsSibling("boolean"))));
         // measureTime also touches chat_unlockExtendedMediaTextPaint, but reads chat_timePaint first.
-        s.add(field("Theme", "chat_timePaint").isStatic(true).type("android.text.TextPaint")
+        // Graph Messenger types its chat paints with a TextPaint subclass of its own.
+        s.add(field("Theme", "chat_timePaint").isStatic(true).type("android.text.TextPaint").narrowed()
                 .readBy("ChatMessageCell#measureTime", 0));
     }
 }
