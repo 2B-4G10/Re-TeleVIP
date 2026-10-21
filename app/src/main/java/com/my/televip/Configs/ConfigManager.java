@@ -23,6 +23,7 @@ import com.my.televip.features.SaveEditsHistory;
 import com.my.televip.features.SecretMediaSave;
 import com.my.televip.features.ShowDeletedMessages;
 import com.my.televip.features.TelePremium;
+import com.my.televip.features.TopicReactions;
 import com.my.televip.features.VoiceToMusicHook;
 import com.my.televip.features.otherFeatures.AlwaysSaveMedia;
 import com.my.televip.features.otherFeatures.CopyNameHook;
@@ -282,6 +283,7 @@ public class ConfigManager {
                 EditOnlineTextView.init(context);
             }
             AlwaysSaveMedia.init();
+            TopicReactions.init();
 
             if (ClientChecker.check(ClientChecker.ClientType.Telegraph)) Telegraph.removeAd();
 

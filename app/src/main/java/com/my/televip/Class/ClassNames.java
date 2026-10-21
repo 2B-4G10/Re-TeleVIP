@@ -32,6 +32,7 @@ public class ClassNames {
     public static final String TL_HELP_GET_PROMO_DATA = "org.telegram.tgnet.TLRPC$TL_help_getPromoData";
     public static final String TL_MESSAGES_GET_SPONSORED_MESSAGES = "org.telegram.tgnet.TLRPC$TL_messages_getSponsoredMessages";
     public static final String TL_CONTACTS_GET_SPONSORED_PEERS = "org.telegram.tgnet.TLRPC$TL_contacts_getSponsoredPeers";
+    public static final String TL_MESSAGES_GET_UNREAD_REACTIONS = "org.telegram.tgnet.TLRPC$TL_messages_getUnreadReactions";
     public static final String TL_MESSAGES_SPONSORED_MESSAGES_EMPTY = "org.telegram.tgnet.TLRPC$TL_messages_sponsoredMessagesEmpty";
     public static final String TL_CONTACTS_SPONSORED_PEERS_EMPTY = "org.telegram.tgnet.TLRPC$TL_contacts_sponsoredPeersEmpty";
     public static final String CHAT_MESSAGE_CELL = "org.telegram.ui.Cells.ChatMessageCell";
