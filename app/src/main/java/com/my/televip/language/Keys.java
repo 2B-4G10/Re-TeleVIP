@@ -112,4 +112,10 @@ public class Keys {
     public static final String SecretMediaDeleteTitle = "SecretMediaDeleteTitle";
     public static final String SecretMediaDeleteMessage = "SecretMediaDeleteMessage";
     public static final String Delete = "Delete";
+    public static final String Save = "Save";
+    public static final String SecretMediaMarkSeen = "SecretMediaMarkSeen";
+    public static final String SecretMediaMarkedSeen = "SecretMediaMarkedSeen";
+    public static final String SecretMediaSaved = "SecretMediaSaved";
+    public static final String SecretMediaSaveFailed = "SecretMediaSaveFailed";
+    public static final String SecretMediaNotDownloaded = "SecretMediaNotDownloaded";
 }
