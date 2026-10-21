@@ -183,7 +183,15 @@ public class TLRPC {
 
         public TL_messages_affectedMessages()
         {
-            this.instance = XReflect.newInstance(ClassLoad.getClass(ClassNames.TL_MESSAGES_AFFECTED));
+            Class<?> clazz = ClassLoad.getClass(ClassNames.TL_MESSAGES_AFFECTED);
+            Object created;
+            try {
+                created = XReflect.newInstance(clazz);
+            } catch (NoSuchMethodError e) {
+                // R8 dropped the constructor where the client never builds one (Nekogram 12.10.5).
+                created = XReflect.allocateInstance(clazz);
+            }
+            this.instance = created;
         }
         public TL_messages_affectedMessages(Object instance)
         {
