@@ -12,7 +12,9 @@ on:
   workflow_run:
     workflows: [Build APK]
     types: [completed]
-  pull_request:
+  # From main, not the pull request's branch, so it also runs for branches made before this file.
+  # It never runs the pull request's code: it only reads its checks and merges its commit.
+  pull_request_target:
     types: [ready_for_review]
 
 permissions:
@@ -30,7 +32,7 @@ jobs:
       (github.event_name == 'workflow_run'
         && github.event.workflow_run.event == 'pull_request'
         && github.event.workflow_run.conclusion == 'success')
-      || (github.event_name == 'pull_request'
+      || (github.event_name == 'pull_request_target'
         && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
     env:
@@ -62,7 +64,7 @@ jobs:
           case "$author" in "$GITHUB_REPOSITORY_OWNER"|app/dependabot) ;; *) skip="it was opened by $author" ;; esac
           if [ -n "$SHA" ] && [ "$head" != "$SHA" ]; then skip="it has commits newer than this build"; fi
           # Marked ready for review: the latest Build APK on its newest commit has to have passed.
-          if [ -z "$skip" ] && [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+          if [ -z "$skip" ] && [ "$GITHUB_EVENT_NAME" = pull_request_target ]; then
             result=$(gh api "repos/$GITHUB_REPOSITORY/commits/$head/check-runs?check_name=Build%20APK" \
                 --jq '[.check_runs[] | select(.app.slug == "github-actions")] | sort_by(.started_at) | last | .conclusion // "none"')
             [ "$result" = success ] || skip="Build APK has not passed on it yet ($result); it merges when it does"
