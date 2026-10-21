@@ -79,7 +79,12 @@ public final class SecretMediaButtons {
             @Override
             public void run() {
                 try {
-                    if (!attach(messageObject, ttl) && ++tries < RETRIES) handler.postDelayed(this, RETRY_MS);
+                    if (attach(messageObject, ttl)) return;
+                    if (++tries < RETRIES) {
+                        handler.postDelayed(this, RETRY_MS);
+                    } else {
+                        Logger.w("Secret media buttons: no viewer on screen");
+                    }
                 } catch (Throwable t) {
                     Logger.e(t);
                 }
@@ -160,30 +165,37 @@ public final class SecretMediaButtons {
                 Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
         // PhotoViewer has its own bar along the bottom.
         params.bottomMargin = dp(photoViewer ? 112 : 64);
+        follow(row, actionBar);
         container.addView(row, params);
-        final LinearLayout view = row;
-        // PhotoViewer shows every other photo too: the row is only for the secret one it opened.
+        return row;
+    }
+
+    /**
+     * Fades the row with the action bar. Registered again each time the viewer's window is shown:
+     * a closed viewer drops its window, and the listeners on it with it, so the row stayed
+     * invisible from the second secret photo on.
+     */
+    private static void follow(LinearLayout row, View actionBar) {
+        ViewTreeObserver.OnPreDrawListener fade = () -> {
+            float alpha = actionBar.getVisibility() == View.VISIBLE ? actionBar.getAlpha() : 0f;
+            if (row.getAlpha() != alpha) row.setAlpha(alpha);
+            boolean enabled = alpha > 0.5f;
+            for (int i = 0; i < row.getChildCount(); i++) row.getChildAt(i).setEnabled(enabled);
+            return true;
+        };
         row.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
             public void onViewAttachedToWindow(View v) {
+                v.getViewTreeObserver().addOnPreDrawListener(fade);
             }
 
             @Override
             public void onViewDetachedFromWindow(View v) {
+                v.getViewTreeObserver().removeOnPreDrawListener(fade);
+                // PhotoViewer shows every other photo too: the row is only for the secret one.
                 v.setVisibility(View.GONE);
             }
         });
-        row.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                float alpha = actionBar.getVisibility() == View.VISIBLE ? actionBar.getAlpha() : 0f;
-                if (view.getAlpha() != alpha) view.setAlpha(alpha);
-                boolean enabled = alpha > 0.5f;
-                for (int i = 0; i < view.getChildCount(); i++) view.getChildAt(i).setEnabled(enabled);
-                return true;
-            }
-        });
-        return row;
     }
 
     private static TextView pill(Context context, String text) {
@@ -215,21 +227,47 @@ public final class SecretMediaButtons {
             Logger.e(t);
             file = null;
         }
-        if (file == null || !file.isFile() || file.length() == 0) {
+        // Timed media is cached encrypted, as <name>.enc with its key in the app's own cache.
+        File encrypted = file == null ? null : new File(file.getPath() + ".enc");
+        File key = file == null ? null : new File(context.getApplicationContext().getCacheDir(), file.getName() + ".enc.key");
+        boolean plain = file != null && file.isFile() && file.length() > 0;
+        if (!plain && (encrypted == null || !encrypted.isFile() || !key.isFile())) {
             toast(context, Translator.get(Keys.SecretMediaNotDownloaded));
             return;
         }
         File source = file;
         new Thread(() -> {
-            boolean saved = copyToGallery(context, source);
+            boolean saved = copyToGallery(context, source.getName(), () -> plain
+                    ? new FileInputStream(source) : decrypt(encrypted, key));
             new Handler(Looper.getMainLooper()).post(() ->
                     toast(context, Translator.get(saved ? Keys.SecretMediaSaved : Keys.SecretMediaSaveFailed)));
         }, "TeleVipSaveSecretMedia").start();
     }
 
     /** Pictures/Telegram or Movies/Telegram, where the client saves media too. */
-    private static boolean copyToGallery(Context context, File source) {
-        String name = source.getName();
+    private interface Source {
+        InputStream open() throws Exception;
+    }
+
+    /**
+     * Reads a file the client stored encrypted (EncryptedFileInputStream): AES-256-CTR, with the
+     * key and IV in the key file and the IV's last four bytes counting the blocks from 0.
+     */
+    private static InputStream decrypt(File encrypted, File keyFile) throws Exception {
+        byte[] key = new byte[32];
+        byte[] iv = new byte[16];
+        try (java.io.DataInputStream in = new java.io.DataInputStream(new FileInputStream(keyFile))) {
+            in.readFully(key);
+            in.readFully(iv);
+        }
+        iv[12] = iv[13] = iv[14] = iv[15] = 0;
+        javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES/CTR/NoPadding");
+        cipher.init(javax.crypto.Cipher.DECRYPT_MODE, new javax.crypto.spec.SecretKeySpec(key, "AES"),
+                new javax.crypto.spec.IvParameterSpec(iv));
+        return new javax.crypto.CipherInputStream(new FileInputStream(encrypted), cipher);
+    }
+
+    private static boolean copyToGallery(Context context, String name, Source source) {
         String lower = name.toLowerCase();
         boolean video = lower.endsWith(".mp4") || lower.endsWith(".mov") || lower.endsWith(".webm");
         String mime = video ? (lower.endsWith(".webm") ? "video/webm" : "video/mp4")
@@ -248,7 +286,7 @@ public final class SecretMediaButtons {
                         : MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
                 Uri uri = resolver.insert(collection, values);
                 if (uri == null) return false;
-                try (InputStream in = new FileInputStream(source); OutputStream out = resolver.openOutputStream(uri)) {
+                try (InputStream in = source.open(); OutputStream out = resolver.openOutputStream(uri)) {
                     if (out == null) return false;
                     copy(in, out);
                 }
@@ -256,7 +294,7 @@ public final class SecretMediaButtons {
                 File dir = new File(Environment.getExternalStoragePublicDirectory(folder), "Telegram");
                 if (!dir.isDirectory() && !dir.mkdirs()) return false;
                 File target = new File(dir, name);
-                try (InputStream in = new FileInputStream(source); OutputStream out = new FileOutputStream(target)) {
+                try (InputStream in = source.open(); OutputStream out = new FileOutputStream(target)) {
                     copy(in, out);
                 }
                 MediaScannerConnection.scanFile(context, new String[]{target.getAbsolutePath()}, new String[]{mime}, null);
