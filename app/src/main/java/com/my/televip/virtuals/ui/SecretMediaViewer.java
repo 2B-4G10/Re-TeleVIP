@@ -51,8 +51,9 @@ public class SecretMediaViewer {
                                 FileLoader fileLoader = FileLoader.getInstance(UserConfig.getSelectedAccount());
                                 File image = fileLoader.getLocalFile(object.getImageReceiver().getImageLocation());
                                 if (image != null) {
-                                    SecretMediaSave.pathImage = image;
+                                    SecretMediaSave.dialogId = messageObject.getDialogId();
                                     SecretMediaSave.id = messageObject.getMessageOwner().getID();
+                                    SecretMediaSave.pathImage = image;
                                 }
                                 PhotoViewer.getInstance().openPhoto(messageObject, messageObject.getDialogId(), 0L, 0L, provider, false);
                                 param.setResult(null);
