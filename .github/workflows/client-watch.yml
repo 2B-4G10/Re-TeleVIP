@@ -14,9 +14,22 @@ name: Client watch
 # When every client checks out on the weekly run, anything merged since the last release -
 # Dependabot's Monday updates, fingerprint fixes - is released: the patch version and
 # versionCode are bumped, the commits are listed in CHANGELOG.md, and Release publishes it.
+#
+# It also runs on every pull request that changes the module, its build or this check, and
+# Auto-merge waits for it: a change that breaks a hook point can't reach main. Those runs only
+# report; issues and releases are left to the weekly run.
 on:
   schedule:
     - cron: '23 5 * * 1'
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'gradle/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - '.github/workflows/client-watch.yml'
+      - '.github/scripts/**'
   workflow_dispatch:
     inputs:
       apk_url:
@@ -28,9 +41,10 @@ permissions:
   issues: write
 
 # A manual check started during the weekly run waits for it instead of racing its release.
+# A pull request's run is replaced by the one for its next push.
 concurrency:
-  group: client-watch
-  cancel-in-progress: false
+  group: client-watch${{ github.event_name == 'pull_request' && format('-pr-{0}', github.event.pull_request.number) || '' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   clients:
@@ -184,6 +198,7 @@ jobs:
           { echo "## $CLIENT"; echo; cat summary.md; } | tee -a "$GITHUB_STEP_SUMMARY" > body.md
           # Issues are off by default on forks; the failed run and this summary still report it.
           [ "$OPEN_ISSUES" = "true" ] || exit 0
+          [ "$GITHUB_EVENT_NAME" != pull_request ] || exit 0
           [ "$(gh api "repos/$GITHUB_REPOSITORY" --jq .has_issues)" = "true" ] || exit 0
 
           title="Client watch: $CLIENT"
