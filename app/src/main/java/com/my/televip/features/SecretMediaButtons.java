@@ -228,17 +228,23 @@ public final class SecretMediaButtons {
             file = null;
         }
         // Timed media is cached encrypted, as <name>.enc with its key in the app's own cache.
+        Context app = context.getApplicationContext();
         File encrypted = file == null ? null : new File(file.getPath() + ".enc");
-        File key = file == null ? null : new File(context.getApplicationContext().getCacheDir(), file.getName() + ".enc.key");
+        if (file != null && !encrypted.isFile() && app.getExternalCacheDir() != null) {
+            encrypted = new File(app.getExternalCacheDir(), file.getName() + ".enc");
+        }
+        File key = file == null ? null : new File(app.getCacheDir(), file.getName() + ".enc.key");
         boolean plain = file != null && file.isFile() && file.length() > 0;
         if (!plain && (encrypted == null || !encrypted.isFile() || !key.isFile())) {
+            Logger.w("Save secret media: no file at " + file);
             toast(context, Translator.get(Keys.SecretMediaNotDownloaded));
             return;
         }
         File source = file;
+        File encryptedFile = encrypted;
         new Thread(() -> {
             boolean saved = copyToGallery(context, source.getName(), () -> plain
-                    ? new FileInputStream(source) : decrypt(encrypted, key));
+                    ? new FileInputStream(source) : decrypt(encryptedFile, key));
             new Handler(Looper.getMainLooper()).post(() ->
                     toast(context, Translator.get(saved ? Keys.SecretMediaSaved : Keys.SecretMediaSaveFailed)));
         }, "TeleVipSaveSecretMedia").start();
