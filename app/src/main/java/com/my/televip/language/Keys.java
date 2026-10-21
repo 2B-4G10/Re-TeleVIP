@@ -108,4 +108,8 @@ public class Keys {
     public static final String ApproximateCreationDateNotice = "ApproximateCreationDateNotice";
     public static final String TeleVip = "TeleVip";
     public static final String EnableVoiceMessageSaving = "EnableVoiceMessageSaving";
+    public static final String SecretMediaDeleteForBoth = "SecretMediaDeleteForBoth";
+    public static final String SecretMediaDeleteTitle = "SecretMediaDeleteTitle";
+    public static final String SecretMediaDeleteMessage = "SecretMediaDeleteMessage";
+    public static final String Delete = "Delete";
 }
