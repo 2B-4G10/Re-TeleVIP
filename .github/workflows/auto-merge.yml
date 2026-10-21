@@ -1,7 +1,8 @@
 name: Auto-merge
 
 # Merges a pull request into main once Build APK (unit tests plus debug and release builds) has
-# passed on its latest commit. Drafts are left alone: mark a pull request ready for review to let
+# passed on its latest commit, and Client watch too when it changes the module, its build or the
+# watch itself: a pull request can't land with hooks that a supported client breaks. Drafts are left alone: mark a pull request ready for review to let
 # it merge, or turn it back into a draft to hold it. A failing pull request stays open for a look.
 #
 # Only pull requests from branches of this repository, opened by the owner or Dependabot, are
@@ -10,7 +11,7 @@ name: Auto-merge
 # token starts no workflows on its own.
 on:
   workflow_run:
-    workflows: [Build APK]
+    workflows: [Build APK, Client watch]
     types: [completed]
   # From main, not the pull request's branch, so it also runs for branches made before this file.
   # It never runs the pull request's code: it only reads its checks and merges its commit.
@@ -30,8 +31,8 @@ jobs:
   merge:
     if: >-
       (github.event_name == 'workflow_run'
-        && github.event.workflow_run.event == 'pull_request'
-        && github.event.workflow_run.conclusion == 'success')
+        && github.event.workflow_run.conclusion == 'success'
+        && github.event.workflow_run.head_branch != 'main')
       || (github.event_name == 'pull_request_target'
         && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
@@ -63,11 +64,22 @@ jobs:
           [ "$cross" = false ] || skip="it comes from a fork"
           case "$author" in "$GITHUB_REPOSITORY_OWNER"|app/dependabot) ;; *) skip="it was opened by $author" ;; esac
           if [ -n "$SHA" ] && [ "$head" != "$SHA" ]; then skip="it has commits newer than this build"; fi
-          # Marked ready for review: the latest Build APK on its newest commit has to have passed.
-          if [ -z "$skip" ] && [ "$GITHUB_EVENT_NAME" = pull_request_target ]; then
-            result=$(gh api "repos/$GITHUB_REPOSITORY/commits/$head/check-runs?check_name=Build%20APK" \
-                --jq '[.check_runs[] | select(.app.slug == "github-actions")] | sort_by(.started_at) | last | .conclusion // "none"')
-            [ "$result" = success ] || skip="Build APK has not passed on it yet ($result); it merges when it does"
+          # Whichever run started this, every required check has to have passed on the newest commit.
+          if [ -z "$skip" ]; then
+            runs=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$head&per_page=100" --jq .workflow_runs)
+            latest() {
+              jq -r --arg n "$1" '[.[] | select(.name == $n and .event == "pull_request")] | sort_by(.created_at) | last
+                  | if . == null then "not run" elif .status == "completed" then .conclusion else .status end' <<< "$runs"
+            }
+            required=("Build APK")
+            if gh pr diff "$NUMBER" --repo "$GITHUB_REPOSITORY" --name-only | grep -qE \
+                '^(app/|gradle/|build\.gradle|settings\.gradle|gradle\.properties|\.github/workflows/client-watch\.yml|\.github/scripts/)'; then
+              required+=("Client watch")
+            fi
+            for check in "${required[@]}"; do
+              result=$(latest "$check")
+              [ "$result" = success ] || { skip="$check has not passed on it yet ($result); it merges when it does"; break; }
+            done
           fi
           if [ -n "$skip" ]; then
             echo "Not merging #$NUMBER: $skip."
