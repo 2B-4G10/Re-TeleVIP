@@ -25,6 +25,10 @@ public class MessagesController {
         this.messagesController = instance;
     }
 
+    public Object getMessagesController() {
+        return messagesController;
+    }
+
     /** Applies a pts update the module caused itself (reading history), as the client would. */
     public void processNewDifferenceParams(int pts, int date, int pts_count) {
         String full = AutomationResolver.resolve("MessagesController", "processNewDifferenceParams", AutomationResolver.ResolverType.Method);
