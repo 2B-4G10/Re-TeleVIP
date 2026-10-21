@@ -26,6 +26,10 @@ public class SecretMediaSave {
 
     public static boolean isEnable = false;
 
+    // The secret photo last opened. Message ids repeat across chats (every group counts its own
+    // from 1), so it is matched by chat and id: by id alone, a photo with the same id in any
+    // other chat was pointed at this file, never found its own and downloaded again and again.
+    public static long dialogId;
     public static long id;
     public static File pathImage;
 
@@ -74,10 +78,14 @@ public class SecretMediaSave {
                         @Override
                         protected void beforeMethod(MethodHookParam param) {
                             try {
-                                if (ConfigManager.secretMediaSave.isEnable() && param.args[0] != null && pathImage != null) {
+                                File saved = pathImage;
+                                if (ConfigManager.secretMediaSave.isEnable() && param.args[0] != null && saved != null) {
                                     TLRPC.Message message = new TLRPC.Message(param.args[0]);
-                                    if (message.getID() == id) {
-                                        param.setResult(pathImage);
+                                    // Once the file is gone (the client deletes viewed secret media,
+                                    // or clears its cache) the client's own path is the right one.
+                                    if (message.getID() == id && MessageObject.getDialogId(message) == dialogId
+                                            && saved.exists()) {
+                                        param.setResult(saved);
                                     }
                                 }
                             } catch (Throwable e) {

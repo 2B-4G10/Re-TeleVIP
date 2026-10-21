@@ -207,46 +207,53 @@ public class SaveEditsHistory {
                                             Object messagesStorageObject = param.thisObject;
 
                                             if (messagesObject != null) {
+                                                // Read on the storage queue, just ahead of the write the client
+                                                // queues next, and never from the caller's (often the main)
+                                                // thread, where it raced the client's own database work.
+                                                final Object edited = messagesObject;
                                                 MessagesStorage messagesStorage = new MessagesStorage(messagesStorageObject);
-
-                                                TLRPC.messages_Messages messages = new TLRPC.messages_Messages(messagesObject);
-
-                                                int count = messages.getMessages().size();
-
-                                                BaseController baseController = new BaseController(messagesStorageObject);
-                                                UserConfig userConfig = baseController.getUserConfig();
-                                                SQLiteDatabase sqLiteDatabase = messagesStorage.getDatabase();
-                                                for (int a = 0; a < count; a++) {
-
-                                                    TLRPC.Message message = new TLRPC.Message(messages.getMessages().get(a));
-
-                                                    int id = message.getID();
-                                                    SQLiteCursor cursor = sqLiteDatabase.queryFinalized(String.format(Locale.US, "SELECT data FROM messages_v2 WHERE mid = %d AND uid = %d", id, MessageObject.getDialogId(message)), new Object[]{});
-
-                                                    if (cursor.next()) {
-                                                        NativeByteBuffer data = cursor.byteBufferValue(0);
-
-                                                        if (data.nativeByteBuffer != null) {
-
-                                                            TLRPC.Message oldMessage = TLRPC.Message.TLdeserialize(data, data.readInt32(false), false);
-
-                                                            oldMessage.readAttachPath(data, userConfig.getClientUserId());
-                                                            data.reuse();
-                                                            if (oldMessage.getMessage() != null && message.getMessage() != null) {
-                                                                if (oldMessage.getFrom_id() != null && (!oldMessage.getMessage().equals(message.getMessage()))) {
-                                                                    if (getDialogId(message.getFrom_id()) != 0) {
-                                                                        messageDatabase.addMessage(getDialogId(message.getFrom_id()), oldMessage.getID(), oldMessage.getMessage());
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
+                                                messagesStorage.getStorageQueue().postRunnable(() -> saveOldTexts(messagesStorageObject, edited));
                                             }
                                         }
                                     }
                                 }
                             });
+                }
+            }
+        } catch (Throwable t) {
+            Logger.e(t);
+        }
+    }
+
+    /** Keeps the stored text of each edited message that the edit changes. */
+    private static void saveOldTexts(Object messagesStorageObject, Object messagesObject) {
+        try {
+            MessagesStorage messagesStorage = new MessagesStorage(messagesStorageObject);
+            TLRPC.messages_Messages messages = new TLRPC.messages_Messages(messagesObject);
+            long clientUserId = new BaseController(messagesStorageObject).getUserConfig().getClientUserId();
+            SQLiteDatabase sqLiteDatabase = messagesStorage.getDatabase();
+            ArrayList<Object> list = messages.getMessages();
+            for (int a = 0, count = list.size(); a < count; a++) {
+                TLRPC.Message message = new TLRPC.Message(list.get(a));
+                SQLiteCursor cursor = null;
+                try {
+                    cursor = sqLiteDatabase.queryFinalized(String.format(Locale.US, "SELECT data FROM messages_v2 WHERE mid = %d AND uid = %d", message.getID(), MessageObject.getDialogId(message)), new Object[]{});
+                    if (!cursor.next()) continue;
+                    NativeByteBuffer data = cursor.byteBufferValue(0);
+                    if (data.nativeByteBuffer == null) continue;
+                    TLRPC.Message oldMessage = TLRPC.Message.TLdeserialize(data, data.readInt32(false), false);
+                    oldMessage.readAttachPath(data, clientUserId);
+                    data.reuse();
+                    if (oldMessage.getMessage() != null && message.getMessage() != null
+                            && oldMessage.getFrom_id() != null && !oldMessage.getMessage().equals(message.getMessage())
+                            && message.getFrom_id() != null && getDialogId(message.getFrom_id()) != 0) {
+                        messageDatabase.addMessage(getDialogId(message.getFrom_id()), oldMessage.getID(), oldMessage.getMessage());
+                    }
+                } catch (Throwable t) {
+                    Logger.e(t);
+                } finally {
+                    // A cursor left open keeps its statement, and the read it holds, alive.
+                    if (cursor != null) cursor.dispose();
                 }
             }
         } catch (Throwable t) {
