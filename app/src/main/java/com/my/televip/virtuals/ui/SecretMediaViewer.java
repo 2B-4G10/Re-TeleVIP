@@ -3,6 +3,7 @@ package com.my.televip.virtuals.ui;
 import com.my.televip.Class.ClassNames;
 import com.my.televip.Configs.ConfigManager;
 import com.my.televip.base.AbstractMethodHook;
+import com.my.televip.features.PreventMedia;
 import com.my.televip.features.SecretMediaSave;
 import com.my.televip.hooks.HMethod;
 import com.my.televip.Class.ClassLoad;
@@ -31,7 +32,11 @@ public class SecretMediaViewer {
                     protected void beforeMethod(MethodHookParam param) {
                         boolean secretMediaSave = ConfigManager.secretMediaSave != null && ConfigManager.secretMediaSave.isEnable();
                         if (ConfigManager.preventMedia.isEnable() && !secretMediaSave) {
-                            param.args[2] = null;
+                            // onOpen tells the sender it was opened; PreventMedia keeps the copy
+                            // here. onClose would delete a view-once media on this phone.
+                            if (!PreventMedia.keepsLocalCopy || PreventMedia.isSecretChat(param.args[0])) {
+                                param.args[2] = null;
+                            }
                             param.args[3] = null;
 
                             MessageObject messageObject = new MessageObject(param.args[0]);
