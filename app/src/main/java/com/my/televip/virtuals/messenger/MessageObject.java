@@ -19,8 +19,13 @@ public class MessageObject {
         return new TLRPC.Message(XReflect.getObjectField(messageObject, AutomationResolver.resolve("MessageObject","messageOwner", AutomationResolver.ResolverType.Field)));
     }
 
+    /**
+     * The client's own getDialogId() only returns getDialogId(messageOwner), so that is called
+     * instead: "MessageObject#getDialogId" maps to the static overload, and on renamed builds
+     * (Nekogram, Cherrygram) the instance one has another name, so calling it failed there.
+     */
     public long getDialogId() {
-        return (long) XReflect.callMethod(messageObject, AutomationResolver.resolve("MessageObject", "getDialogId", AutomationResolver.ResolverType.Method));
+        return getDialogId(getMessageOwner());
     }
 
     public boolean isVoice() {
