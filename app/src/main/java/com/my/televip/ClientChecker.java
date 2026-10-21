@@ -59,7 +59,7 @@ public class ClientChecker {
         VERIFIED_BUILD.put(ClientType.forkgramBeta, "12.8.4.0 (691909)");
         VERIFIED_BUILD.put(ClientType.ForkgramClassic, "12.10.8.0 (709208)");
         VERIFIED_BUILD.put(ClientType.Mercurygram, "12.10.5.1 (7105018)");
-        VERIFIED_BUILD.put(ClientType.Telegraph, "12.8.1.1 (69172)");
+        VERIFIED_BUILD.put(ClientType.Telegraph, "13.0.2.0 (71751)");
         VERIFIED_BUILD.put(ClientType.Telega, "2.4.3 (107)");
         VERIFIED_BUILD.put(ClientType.Momogram, "12.6.4");
         VERIFIED_BUILD.put(ClientType.Turrit, "1.8.9.9.5");
