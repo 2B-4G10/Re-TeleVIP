@@ -48,4 +48,22 @@ public class XReflectAllocateTest {
         // Only list fields are filled; anything else stays as allocated.
         assertEquals(null, empty.other);
     }
+
+    /** Like TL_messages_affectedMessages on builds that keep its constructor. */
+    static final class AffectedMessages {
+        public int pts = 7;
+    }
+
+    @Test
+    public void usesTheConstructorWhereThereIsOne() {
+        AffectedMessages made = (AffectedMessages) XReflect.newInstanceOrAllocate(AffectedMessages.class);
+        assertEquals(7, made.pts);
+    }
+
+    @Test
+    public void allocatesWhereTheConstructorIsGone() {
+        Object made = XReflect.newInstanceOrAllocate(SponsoredMessagesEmpty.class);
+        assertTrue(made instanceof SponsoredMessagesEmpty);
+        assertNotNull(((SponsoredMessagesEmpty) made).messages);
+    }
 }
