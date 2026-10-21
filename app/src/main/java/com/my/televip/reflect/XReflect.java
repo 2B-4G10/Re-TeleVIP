@@ -339,6 +339,19 @@ public final class XReflect {
     }
 
     /**
+     * A new {@code clazz} from its no-argument constructor, or {@link #allocateInstance} where R8
+     * has removed it: TL objects the module makes itself (a fake answer, a request of its own)
+     * may be ones the client never creates, and an obfuscated build then has no constructor left.
+     */
+    public static Object newInstanceOrAllocate(Class<?> clazz) {
+        try {
+            return newInstance(clazz);
+        } catch (NoSuchMethodError e) {
+            return allocateInstance(clazz);
+        }
+    }
+
+    /**
      * An instance of {@code clazz} built without calling its constructor, for classes R8 has left
      * without one (a class the client never creates itself loses its constructors, but stays
      * because other code still checks for it). Fields a constructor would have filled with an empty
