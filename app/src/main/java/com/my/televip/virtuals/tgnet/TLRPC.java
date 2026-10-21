@@ -183,15 +183,8 @@ public class TLRPC {
 
         public TL_messages_affectedMessages()
         {
-            Class<?> clazz = ClassLoad.getClass(ClassNames.TL_MESSAGES_AFFECTED);
-            Object created;
-            try {
-                created = XReflect.newInstance(clazz);
-            } catch (NoSuchMethodError e) {
-                // R8 dropped the constructor where the client never builds one (Nekogram 12.10.5).
-                created = XReflect.allocateInstance(clazz);
-            }
-            this.instance = created;
+            // R8 dropped its constructor where the client never builds one (Nekogram 12.10.5).
+            this.instance = XReflect.newInstanceOrAllocate(ClassLoad.getClass(ClassNames.TL_MESSAGES_AFFECTED));
         }
         public TL_messages_affectedMessages(Object instance)
         {
@@ -224,7 +217,7 @@ public class TLRPC {
 
         public TL_channels_readHistory()
         {
-            this.instance = XReflect.newInstance(ClassLoad.getClass(ClassNames.TL_CHANNELS_READ_HISTORY));
+            this.instance = XReflect.newInstanceOrAllocate(ClassLoad.getClass(ClassNames.TL_CHANNELS_READ_HISTORY));
         }
         public TL_channels_readHistory(Object instance)
         {
@@ -249,7 +242,7 @@ public class TLRPC {
 
         public TL_messages_readHistory()
         {
-            this.instance = XReflect.newInstance(ClassLoad.getClass(ClassNames.TL_MESSAGES_READ_HISTORY));
+            this.instance = XReflect.newInstanceOrAllocate(ClassLoad.getClass(ClassNames.TL_MESSAGES_READ_HISTORY));
         }
 
         public TL_messages_readHistory(Object instance)
