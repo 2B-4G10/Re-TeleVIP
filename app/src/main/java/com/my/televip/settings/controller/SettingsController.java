@@ -1,5 +1,6 @@
 package com.my.televip.settings.controller;
 
+import android.app.Activity;
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import com.my.televip.virtuals.ActionBar.AlertDialog;
 import com.my.televip.virtuals.messenger.browser.Browser;
 import com.my.televip.virtuals.ui.LaunchActivity;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +27,13 @@ public class SettingsController {
 
     public FrameLayout settingsView;
     private final Context context;
+
+    /**
+     * The client's LaunchActivity that is showing now. Leaving the client with Back finishes it
+     * and reopening makes a new one in the same process; the settings and their dialogs must go
+     * there, since the first one's window is gone (dialogs fail with BadTokenException).
+     */
+    private static WeakReference<Activity> currentActivity = new WeakReference<>(null);
 
     public SettingsActivity settingsActivity;
 
@@ -42,7 +51,8 @@ public class SettingsController {
 
     public void openView(){
         try {
-            if (settingsView == null) {
+            Context context = getContext();
+            if (settingsView == null || settingsView.getContext() != context) {
                 settingsView = new FrameLayout(context);
             }
 
@@ -61,6 +71,7 @@ public class SettingsController {
     private void showJoinTeleVip() {
         try {
             if (!ConfigPreferences.getBoolean("JTV")) {
+                Context context = getContext();
                 AlertDialog alertDialog = new AlertDialog(context);
 
                 alertDialog.setTitle(Translator.get(Keys.SettingsName));
@@ -86,7 +97,7 @@ public class SettingsController {
 
     public void show(View target) {
         try {
-            FrameLayout root = new LaunchActivity(context).frameLayout;
+            FrameLayout root = new LaunchActivity(getContext()).frameLayout;
             if (root == null) {
                 Logger.e(new IllegalStateException("LaunchActivity content view not found"));
                 return;
@@ -133,7 +144,14 @@ public class SettingsController {
         }
     }
 
+    /** Called from every LaunchActivity#onCreate, so the settings follow the client's current one. */
+    public static void setActivity(Activity activity) {
+        currentActivity = new WeakReference<>(activity);
+    }
+
     public Context getContext() {
+        Activity activity = currentActivity.get();
+        if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) return activity;
         return context;
     }
 
