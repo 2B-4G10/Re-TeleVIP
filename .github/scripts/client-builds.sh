@@ -64,7 +64,9 @@ case "$source" in
       [ "$attempt" = 5 ] && { echo "Could not list the APKPure versions of $package." >&2; exit 1; }
       sleep $((attempt * 15))
     done
-    printf '%s\n' "$versions" | tr ',' '\n' | sed 's/^ *//; s/ *$//' | grep . | sort -rV \
+    # Only plain version numbers: Graph Messenger's old builds were named "T11.14.1 - P11.23.0",
+    # which would otherwise sort above its current 12.x and 13.x ones.
+    printf '%s\n' "$versions" | tr ',' '\n' | sed 's/^ *//; s/ *$//' | grep -E '^[0-9]' | sort -rV \
         | awk -v n="$count" -v p="$package" 'shown++ < n { print $0 "\tapkpure:" p "@" $0 }'
     ;;
   url)
