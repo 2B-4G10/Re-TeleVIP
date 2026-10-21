@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.3 — Graph Messenger, save secret media, and chats that load with Ghost Mode
 
 - **You decide when the sender sees your secret media as opened.** With Prevent media on,
   opening a self-destructing photo or video tells the sender nothing. Tap **Mark as seen** in
@@ -8,9 +8,17 @@
   keep yours.
 - **Save secret media from the viewer.** A **Save** button puts the photo or video in your
   gallery, next to **Mark as seen** and **Delete for both**.
-- **Graph Messenger works again.** Re: TeleVIP shows up in its settings and its features work
-  on Graph's current versions (12.10 and 13.0), which are now checked every week like the
-  other clients.
+- **Graph Messenger is supported.** Re: TeleVIP shows up in its settings and its features work
+  on Graph's current versions (12.10 and 13.0), which are checked every week like the other
+  clients.
+- **Hide seen works smoothly on Nekogram 12.10.5.** Reading a chat with Ghost Mode on could
+  run into an error there, which got in the way of chats loading. Chats now open normally, and
+  the sender still doesn't see that you read them.
+- **Save edits history works on Nekogram and Cherrygram.** On these clients it couldn't tell
+  which chat an edited message belonged to, so earlier versions weren't kept. The secret media
+  viewer had the same trouble there and now finds the right chat too.
+- **Re: TeleVIP settings open every time.** After leaving the app with Back and opening it
+  again, tapping the settings did nothing until the app was force stopped.
 
 ## 1.2.2 — Nekogram 12.10.5, fair secret media, and smoother settings
 
