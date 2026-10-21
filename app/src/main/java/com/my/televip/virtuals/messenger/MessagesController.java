@@ -9,7 +9,13 @@ import com.my.televip.obfuscate.AutomationResolver;
 import com.my.televip.virtuals.androidx.LongSparseArray;
 import com.my.televip.virtuals.tgnet.TLRPC;
 
+import com.my.televip.logging.Logger;
 import com.my.televip.reflect.XReflect;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.function.BiConsumer;
 
 public class MessagesController {
     final Object messagesController;
@@ -67,6 +73,39 @@ public class MessagesController {
 
     public MessagesStorage getMessagesStorage() {
         return new MessagesStorage(XReflect.callMethod(messagesController, AutomationResolver.resolve("MessagesController", "getMessagesStorage", AutomationResolver.ResolverType.Method)));
+    }
+
+    /**
+     * Deletes messages of one chat, for everyone when {@code forAll}, through the same overload
+     * Show deleted messages hooks: (messages, randoms, encryptedChat, dialogId, forAll, mode,
+     * cacheOnly, taskId, taskRequest, topicId, movedToScheduled, movedToScheduledMessageId), or
+     * Momogram's with a completion callback after them. Not for secret chats (they need randoms).
+     */
+    public boolean deleteMessages(ArrayList<Integer> ids, long dialogId, boolean forAll) {
+        Class<?> owner = ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER);
+        Class<?>[] params = AutomationResolver.resolveObject("deleteMessages", new Class<?>[]{ArrayList.class,
+                ArrayList.class, ClassLoad.getClass(ClassNames.TLRPC_ENCRYPTED_CHAT), long.class, boolean.class, int.class,
+                boolean.class, long.class, ClassLoad.getClass(ClassNames.TL_OBJECT), int.class, boolean.class, int.class});
+        if (params.length != 12) return false;   // a build that reshaped it; the arguments would not fit
+        Object[] args = {ids, null, null, dialogId, forAll, 0, false, 0L, null, 0, false, 0};
+        try {
+            Method method = XReflect.findMethodExactIfExists(owner,
+                    AutomationResolver.resolve("MessagesController", "deleteMessages", AutomationResolver.ResolverType.Method), params);
+            if (method == null) {
+                Class<?>[] withCallback = Arrays.copyOf(params, params.length + 1);
+                withCallback[params.length] = BiConsumer.class;
+                method = XReflect.findMethodExactIfExists(owner,
+                        AutomationResolver.resolveOverload("MessagesController", "deleteMessagesAAOJZIZJOIZIB", "deleteMessages"), withCallback);
+                args = Arrays.copyOf(args, args.length + 1);
+            }
+            if (method == null) return false;
+            method.setAccessible(true);
+            method.invoke(messagesController, args);
+            return true;
+        } catch (Throwable t) {
+            Logger.e(t);
+            return false;
+        }
     }
 
     public static MessagesController getInstance(int num){
