@@ -196,6 +196,25 @@ public interface Body {
         return (r, m) -> Refs.of(r, m).switchKeys.contains(key);
     }
 
+    /**
+     * Returns {@code returnType} and takes {@code params}, or only their first {@code least}: R8
+     * drops trailing parameters a method never reads.
+     */
+    static Body shaped(final String returnType, final int least, final String... params) {
+        return (r, m) -> {
+            String ret = r.descriptor(returnType);
+            if (ret == null) return null;
+            String[] actual = m.parameterTypes();
+            if (!m.returnType().equals(ret) || actual.length < least || actual.length > params.length) return false;
+            for (int i = 0; i < actual.length; i++) {
+                String want = r.descriptor(params[i]);
+                if (want == null) return null;
+                if (!want.equals(actual[i])) return false;
+            }
+            return true;
+        };
+    }
+
     /** Writes some field of {@code owner} whose type is {@code type}. */
     static Body writesFieldOfType(final String owner, final String type) {
         return (r, m) -> {
