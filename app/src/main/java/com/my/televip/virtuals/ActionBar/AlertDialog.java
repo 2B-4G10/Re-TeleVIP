@@ -1,11 +1,21 @@
 package com.my.televip.virtuals.ActionBar;
 
+import static com.my.televip.application.AndroidUtilities.dp;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.InsetDrawable;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.view.View;
+import android.view.Window;
+import android.widget.Button;
 
 import com.my.televip.logging.Logger;
+import com.my.televip.virtuals.Theme;
 
 /**
  * TeleVip's dialogs, built with the platform's AlertDialog.
@@ -13,6 +23,11 @@ import com.my.televip.logging.Logger;
  * <p>The client's own builder would look more native, but in an obfuscated build its positive,
  * negative and neutral setters are three identically shaped methods with meaningless names, so
  * an action could land on the wrong button. The platform dialog is never wrong.</p>
+ *
+ * <p>The platform dialog takes its colours from the activity's theme, which most clients keep
+ * light even in night mode, while TeleVip's own views follow the client's light or dark mode.
+ * So the dialog is built on the matching light or dark system theme and its background, title,
+ * message and buttons are painted from {@link Theme}, the same palette as TeleVip's views.</p>
  */
 public class AlertDialog {
 
@@ -38,11 +53,13 @@ public class AlertDialog {
     private Dialog created;
 
     public AlertDialog(Context context) {
-        builder = new android.app.AlertDialog.Builder(context);
+        builder = new android.app.AlertDialog.Builder(context, isLight()
+                ? android.R.style.Theme_DeviceDefault_Light_Dialog_Alert
+                : android.R.style.Theme_DeviceDefault_Dialog_Alert);
     }
 
     public void setTitle(CharSequence title) {
-        builder.setTitle(title);
+        builder.setTitle(tinted(title));
     }
 
     public void setView(View view) {
@@ -50,7 +67,7 @@ public class AlertDialog {
     }
 
     public void setMessage(CharSequence message) {
-        builder.setMessage(message);
+        builder.setMessage(tinted(message));
     }
 
     public void setPositiveButton(CharSequence text, Object click) {
@@ -66,11 +83,13 @@ public class AlertDialog {
     }
 
     public void show() {
-        created = builder.show();
+        create().show();
     }
 
     public Dialog create() {
-        created = builder.create();
+        android.app.AlertDialog dialog = builder.create();
+        dialog.setOnShowListener(d -> paint(dialog));
+        created = dialog;
         return created;
     }
 
@@ -78,6 +97,48 @@ public class AlertDialog {
         return () -> {
             if (created != null) created.dismiss();
         };
+    }
+
+    /** Whether the client is in light mode; light when that can't be read. */
+    private static boolean isLight() {
+        try {
+            return Theme.isLight();
+        } catch (Throwable t) {
+            Logger.e(t);
+            return true;
+        }
+    }
+
+    private static CharSequence tinted(CharSequence text) {
+        if (text == null) return null;
+        try {
+            SpannableString span = new SpannableString(text);
+            span.setSpan(new ForegroundColorSpan(Theme.getTextColor()), 0, span.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+            return span;
+        } catch (Throwable t) {
+            Logger.e(t);
+            return text;
+        }
+    }
+
+    /** Background and buttons in TeleVip's colours, so nothing is left to the activity's theme. */
+    private static void paint(android.app.AlertDialog dialog) {
+        try {
+            Window window = dialog.getWindow();
+            if (window != null) {
+                GradientDrawable background = new GradientDrawable();
+                background.setColor(Theme.getBackgroundWhiteOrBlueColor());
+                background.setCornerRadius(dp(14));
+                window.setBackgroundDrawable(new InsetDrawable(background, dp(16)));
+            }
+            int accent = Theme.getTextBlueColor();
+            for (int which : new int[]{DialogInterface.BUTTON_POSITIVE, DialogInterface.BUTTON_NEGATIVE, DialogInterface.BUTTON_NEUTRAL}) {
+                Button button = dialog.getButton(which);
+                if (button != null) button.setTextColor(accent);
+            }
+        } catch (Throwable t) {
+            Logger.e(t);
+        }
     }
 
     private static DialogInterface.OnClickListener listener(Object click) {
