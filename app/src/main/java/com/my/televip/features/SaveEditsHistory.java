@@ -260,7 +260,7 @@ public class SaveEditsHistory {
      * its arguments by type) or followed by more (a fork's extra parameter: Momogram's
      * fillMessageMenu). Anything else is left to the usual lookup, which reports it.
      */
-    private static void hookTolerant(boolean anyOrder, Class<?> owner, String name, Class<?>[] params, AbstractMethodHook hook) {
+    static void hookTolerant(boolean anyOrder, Class<?> owner, String name, Class<?>[] params, AbstractMethodHook hook) {
         if (owner == null) return;
         Method method = XReflect.findMethodExactIfExists(owner, name, params);
         if (method == null) {
