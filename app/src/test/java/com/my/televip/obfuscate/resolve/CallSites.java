@@ -154,6 +154,8 @@ final class CallSites {
                 {"PhotoViewer#openPhoto|PhotoViewer#openPhotoOOOOAAAIOOJJJZOI"}});
         ROUTES.put("Disable stories", new String[][]{
                 {"StoriesController#hasStories|StoriesController#hasStories2"}});
+        ROUTES.put("Topic reactions: the next liked message", new String[][]{
+                {"MessagesController#getNextReactionMention|MessagesController#getNextReactionMentionInternal"}});
     }
 
     private static String[] concat(String[] a, String... b) {
