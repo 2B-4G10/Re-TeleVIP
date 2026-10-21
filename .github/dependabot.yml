@@ -1,5 +1,5 @@
 # Weekly dependency updates, opened on Monday morning before the Client watch run.
-# Each pull request is merged automatically once Build APK passes on it (dependency-merge.yml);
+# Each pull request is merged automatically once Build APK passes on it (auto-merge.yml);
 # the Client watch run then releases the result if every client still checks out.
 version: 2
 updates:
