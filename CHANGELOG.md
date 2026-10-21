@@ -14,6 +14,9 @@
 - **Hide seen works smoothly on Nekogram 12.10.5.** Reading a chat with Ghost Mode on could
   run into an error there, which got in the way of chats loading. Chats now open normally, and
   the sender still doesn't see that you read them.
+- **Save edits history works on Nekogram and Cherrygram.** On these clients it couldn't tell
+  which chat an edited message belonged to, so earlier versions weren't kept. The secret media
+  viewer had the same trouble there and now finds the right chat too.
 - **Re: TeleVIP settings open every time.** After leaving the app with Back and opening it
   again, tapping the settings did nothing until the app was force stopped.
 
