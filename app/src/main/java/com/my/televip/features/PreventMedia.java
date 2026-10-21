@@ -8,6 +8,8 @@ import com.my.televip.Class.ClassLoad;
 import com.my.televip.obfuscate.AutomationResolver;
 import com.my.televip.logging.Logger;
 import com.my.televip.virtuals.messenger.MessageObject;
+import com.my.televip.virtuals.messenger.MessagesController;
+import com.my.televip.virtuals.messenger.UserConfig;
 import com.my.televip.virtuals.tgnet.TLRPC;
 import com.my.televip.virtuals.ui.SecretMediaViewer;
 import com.my.televip.xposed.XBridge;
@@ -23,37 +25,24 @@ public class PreventMedia {
     public static boolean isEnable = false;
 
     /**
-     * True once markMessageAsRead2 is hooked: Telegram may then tell the sender a secret media was
-     * opened, because the hook keeps it from also queueing the local deletion. Without the hook
-     * nothing is sent, as before.
+     * MessagesController.markMessageAsRead2, hooked so it never queues the local deletion. Opening
+     * secret media tells the sender nothing; "Mark as seen" in the viewer calls this to tell them.
      */
-    public static boolean keepsLocalCopy = false;
+    private static Method markAsRead;
 
     public static void init() {
         try {
             if (!isEnable) {
                 isEnable = true;
 
-                keepsLocalCopy = hookMarkAsRead();
+                markAsRead = hookMarkAsRead();
 
                 if (ClassLoad.getClass(ClassNames.CHAT_ACTIVITY) != null) {
                     HMethod.hookMethod(ClassLoad.getClass(ClassNames.CHAT_ACTIVITY), AutomationResolver.resolve("ChatActivity", "sendSecretMessageRead", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("sendSecretMessageRead", new Class<?>[]{ClassLoad.getClass(ClassNames.MESSAGE_OBJECT), boolean.class}), new AbstractMethodHook() {
                         @Override
                         protected void beforeMethod(MethodHookParam param) {
-                            if (!ConfigManager.preventMedia.isEnable()) return;
-                            // Secret chats keep their media by not reporting it read at all: the
-                            // read receipt there would start the deletion on this phone too.
-                            if (!keepsLocalCopy || isSecretChat(messageArg(param.args))) param.setResult(null);
-                        }
-
-                        @Override
-                        protected void afterMethod(MethodHookParam param) {
-                            if (!ConfigManager.preventMedia.isEnable()) return;
-                            Object message = messageArg(param.args);
-                            // readNow false: the secret media viewer is about to open it.
-                            if (message != null && !readNowArg(param.args) && !isSecretChat(message)) {
-                                SecretMediaDeleteButton.showFor(message, param.getResult() != null);
-                            }
+                            // Opening it reports nothing: the sender is told only on "Mark as seen".
+                            if (ConfigManager.preventMedia.isEnable()) param.setResult(null);
                         }
                     }));
                     HMethod.hookMethod(ClassLoad.getClass(ClassNames.CHAT_ACTIVITY), AutomationResolver.resolve("ChatActivity", "sendSecretMediaDelete", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("sendSecretMediaDelete", new Class<?>[]{ClassLoad.getClass(ClassNames.MESSAGE_OBJECT)}), new AbstractMethodHook() {
@@ -95,7 +84,7 @@ public class PreventMedia {
                     }));
                 }
 
-                if (keepsLocalCopy && ClassLoad.getClass(ClassNames.MESSAGES_STORAGE) != null) {
+                if (markAsRead != null && ClassLoad.getClass(ClassNames.MESSAGES_STORAGE) != null) {
                     // Once the sender is told, the server lets the media expire, and the next
                     // history load would overwrite the copy kept here with the expired one.
                     SaveEditsHistory.hookTolerant(true,
@@ -128,13 +117,34 @@ public class PreventMedia {
     }
 
     /**
-     * Opening a secret media sends "opened" (messages.readMessageContents) through
-     * markMessageAsRead2, which also queues the media's deletion on this phone unless told not to.
-     * This keeps the request and drops only the deletion, and remembers the media as kept.
+     * Tells the sender the media was opened, as opening it normally would. The timer then runs
+     * out for them, while the copy here is kept.
      */
-    private static boolean hookMarkAsRead() {
+    public static boolean canMarkSeen() {
+        return markAsRead != null;
+    }
+
+    public static boolean markSeen(long dialogId, int mid, int ttl) {
+        if (markAsRead == null) return false;
+        try {
+            Object controller = MessagesController.getInstance(UserConfig.getSelectedAccount()).getMessagesController();
+            // ttl only sizes the local deletion the hook drops, but 0 makes the client skip it all.
+            markAsRead.invoke(controller, dialogId, mid, null, ttl > 0 ? ttl : Integer.MAX_VALUE, 0L, true);
+            return true;
+        } catch (Throwable t) {
+            Logger.e(t);
+            return false;
+        }
+    }
+
+    /**
+     * markMessageAsRead2 sends "opened" (messages.readMessageContents) and also queues the media's
+     * deletion on this phone unless told not to. The hook keeps the request, drops the deletion,
+     * and remembers the media as kept.
+     */
+    private static Method hookMarkAsRead() {
         Class<?> controller = ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER);
-        if (controller == null) return false;
+        if (controller == null) return null;
         String name = AutomationResolver.resolve("MessagesController", "markMessageAsRead2", AutomationResolver.ResolverType.Method);
         // (dialogId, mid, inputChannel, ttl, taskId, createDeleteTask); the channel's class is
         // the one parameter not matched, so a renamed TLRPC class does not matter.
@@ -148,8 +158,8 @@ public class PreventMedia {
             }
         }
         if (found == null) {
-            Logger.w("Prevent media: markMessageAsRead2 not found, secret media is not reported as opened");
-            return false;
+            Logger.w("Prevent media: markMessageAsRead2 not found, no Mark as seen");
+            return null;
         }
         HMethod.hookMethod(found, new AbstractMethodHook() {
             @Override
@@ -160,23 +170,8 @@ public class PreventMedia {
                 }
             }
         });
-        return true;
-    }
-
-    /** The MessageObject argument, wherever R8 put it (it may make the method static). */
-    private static Object messageArg(Object[] args) {
-        Class<?> messageObject = ClassLoad.getClass(ClassNames.MESSAGE_OBJECT);
-        for (Object arg : args) {
-            if (messageObject != null && messageObject.isInstance(arg)) return arg;
-        }
-        return null;
-    }
-
-    private static boolean readNowArg(Object[] args) {
-        for (Object arg : args) {
-            if (arg instanceof Boolean) return (Boolean) arg;
-        }
-        return false;
+        found.setAccessible(true);
+        return found;
     }
 
     /** Messages of secret (end-to-end encrypted) chats have negative ids on the phone. */

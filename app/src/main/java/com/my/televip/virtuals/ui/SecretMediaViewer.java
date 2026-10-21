@@ -3,7 +3,7 @@ package com.my.televip.virtuals.ui;
 import com.my.televip.Class.ClassNames;
 import com.my.televip.Configs.ConfigManager;
 import com.my.televip.base.AbstractMethodHook;
-import com.my.televip.features.PreventMedia;
+import com.my.televip.features.SecretMediaButtons;
 import com.my.televip.features.SecretMediaSave;
 import com.my.televip.hooks.HMethod;
 import com.my.televip.Class.ClassLoad;
@@ -32,18 +32,18 @@ public class SecretMediaViewer {
                     protected void beforeMethod(MethodHookParam param) {
                         boolean secretMediaSave = ConfigManager.secretMediaSave != null && ConfigManager.secretMediaSave.isEnable();
                         if (ConfigManager.preventMedia.isEnable() && !secretMediaSave) {
-                            // onOpen tells the sender it was opened; PreventMedia keeps the copy
-                            // here. onClose would delete a view-once media on this phone.
-                            if (!PreventMedia.keepsLocalCopy || PreventMedia.isSecretChat(param.args[0])) {
-                                param.args[2] = null;
-                            }
+                            // onOpen would tell the sender it was opened ("Mark as seen" does
+                            // that now), and onClose would delete a view-once media.
+                            param.args[2] = null;
                             param.args[3] = null;
 
                             MessageObject messageObject = new MessageObject(param.args[0]);
                             if (messageObject.getMessageObject() != null) {
                                 TLRPC.Message messageOwner = messageObject.getMessageOwner();
                                 if (messageOwner.message != null) {
+                                    int ttl = messageOwner.getTtl();
                                     messageOwner.setTtl(0);
+                                    SecretMediaButtons.showFor(param.args[0], ttl);
                                 }
                             }
                         }
