@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- **You decide when the sender sees your secret media as opened.** With Prevent media on,
+  opening a self-destructing photo or video tells the sender nothing. Tap **Mark as seen** in
+  the viewer when you want them to see it as opened; their copy then expires as usual, and you
+  keep yours.
+- **Save secret media from the viewer.** A **Save** button puts the photo or video in your
+  gallery, next to **Mark as seen** and **Delete for both**.
+
 ## 1.2.2 — Nekogram 12.10.5, fair secret media, and smoother settings
 
 - **Prevent media and Save secret media work on Nekogram 12.10.5.** Nekogram renamed part of
