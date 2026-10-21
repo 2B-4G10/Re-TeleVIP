@@ -8,6 +8,9 @@
   keep yours.
 - **Save secret media from the viewer.** A **Save** button puts the photo or video in your
   gallery, next to **Mark as seen** and **Delete for both**.
+- **Graph Messenger works again.** Re: TeleVIP shows up in its settings and its features work
+  on Graph's current versions (12.10 and 13.0), which are now checked every week like the
+  other clients.
 
 ## 1.2.2 — Nekogram 12.10.5, fair secret media, and smoother settings
 
