@@ -19,6 +19,13 @@ public class AndroidUtilities {
 
     }
 
+    public static void runOnUIThread(Runnable runnable, long delayMillis) {
+        if (applicationHandler == null) {
+            return;
+        }
+        applicationHandler.postDelayed(runnable, delayMillis);
+    }
+
     public static void init(Context context) {
         try {
             applicationHandler = new Handler(ApplicationLoaderHook.getApplicationContext().getMainLooper());

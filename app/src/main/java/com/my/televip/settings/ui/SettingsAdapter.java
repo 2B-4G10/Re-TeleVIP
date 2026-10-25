@@ -6,15 +6,18 @@ import android.content.Intent;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.my.televip.Configs.ConfigItem;
 import com.my.televip.Configs.ConfigManager;
+import com.my.televip.features.ClearSavedData;
 import com.my.televip.language.Keys;
 import com.my.televip.language.Translator;
 import com.my.televip.logging.Logger;
 import com.my.televip.settings.controller.SettingsController;
 import com.my.televip.utils.DialogUtils;
 import com.my.televip.utils.Utils;
+import com.my.televip.virtuals.ActionBar.AlertDialog;
 import com.my.televip.virtuals.Theme;
 import com.my.televip.virtuals.messenger.browser.Browser;
 import com.my.televip.virtuals.ui.Cells.ExpandableTextCheckCell;
@@ -184,6 +187,17 @@ public class SettingsAdapter {
 
                             ((Activity) settingsController.getContext()).finishAffinity();
                             android.os.Process.killProcess(android.os.Process.myPid());
+                            break;
+                        case Keys.ClearSavedData:
+                            AlertDialog confirm = new AlertDialog(settingsController.getContext());
+                            confirm.setTitle(Translator.get(Keys.ClearSavedDataTitle));
+                            confirm.setMessage(Translator.get(Keys.ClearSavedDataMessage));
+                            confirm.setPositiveButton(Translator.get(Keys.Delete), AlertDialog.click(() -> {
+                                ClearSavedData.run();
+                                Toast.makeText(settingsController.getContext(), Translator.get(Keys.SavedDataCleared), Toast.LENGTH_SHORT).show();
+                            }));
+                            confirm.setNegativeButton(Translator.get(Keys.Cancel), null);
+                            confirm.show();
                             break;
                         case Keys.Calendar:
                             Translator.withTextDirection(() -> DialogUtils.createSingleChoiceDialog((Activity) settingsController.getContext(), new String[]{
