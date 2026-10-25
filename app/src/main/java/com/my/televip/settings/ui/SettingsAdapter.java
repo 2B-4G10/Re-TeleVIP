@@ -10,7 +10,6 @@ import android.widget.TextView;
 
 import com.my.televip.Configs.ConfigItem;
 import com.my.televip.Configs.ConfigManager;
-import com.my.televip.audio;
 import com.my.televip.language.Keys;
 import com.my.televip.language.Translator;
 import com.my.televip.logging.Logger;
@@ -160,10 +159,6 @@ public class SettingsAdapter {
                     }
                     break;
             }
-            row.itemView.setOnLongClickListener(v -> {
-                playAudio(settingsController.getContext());
-                return true;
-            });
 
             row.itemView.setOnClickListener(v -> {
 
@@ -265,13 +260,5 @@ public class SettingsAdapter {
         }
     }
 
-    public static void playAudio(Context context) {
-        if (audio.playing) {
-            audio.stop();
-        } else {
-            audio.start();
-            DialogUtils.showQuranAlert(context);
-        }
-    }
 
 }
