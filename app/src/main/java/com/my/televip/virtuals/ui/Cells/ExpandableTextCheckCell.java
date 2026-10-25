@@ -86,8 +86,9 @@ public class ExpandableTextCheckCell extends LinearLayout {
                 boolean newChecked = !textCheckCell1.isChecked();
                 textCheckCell1.setChecked(newChecked);
                 child.setEnable(newChecked);
-                child.run();
+                // The group's switch first: the child's feature reads it (Hide seen for Ghost Mode).
                 updateMainStateFromChildren(item);
+                child.run();
             });
 
             updateMainStateFromChildren(item);
