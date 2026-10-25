@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.my.televip.application.AndroidUtilities;
+import com.my.televip.language.Translator;
 import com.my.televip.virtuals.Theme;
 
 /**
@@ -27,6 +28,7 @@ public class ActionRowView extends LinearLayout {
     private final TextView subtitle;
     private final TextView value;
     private final Paint dividerPaint = new Paint();
+    private final boolean rtl;
     private boolean divider;
 
     public ActionRowView(Context context) {
@@ -36,35 +38,53 @@ public class ActionRowView extends LinearLayout {
         setMinimumHeight(AndroidUtilities.dp(56));
         setPadding(AndroidUtilities.dp(21), AndroidUtilities.dp(10), AndroidUtilities.dp(21), AndroidUtilities.dp(10));
 
+        // Mirrored by hand for a right-to-left language: the settings are laid out left to right.
+        rtl = Translator.isRTL();
+        int textGravity = rtl ? Gravity.RIGHT : Gravity.LEFT;
+
         icon = new ImageView(context);
         icon.setVisibility(GONE);
         LayoutParams iconParams = new LayoutParams(AndroidUtilities.dp(36), AndroidUtilities.dp(36));
-        iconParams.setMarginEnd(AndroidUtilities.dp(16));
-        addView(icon, iconParams);
+        if (rtl) {
+            iconParams.leftMargin = AndroidUtilities.dp(16);
+        } else {
+            iconParams.rightMargin = AndroidUtilities.dp(16);
+        }
 
         texts = new LinearLayout(context);
         texts.setOrientation(VERTICAL);
-        addView(texts, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
+        LayoutParams textsParams = new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f);
 
         title = new TextView(context);
         title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         title.setTextColor(Theme.getTextColor());
-        texts.addView(title);
+        title.setGravity(textGravity);
+        texts.addView(title, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
         subtitle = new TextView(context);
         subtitle.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
         subtitle.setTextColor(Theme.getTextGrayColor());
         subtitle.setPadding(0, AndroidUtilities.dp(2), 0, 0);
+        subtitle.setGravity(textGravity);
         subtitle.setVisibility(GONE);
-        texts.addView(subtitle);
+        texts.addView(subtitle, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
         value = new TextView(context);
         value.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         value.setTextColor(Theme.getTextBlueColor());
         value.setVisibility(GONE);
         LayoutParams valueParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-        valueParams.setMarginStart(AndroidUtilities.dp(12));
-        addView(value, valueParams);
+        if (rtl) {
+            valueParams.rightMargin = AndroidUtilities.dp(12);
+            addView(value, valueParams);
+            addView(texts, textsParams);
+            addView(icon, iconParams);
+        } else {
+            valueParams.leftMargin = AndroidUtilities.dp(12);
+            addView(icon, iconParams);
+            addView(texts, textsParams);
+            addView(value, valueParams);
+        }
 
         dividerPaint.setColor(Theme.isLight() ? 0x14000000 : 0x14FFFFFF);
         setWillNotDraw(false);
@@ -80,7 +100,6 @@ public class ActionRowView extends LinearLayout {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         if (!divider) return;
-        boolean rtl = getLayoutDirection() == LAYOUT_DIRECTION_RTL;
         int start = rtl ? 0 : texts.getLeft();
         int end = rtl ? texts.getRight() : getWidth();
         canvas.drawRect(start, getHeight() - 1, end, getHeight(), dividerPaint);
