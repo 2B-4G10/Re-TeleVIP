@@ -23,7 +23,7 @@ import java.util.List;
 public class SettingsController {
 
     /** The Re: TeleVIP group, opened from the settings' invite row and the join prompt. */
-    public static final String GROUP_LINK = "t.me/Re_TeleVIP";
+    public static final String GROUP_LINK = "t.me/Revived_TeleVIP";
     public static final String GROUP_URL = "https://" + GROUP_LINK;
 
     public FrameLayout settingsView;
@@ -86,9 +86,12 @@ public class SettingsController {
         }
     }
 
+    /** "Don't show again" for the current group; a new key, so the move to a new group is shown once. */
+    private static final String JOIN_DISMISSED = "JoinRevivedTeleVip";
+
     private void showJoinTeleVip() {
         try {
-            if (!ConfigPreferences.getBoolean("JTV")) {
+            if (!ConfigPreferences.getBoolean(JOIN_DISMISSED)) {
                 Context context = getContext();
                 AlertDialog alertDialog = new AlertDialog(context);
 
@@ -105,7 +108,7 @@ public class SettingsController {
                 }));
 
                 alertDialog.setNegativeButton(Translator.get(Keys.Cancel), null);
-                alertDialog.setNeutralButton(Translator.get(Keys.DontShowAgain), AlertDialog.click(() -> ConfigPreferences.putBoolean("JTV", true)));
+                alertDialog.setNeutralButton(Translator.get(Keys.DontShowAgain), AlertDialog.click(() -> ConfigPreferences.putBoolean(JOIN_DISMISSED, true)));
                 alertDialog.show();
             }
         } catch (Throwable e) {
