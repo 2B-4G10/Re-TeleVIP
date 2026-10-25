@@ -148,5 +148,7 @@
   "SecretMediaNotFound": "تعذّر تحديد الملف على هذا الإصدار من التطبيق، لذا لم يُحفظ شيء",
   "Language": "اللغة",
   "LanguageDesc": "لإعدادات Re: TeleVIP وقوائمه",
-  "LanguageSameAsApp": "مثل التطبيق"
+  "LanguageSameAsApp": "مثل التطبيق",
+  "Support": "ادعم Re: TeleVIP",
+  "SupportDesc": "مبرمج في أوقات مسروقة ☕ دعمك على Patreon يعوّضنا عنها!"
 }

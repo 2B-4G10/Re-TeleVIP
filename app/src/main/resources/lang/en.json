@@ -148,5 +148,7 @@
   "SecretMediaNotFound": "Couldn't tell which file this is on this version of the app, so nothing was saved",
   "Language": "Language",
   "LanguageDesc": "For Re: TeleVIP's settings and menus",
-  "LanguageSameAsApp": "Same as app"
+  "LanguageSameAsApp": "Same as app",
+  "Support": "Support Re: TeleVIP",
+  "SupportDesc": "Coded in squeezed-in time ☕ Your support on Patreon makes up for it!"
 }
