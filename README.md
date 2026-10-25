@@ -7,10 +7,11 @@
 **Privacy, ad blocking and quality-of-life features for Telegram and its forks,<br>as a Vector / Xposed module.**
 
 [![Release](https://img.shields.io/github/v/release/2B-4G10/Re-TeleVIP?label=release&color=FFD500)](../../releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/2B-4G10/Re-TeleVIP/total?color=2AABEE)](../../releases)
+[![Downloads](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2F2B-4G10%2FRe-TeleVIP%2Fbadges%2Fdownloads.json)](../../releases)
 [![Client watch](https://img.shields.io/github/actions/workflow/status/2B-4G10/Re-TeleVIP/client-watch.yml?label=client%20watch)](../../actions/workflows/client-watch.yml)
 [![Xposed API](https://img.shields.io/badge/libxposed-API%20102-4A4D54)](#-getting-started)
 [![License](https://img.shields.io/badge/license-GPL--3.0-F99B1C)](LICENSE)
+[![Patreon](https://img.shields.io/badge/Patreon-support-FF424D?logo=patreon&logoColor=white)](https://www.patreon.com/Dossary)
 
 <br>
 
@@ -227,6 +228,13 @@ Details are in the [changelog](CHANGELOG.md).
 
 <br>
 
+## 💛 Support
+
+Re: TeleVIP is free, and coded in squeezed-in time ☕<br>
+Your support on Patreon makes up for it!
+
+[![Support on Patreon](https://img.shields.io/badge/Support%20on-Patreon-FF424D?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/Dossary)
+
 ## 🙏 Credits
 
 **[Mustafa (@mustafa1dev)](https://github.com/mustafa1dev)** is the original author of TeleVip
@@ -237,5 +245,11 @@ Partly based on [Re-Telegram](https://github.com/Sakion-Team/Re-Telegram).
 
 [GPL-3.0](LICENSE). This project is for educational use.<br>
 Modified clients can put a Telegram account at risk, so use it at your own risk.
+
+<br>
+
+---
+
+Made in Saudi 🇸🇦 By: i_2B_4G10🚀
 
 </div>

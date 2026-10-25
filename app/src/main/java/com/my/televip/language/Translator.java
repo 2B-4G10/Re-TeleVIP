@@ -229,6 +229,7 @@ public class Translator {
             clientRtl = LocaleController.isRTL();
             boolean rtl = isRTL();
             if (rtl != clientRtl) {
+                swappedClientRtl = clientRtl;
                 LocaleController.setRTL(rtl);
                 swapped = true;
             }
@@ -239,6 +240,7 @@ public class Translator {
             build.run();
         } finally {
             if (swapped) {
+                swappedClientRtl = null;
                 try {
                     LocaleController.setRTL(clientRtl);
                 } catch (Throwable e) {
@@ -246,6 +248,15 @@ public class Translator {
                 }
             }
         }
+    }
+
+    /** The client's real direction while {@link #withTextDirection} has it flipped, else null. */
+    private static volatile Boolean swappedClientRtl;
+
+    /** The client's own text direction, also while {@link #withTextDirection} has it flipped. */
+    public static boolean isClientRTL() {
+        Boolean swapped = swappedClientRtl;
+        return swapped != null ? swapped : LocaleController.isRTL();
     }
 
     public static String get(String key) {

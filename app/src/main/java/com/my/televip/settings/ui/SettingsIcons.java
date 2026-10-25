@@ -43,6 +43,13 @@ public final class SettingsIcons {
         return IconTileDrawable.of(AppIconDrawable.TILE_COLOR, new AppIconDrawable());
     }
 
+    /** Patreon's coral, for the support row's tile and title. */
+    public static final int SUPPORT_COLOR = 0xFFFF5A5F;
+
+    public static Drawable support() {
+        return IconTileDrawable.material(SUPPORT_COLOR, SUPPORT);
+    }
+
     public static Drawable restart() {
         return IconTileDrawable.material(0xFFFF4D4F, RESTART);
     }
@@ -82,6 +89,10 @@ public final class SettingsIcons {
     /** Material Icons "auto_awesome" (round). */
     private static final String OTHER =
             "m19.46 8 .79-1.75L22 5.46a.5.5 0 0 0 0-.91l-1.75-.79L19.46 2a.5.5 0 0 0-.91 0l-.79 1.75-1.76.79a.5.5 0 0 0 0 .91l1.75.79.79 1.76c.18.39.74.39.92 0zM11.5 9.5 9.91 6c-.35-.78-1.47-.78-1.82 0L6.5 9.5 3 11.09c-.78.36-.78 1.47 0 1.82l3.5 1.59L8.09 18c.36.78 1.47.78 1.82 0l1.59-3.5 3.5-1.59c.78-.36.78-1.47 0-1.82L11.5 9.5zm7.04 6.5-.79 1.75-1.75.79a.5.5 0 0 0 0 .91l1.75.79.79 1.76a.5.5 0 0 0 .91 0l.79-1.75 1.76-.79a.5.5 0 0 0 0-.91l-1.75-.79-.79-1.76a.508.508 0 0 0-.92 0z";
+
+    /** Material Icons "favorite" (round). */
+    private static final String SUPPORT =
+            "M13.35 20.13c-.76.69-1.93.69-2.69-.01l-.11-.1C5.3 15.27 1.87 12.16 2 8.28c.06-1.7.93-3.33 2.34-4.29 2.64-1.8 5.9-.96 7.66 1.1 1.76-2.06 5.02-2.91 7.66-1.1 1.41.96 2.28 2.59 2.34 4.29.14 3.88-3.3 6.99-8.55 11.76l-.1.09z";
 
     /** Material Icons "restart_alt" (round). */
     private static final String RESTART =
