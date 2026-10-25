@@ -40,6 +40,10 @@ public class SettingsActivity {
 
         try {
             layout.setOrientation(LinearLayout.VERTICAL);
+            // Laid out left to right everywhere, and mirrored by the rows themselves for a
+            // right-to-left language: the client's own cells do it that way, and most clients
+            // turn Android's mirroring off.
+            layout.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
             layout.setBackgroundColor(Theme.getBackgroundGrayColor());
 
             MainToolBar toolbar = new MainToolBar(context);
@@ -64,35 +68,8 @@ public class SettingsActivity {
                     ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
 
             SettingsCells.prepare(context);
-            // Each group is a card: a header opens one, a divider ends it, and a footnote (INFO)
-            // goes under it. Rows without a header (the buttons) get a card of their own.
-            LinearLayout card = null;
-            for (int i = 0; i < SettingsAdapter.getRowCount(); i++) {
-                int type = ConfigManager.getItems().get(i).getType();
-                if (type == ConfigItem.DIVIDER) {
-                    card = null;
-                    continue;
-                }
-                // Row by row, so a cell this client cannot build costs that row, not the list.
-                try {
-                    SettingsAdapter.Row row = SettingsAdapter.createRow(context, i);
-                    SettingsAdapter.bind(row, settingsController, i);
-                    LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                    if (type == ConfigItem.INFO) {
-                        card = null;
-                        rows.addView(row.itemView, rowParams);
-                        continue;
-                    }
-                    if (card == null || type == ConfigItem.HEADER) {
-                        card = createCard(context);
-                        rows.addView(card, cardParams());
-                    }
-                    card.addView(row.itemView, rowParams);
-                } catch (Throwable t) {
-                    Logger.e(t);
-                }
-            }
+            // The client's switch rows take the direction of Re: TeleVIP's language.
+            Translator.withTextDirection(() -> addRows(rows, settingsController));
             View bottom = new View(context);
             rows.addView(bottom, new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, AndroidUtilities.dp(16)));
@@ -110,6 +87,39 @@ public class SettingsActivity {
         }
 
         return layout;
+    }
+
+    /** Adds every settings row to {@code rows}, grouped in cards. */
+    private void addRows(LinearLayout rows, SettingsController settingsController) {
+        // Each group is a card: a header opens one, a divider ends it, and a footnote (INFO)
+        // goes under it. Rows without a header (the buttons) get a card of their own.
+        LinearLayout card = null;
+        for (int i = 0; i < SettingsAdapter.getRowCount(); i++) {
+            int type = ConfigManager.getItems().get(i).getType();
+            if (type == ConfigItem.DIVIDER) {
+                card = null;
+                continue;
+            }
+            // Row by row, so a cell this client cannot build costs that row, not the list.
+            try {
+                SettingsAdapter.Row row = SettingsAdapter.createRow(context, i);
+                SettingsAdapter.bind(row, settingsController, i);
+                LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                if (type == ConfigItem.INFO) {
+                    card = null;
+                    rows.addView(row.itemView, rowParams);
+                    continue;
+                }
+                if (card == null || type == ConfigItem.HEADER) {
+                    card = createCard(context);
+                    rows.addView(card, cardParams());
+                }
+                card.addView(row.itemView, rowParams);
+            } catch (Throwable t) {
+                Logger.e(t);
+            }
+        }
     }
 
     /** A rounded card in the row colour, clipping its rows' touch ripples to its corners. */

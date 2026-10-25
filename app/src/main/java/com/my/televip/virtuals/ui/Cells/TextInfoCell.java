@@ -7,6 +7,7 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.my.televip.application.AndroidUtilities;
+import com.my.televip.language.Translator;
 import com.my.televip.virtuals.Theme;
 import com.my.televip.virtuals.ui.Components.LayoutHelper;
 
@@ -21,9 +22,10 @@ public class TextInfoCell extends FrameLayout {
         textView.setTextColor(Theme.getTextGrayColor());
         textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
         // A footnote to the group card above it, lined up with the card's text.
-        textView.setGravity(Gravity.START);
+        int gravity = Translator.isRTL() ? Gravity.RIGHT : Gravity.LEFT;
+        textView.setGravity(gravity);
         textView.setPadding(0, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(4));
-        addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.START, 33, 0, 33, 0));
+        addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, gravity, 33, 0, 33, 0));
     }
 
     @Override

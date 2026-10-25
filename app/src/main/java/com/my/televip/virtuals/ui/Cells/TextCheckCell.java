@@ -1,14 +1,25 @@
 package com.my.televip.virtuals.ui.Cells;
 
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
+import android.graphics.PixelFormat;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.widget.TextView;
 
 import com.my.televip.Class.ClassLoad;
 import com.my.televip.Class.ClassNames;
+import com.my.televip.application.AndroidUtilities;
+import com.my.televip.language.Translator;
+import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.AutomationResolver;
 
 import com.my.televip.reflect.XReflect;
+import com.my.televip.virtuals.Theme;
+import com.my.televip.virtuals.messenger.LocaleController;
 
 import java.util.Collections;
 import java.util.Map;
@@ -35,12 +46,65 @@ public class TextCheckCell {
 
     public void setTextAndValueAndCheck(CharSequence text, String value, boolean checked, boolean multiline, boolean divider){
         LAST_SET.put(textCell, checked);
-        XReflect.callMethod(textCell, AutomationResolver.resolve("TextCheckCell","setTextAndValueAndCheck", AutomationResolver.ResolverType.Method), text, value, checked, multiline,  divider);
+        XReflect.callMethod(textCell, AutomationResolver.resolve("TextCheckCell","setTextAndValueAndCheck", AutomationResolver.ResolverType.Method), text, value, checked, multiline, clientDivider(divider));
     }
 
     public void setTextAndCheck(CharSequence text, boolean checked, boolean divider){
         LAST_SET.put(textCell, checked);
-        XReflect.callMethod(textCell, AutomationResolver.resolve("TextCheckCell","setTextAndCheck", AutomationResolver.ResolverType.Method), text, checked,  divider);
+        XReflect.callMethod(textCell, AutomationResolver.resolve("TextCheckCell","setTextAndCheck", AutomationResolver.ResolverType.Method), text, checked, clientDivider(divider));
+    }
+
+    /**
+     * The divider to ask the client's cell for. The cell draws it on the side of the client's
+     * text direction, read at every draw; when Re: TeleVIP's language reads the other way, the
+     * cell's own is turned off and the line is drawn here, on the side the row's text starts.
+     */
+    private boolean clientDivider(boolean divider) {
+        View view = getView();
+        try {
+            boolean rtl = Translator.isRTL();
+            if (rtl != LocaleController.isRTL()) {
+                view.setForeground(divider ? new DividerDrawable(rtl) : null);
+                return false;
+            }
+        } catch (Throwable e) {
+            Logger.e(e);
+        }
+        if (view.getForeground() instanceof DividerDrawable) view.setForeground(null);
+        return divider;
+    }
+
+    /** A hairline along the bottom, from where the text starts to the far edge. */
+    private static final class DividerDrawable extends Drawable {
+        private final Paint paint = new Paint();
+        private final boolean rtl;
+
+        DividerDrawable(boolean rtl) {
+            this.rtl = rtl;
+            paint.setColor(Theme.isLight() ? 0x14000000 : 0x14FFFFFF);
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            Rect b = getBounds();
+            int inset = AndroidUtilities.dp(20);
+            canvas.drawRect(rtl ? b.left : b.left + inset, b.bottom - 1, rtl ? b.right - inset : b.right, b.bottom, paint);
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            paint.setAlpha(alpha);
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+            paint.setColorFilter(colorFilter);
+        }
+
+        @Override
+        public int getOpacity() {
+            return PixelFormat.TRANSLUCENT;
+        }
     }
 
     public void setChecked(boolean checked){

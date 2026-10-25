@@ -123,4 +123,8 @@ public class Keys {
     public static final String SavedDataCleared = "SavedDataCleared";
     public static final String SecretMediaSavedTo = "SecretMediaSavedTo";
     public static final String SecretMediaNotFound = "SecretMediaNotFound";
+    public static final String Language = "Language";
+    public static final String LanguageDesc = "LanguageDesc";
+    public static final String LanguageSameAsApp = "LanguageSameAsApp";
+
 }
