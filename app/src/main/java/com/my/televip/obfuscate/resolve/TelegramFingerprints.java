@@ -444,6 +444,7 @@ public final class TelegramFingerprints {
         s.add(field("TLRPC$Message", "id").type("int").readBy(secret, 1));
         s.add(field("TLRPC$Message", "ttl").type("int").readBy(secret, 2));
         s.add(field("TLRPC$Message", "from_id").type(peer).readBy(secret, 0));
+        s.add(field("TLRPC$Message", "peer_id").type(peer).readBy(secret, 1));
         s.add(field("TLRPC$Message", "message").type("java.lang.String").readBy(secret, 0));
         // user: username (checked for null first), first_name, last_name, username, phone.
         s.add(field("TLRPC$User", "phone").type("java.lang.String").readBy("TLRPC$TL_user#serializeToStream", 3));
