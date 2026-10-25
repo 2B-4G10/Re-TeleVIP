@@ -41,9 +41,10 @@ public class PreventMedia {
                     HMethod.hookMethod(ClassLoad.getClass(ClassNames.CHAT_ACTIVITY), AutomationResolver.resolve("ChatActivity", "sendSecretMessageRead", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("sendSecretMessageRead", new Class<?>[]{ClassLoad.getClass(ClassNames.MESSAGE_OBJECT), boolean.class}), new AbstractMethodHook() {
                         @Override
                         protected void beforeMethod(MethodHookParam param) {
-                            if (!ConfigManager.preventMedia.isEnable() || reportingRead) return;
+                            if (reportingRead) return;
                             // Opening it reports nothing: the sender is told only on "Mark as seen".
-                            param.setResult(null);
+                            // With Prevent media off it opens as usual, timer and all, with Save.
+                            if (ConfigManager.preventMedia.isEnable()) param.setResult(null);
                             // readNow false: a viewer is about to open it. Current builds show it
                             // in PhotoViewer, older ones in SecretMediaViewer (which also calls this).
                             Object message = messageArg(param.args);

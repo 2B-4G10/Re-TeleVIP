@@ -292,6 +292,8 @@ public class ConfigManager {
             }
             AlwaysSaveMedia.init();
             TopicReactions.init();
+            // Its viewer hook also offers Save with Prevent media off.
+            PreventMedia.init();
 
             if (ClientChecker.check(ClientChecker.ClientType.Telegraph)) Telegraph.removeAd();
 

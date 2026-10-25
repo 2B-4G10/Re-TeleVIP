@@ -51,7 +51,8 @@ import static com.my.televip.application.AndroidUtilities.dp;
 /**
  * Save, Mark as seen and Delete for both in the secret media viewer, while Prevent media keeps
  * opened media. Opening it tells the sender nothing; "Mark as seen" does, and "Delete for both"
- * removes it here and for the sender, as the timer or the single view would have.
+ * removes it here and for the sender, as the timer or the single view would have. With Prevent
+ * media off the media expires as sent, and only Save is added.
  *
  * <p>Found without names, so it needs nothing renamed builds have to map: the viewer is the
  * static instance of its class, and the buttons sit next to its action bar.</p>
@@ -110,10 +111,15 @@ public final class SecretMediaButtons {
 
         TLRPC.Message owner = new MessageObject(messageObject).getMessageOwner();
         int mid = owner.getID();
-        boolean show = ConfigManager.preventMedia.isEnable() && mid != 0;
-        row.setVisibility(show ? View.VISIBLE : View.GONE);
-        if (!show) return true;
+        row.setVisibility(mid != 0 ? View.VISIBLE : View.GONE);
+        if (mid == 0) return true;
         save.setOnClickListener(v -> save(v.getContext(), owner.message));
+        if (!ConfigManager.preventMedia.isEnable()) {
+            // It expires as sent; Save is the only thing added.
+            seen.setVisibility(View.GONE);
+            delete.setVisibility(View.GONE);
+            return true;
+        }
         if (mid < 0) {
             // A secret chat: its read receipt starts the timer on this phone too, so "Mark as seen"
             // and "Delete for both" are one thing there, the timer running out on both phones.
@@ -136,6 +142,7 @@ public final class SecretMediaButtons {
                 toast(v.getContext(), Translator.get(Keys.SecretMediaMarkedSeen));
             }
         });
+        delete.setVisibility(View.VISIBLE);
         delete.setOnClickListener(v -> confirm(v, () -> delete(v, viewer, photoViewer, dialogId, mid)));
         return true;
     }
