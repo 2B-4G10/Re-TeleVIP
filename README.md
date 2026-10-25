@@ -11,6 +11,7 @@
 [![Client watch](https://img.shields.io/github/actions/workflow/status/2B-4G10/Re-TeleVIP/client-watch.yml?label=client%20watch)](../../actions/workflows/client-watch.yml)
 [![Xposed API](https://img.shields.io/badge/libxposed-API%20102-4A4D54)](#-getting-started)
 [![License](https://img.shields.io/badge/license-GPL--3.0-F99B1C)](LICENSE)
+[![Patreon](https://img.shields.io/badge/Patreon-support-FF424D?logo=patreon&logoColor=white)](https://www.patreon.com/Dossary)
 
 <br>
 
@@ -225,6 +226,13 @@ Re: TeleVIP doesn't rely on a name table for one version. It works it out on you
 Details are in the [changelog](CHANGELOG.md).
 
 <br>
+
+## 💛 Support
+
+Re: TeleVIP is free, and coded in squeezed-in time ☕<br>
+Your support on Patreon makes up for it!
+
+[![Support on Patreon](https://img.shields.io/badge/Support%20on-Patreon-FF424D?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/Dossary)
 
 ## 🙏 Credits
 
