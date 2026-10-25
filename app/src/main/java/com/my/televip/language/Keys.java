@@ -17,6 +17,7 @@ public class Keys {
     public static final String EnableSavingStories = "EnableSavingStories";
     public static final String GhostModeSettings = "GhostModeSettings";
     public static final String TeleVipGroup = "TeleVipGroup";
+    public static final String Support = "Support";
     public static final String HideOnline = "HideOnline";
     public static final String PreventMedia = "PreventMedia";
     public static final String HidePhone = "HidePhone";
@@ -116,9 +117,6 @@ public class Keys {
     public static final String SecretMediaMarkedSeen = "SecretMediaMarkedSeen";
     public static final String SecretMediaSaveFailed = "SecretMediaSaveFailed";
     public static final String SecretMediaNotDownloaded = "SecretMediaNotDownloaded";
-    public static final String Language = "Language";
-    public static final String LanguageDesc = "LanguageDesc";
-    public static final String LanguageSameAsApp = "LanguageSameAsApp";
     public static final String GhostModeNotWorking = "GhostModeNotWorking";
     public static final String ClearSavedData = "ClearSavedData";
     public static final String ClearSavedDataTitle = "ClearSavedDataTitle";
@@ -126,6 +124,10 @@ public class Keys {
     public static final String SavedDataCleared = "SavedDataCleared";
     public static final String SecretMediaSavedTo = "SecretMediaSavedTo";
     public static final String SecretMediaNotFound = "SecretMediaNotFound";
+    public static final String Language = "Language";
+    public static final String LanguageDesc = "LanguageDesc";
+    public static final String LanguageSameAsApp = "LanguageSameAsApp";
+
     public static final String CheckForUpdates = "CheckForUpdates";
     public static final String CheckForUpdatesNow = "CheckForUpdatesNow";
     public static final String UpdateChecking = "UpdateChecking";

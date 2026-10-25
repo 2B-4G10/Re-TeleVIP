@@ -2,7 +2,6 @@ package com.my.televip.settings.ui;
 
 
 import android.content.Context;
-import android.graphics.drawable.GradientDrawable;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -44,10 +43,12 @@ public class SettingsActivity {
             // right-to-left language: the client's own cells do it that way, and most clients
             // turn Android's mirroring off.
             layout.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
-            layout.setBackgroundColor(Theme.getBackgroundGrayColor());
+            // A fixed backdrop the cards scroll over.
+            layout.setBackground(GlassStyle.backdrop());
 
             MainToolBar toolbar = new MainToolBar(context);
 
+            toolbar.setBackgroundColor(GlassStyle.toolbarColor());
             toolbar.setColorTitle(Theme.getTextToolBarColor());
             toolbar.setRippleColor(Theme.getToolBarRippleColor());
             toolbar.setTextTitle(Translator.get(Keys.SettingsName));
@@ -59,7 +60,6 @@ public class SettingsActivity {
             layout.addView(toolbar);
 
             ScrollView scroll = new ScrollView(context);
-            scroll.setBackgroundColor(Theme.getBackgroundGrayColor());
             scroll.setVerticalScrollBarEnabled(false);
 
             LinearLayout rows = new LinearLayout(context);
@@ -122,14 +122,11 @@ public class SettingsActivity {
         }
     }
 
-    /** A rounded card in the row colour, clipping its rows' touch ripples to its corners. */
+    /** A rounded glass card, clipping its rows' touch ripples to its corners. */
     private static LinearLayout createCard(Context context) {
         LinearLayout card = new LinearLayout(context);
         card.setOrientation(LinearLayout.VERTICAL);
-        GradientDrawable background = new GradientDrawable();
-        background.setColor(Theme.getBackgroundWhiteOrBlueColor());
-        background.setCornerRadius(AndroidUtilities.dp(16));
-        card.setBackground(background);
+        card.setBackground(GlassStyle.card());
         card.setClipToOutline(true);
         return card;
     }

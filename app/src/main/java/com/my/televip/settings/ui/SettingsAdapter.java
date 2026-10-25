@@ -176,6 +176,9 @@ public class SettingsAdapter {
                             Browser.openUrl(settingsController.getContext(), SettingsController.GROUP_URL);
                             settingsController.hide();
                             break;
+                        case Keys.Support:
+                            Browser.openUrl(settingsController.getContext(), SettingsController.SUPPORT_URL);
+                            break;
                         case Keys.RestartApp:
                             Intent intent = settingsController.getContext()
                                     .getPackageManager()
@@ -301,6 +304,10 @@ public class SettingsAdapter {
             case Keys.TeleVipGroup:
                 view.set(title, SettingsController.GROUP_LINK, null, SettingsIcons.logo());
                 view.getTitleView().setTextColor(Theme.getTextBlueColor());
+                break;
+            case Keys.Support:
+                view.set(title, explanation, null, SettingsIcons.support());
+                view.getTitleView().setTextColor(SettingsIcons.SUPPORT_COLOR);
                 break;
             case Keys.RestartApp:
                 view.set(title, explanation, null, SettingsIcons.restart());
