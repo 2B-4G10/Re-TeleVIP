@@ -2,7 +2,8 @@
 # Moves the build to the latest stable Android Gradle Plugin, Gradle and libxposed API.
 # Edits the files in place and prints a one-line summary of what changed (nothing if current).
 #   AGP        gradle/libs.versions.toml `agp`      <- Google Maven, stable releases only
-#   Gradle     gradle/wrapper distributionUrl       <- services.gradle.org, current release
+#   Gradle     gradle/wrapper distributionUrl and distributionSha256Sum
+#              <- services.gradle.org, current release
 #   libxposed  gradle/libs.versions.toml `libxposed` and module.prop targetApiVersion
 #              <- Maven Central; minApiVersion stays, so older frameworks keep loading it
 #   Android    compileSdk / targetSdk of both modules, and the platform the workflows install
@@ -39,12 +40,20 @@ if [ -n "$xp_new" ] && [ "$(printf '%s\n%s\n' "$xp_now" "$xp_new" | sort -V | ta
 fi
 
 gradle_now=$(sed -n 's/.*gradle-\([0-9.]*\)-\(bin\|all\)\.zip/\1/p' "$wrapper")
-gradle_new=$(curl -fsSL --retry 3 https://services.gradle.org/versions/current \
-  | sed -n 's/.*"version" *: *"\([0-9.]*\)".*/\1/p' | head -n1)
-if [ -n "$gradle_new" ] && [ "$(printf '%s\n%s\n' "$gradle_now" "$gradle_new" | sort -V | tail -n1)" != "$gradle_now" ]; then
+gradle_json=$(curl -fsSL --retry 3 https://services.gradle.org/versions/current)
+gradle_new=$(printf '%s' "$gradle_json" | sed -n 's/.*"version" *: *"\([0-9.]*\)".*/\1/p' | head -n1)
+# The SHA-256 of the -bin.zip, which the wrapper checks the download against.
+gradle_sum=$(printf '%s' "$gradle_json" | sed -n 's/.*"checksum" *: *"\([0-9a-f]\{64\}\)".*/\1/p' | head -n1)
+if [ -n "$gradle_new" ] && [ -n "$gradle_sum" ] \
+    && [ "$(printf '%s\n%s\n' "$gradle_now" "$gradle_new" | sort -V | tail -n1)" != "$gradle_now" ]; then
   # The distribution URL is all the wrapper needs; running the wrapper task instead would first
   # configure the project, which can fail half way through a toolchain bump.
   sed -i "s/gradle-$gradle_now-bin\.zip/gradle-$gradle_new-bin.zip/" "$wrapper"
+  if grep -q '^distributionSha256Sum=' "$wrapper"; then
+    sed -i "s/^distributionSha256Sum=.*/distributionSha256Sum=$gradle_sum/" "$wrapper"
+  else
+    echo "distributionSha256Sum=$gradle_sum" >> "$wrapper"
+  fi
   changes+=("Gradle $gradle_now → $gradle_new")
 fi
 

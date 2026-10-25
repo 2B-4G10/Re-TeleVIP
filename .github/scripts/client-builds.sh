@@ -17,6 +17,10 @@
 #       a single build at a fixed address (only ever the newest one, e.g. telegram.org).
 set -euo pipefail
 
+# SHA-256 of the certificate f-droid.org signs its repository index with (shown as the
+# repository fingerprint in the F-Droid app).
+FDROID_KEY_SHA256=43238d512c1e5eb2d6569f4a3afbf5523418b82e0a3ed1552770abb9a9c9ccab
+
 source=$1
 case "$source" in
   github)
@@ -48,6 +52,13 @@ case "$source" in
         rm -f "$work/$repo.jar"
         sleep $((attempt * 15))
       done
+      # The index is a signed jar: only trust it when f-droid.org's own repository key signed it.
+      signer=$(keytool -printcert -jarfile "$work/$repo.jar" 2>/dev/null \
+          | sed -n 's/^[[:space:]]*SHA256: *//p' | head -n1 | tr -d ':' | tr 'A-F' 'a-f')
+      if [ "$signer" != "$FDROID_KEY_SHA256" ]; then
+        echo "::error::The f-droid.org $repo index is not signed by f-droid.org's key (got '${signer:-no signature}')." >&2
+        exit 1
+      fi
       unzip -p "$work/$repo.jar" index-v1.json | jq -r --arg p "$package" --arg base "https://f-droid.org/$repo/" '
         .packages[$p] // [] | .[]
         | select((.nativecode // ["arm64-v8a"]) | index("arm64-v8a"))

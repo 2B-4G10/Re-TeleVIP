@@ -1,6 +1,9 @@
 # Weekly dependency updates, opened on Monday morning before the Client watch run.
 # Each pull request is merged automatically once Build APK passes on it (auto-merge.yml);
 # the Client watch run then releases the result if every client still checks out.
+# A release must be a week old before it is offered (cooldown), so a hijacked or broken version
+# is usually pulled before it can reach a signed TeleVIP build. Security fixes skip the wait.
+# Actions are pinned to commit SHAs; Dependabot moves the SHA and its version comment together.
 version: 2
 updates:
   - package-ecosystem: gradle
@@ -17,6 +20,8 @@ updates:
       - dependency-name: io.github.libxposed:api
       - dependency-name: com.android.application
       - dependency-name: com.android.tools.build:gradle
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: Build
 
@@ -29,5 +34,7 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: CI
