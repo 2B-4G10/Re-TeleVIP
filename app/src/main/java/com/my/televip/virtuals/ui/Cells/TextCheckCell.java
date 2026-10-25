@@ -19,7 +19,6 @@ import com.my.televip.obfuscate.AutomationResolver;
 
 import com.my.televip.reflect.XReflect;
 import com.my.televip.virtuals.Theme;
-import com.my.televip.virtuals.messenger.LocaleController;
 
 import java.util.Collections;
 import java.util.Map;
@@ -63,7 +62,8 @@ public class TextCheckCell {
         View view = getView();
         try {
             boolean rtl = Translator.isRTL();
-            if (rtl != LocaleController.isRTL()) {
+            // The client's own direction, not the flipped one the rows are built with.
+            if (rtl != Translator.isClientRTL()) {
                 view.setForeground(divider ? new DividerDrawable(rtl) : null);
                 return false;
             }
