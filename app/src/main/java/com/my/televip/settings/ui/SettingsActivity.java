@@ -13,7 +13,6 @@ import com.my.televip.Configs.ConfigItem;
 import com.my.televip.Configs.ConfigManager;
 import com.my.televip.Drawable.ArrowDrawable;
 import com.my.televip.application.AndroidUtilities;
-import com.my.televip.audio;
 import com.my.televip.base.AbstractMethodHook;
 import com.my.televip.hooks.HMethod;
 import com.my.televip.language.Keys;
@@ -138,7 +137,6 @@ public class SettingsActivity {
     }
 
     public static void init(SettingsController settingsController) {
-        audio.init();
         try {
             HMethod.hookMethod(ClassLoad.getClass(ClassNames.LAUNCH_ACTIVITY), "onBackPressed", new AbstractMethodHook() {
                 @Override

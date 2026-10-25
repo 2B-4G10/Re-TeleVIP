@@ -17,6 +17,11 @@ public class TLRPC {
         public Peer(Object peer) {
             this.peer = peer;
         }
+
+        /** Channel posts have no from_id: the client leaves the field null. */
+        public boolean isEmpty() {
+            return peer == null;
+        }
         public long getUser_id(){
             return XReflect.getLongField(peer, AutomationResolver.resolve("TLRPC$Peer", "user_id", AutomationResolver.ResolverType.Field));
         }
@@ -68,6 +73,10 @@ public class TLRPC {
 
         public Peer getFrom_id(){
             return new TLRPC.Peer(XReflect.getObjectField(message, AutomationResolver.resolve("TLRPC$Message", "from_id", AutomationResolver.ResolverType.Field)));
+        }
+
+        public Peer getPeer_id(){
+            return new TLRPC.Peer(XReflect.getObjectField(message, AutomationResolver.resolve("TLRPC$Message", "peer_id", AutomationResolver.ResolverType.Field)));
         }
 
         public int getFlags(){

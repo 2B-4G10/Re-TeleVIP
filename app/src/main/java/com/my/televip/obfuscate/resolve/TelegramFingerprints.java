@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public final class TelegramFingerprints {
 
-    public static final int VERSION = 17;
+    public static final int VERSION = 18;
 
     private TelegramFingerprints() {
     }
@@ -444,6 +444,7 @@ public final class TelegramFingerprints {
         s.add(field("TLRPC$Message", "id").type("int").readBy(secret, 1));
         s.add(field("TLRPC$Message", "ttl").type("int").readBy(secret, 2));
         s.add(field("TLRPC$Message", "from_id").type(peer).readBy(secret, 0));
+        s.add(field("TLRPC$Message", "peer_id").type(peer).readBy(secret, 1));
         s.add(field("TLRPC$Message", "message").type("java.lang.String").readBy(secret, 0));
         // user: username (checked for null first), first_name, last_name, username, phone.
         s.add(field("TLRPC$User", "phone").type("java.lang.String").readBy("TLRPC$TL_user#serializeToStream", 3));
@@ -579,6 +580,11 @@ public final class TelegramFingerprints {
         s.add(method("MessagesController", "getInputChannelO2").named("getInputChannel")
                 .sig("org.telegram.tgnet.TLRPC$InputChannel", "org.telegram.tgnet.TLRPC$InputPeer"));
         s.add(method("MessagesController", "getInstance").sig("org.telegram.messenger.MessagesController", "int"));
+        // Marks a mention seen once it is on screen, or a voice message played: the one method taking
+        // a MessageObject that makes both readMessageContents requests.
+        s.add(method("MessagesController", "markMessageContentAsRead").sig("void", "org.telegram.messenger.MessageObject")
+                .where(refersTo("org.telegram.tgnet.TLRPC$TL_channels_readMessageContents"),
+                        refersTo("org.telegram.tgnet.TLRPC$TL_messages_readMessageContents")));
         // The sponsored posts a chat shows: cached for five minutes, else fetched. Its return type
         // is an inner class nothing else names.
         s.add(method("MessagesController", "getSponsoredMessages").sig(Symbol.ANY, "long")

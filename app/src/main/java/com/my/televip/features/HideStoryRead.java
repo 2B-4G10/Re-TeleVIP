@@ -1,9 +1,8 @@
 package com.my.televip.features;
 
-import com.my.televip.Class.ClassLoad;
 import com.my.televip.Class.ClassNames;
 import com.my.televip.ClientChecker;
-import com.my.televip.obfuscate.AutomationResolver;
+import com.my.televip.virtuals.tgnet.TLConstructor;
 
 public class HideStoryRead {
 
@@ -13,9 +12,8 @@ public class HideStoryRead {
             return className.contains("TL_stories_readStories") ||
                     className.contains("TL_stories_incrementStoryViews");
         } else {
-            Class<?> objectClass = object.getClass();
-            return objectClass.equals(ClassLoad.getClass(AutomationResolver.resolve(ClassNames.TL_STORIES_READ_STORIES))) ||
-                    objectClass.equals(ClassLoad.getClass(AutomationResolver.resolve(ClassNames.TL_STORIES_INCREMENT_STORY_VIEWS)));
+            return TLConstructor.is(object, ClassNames.TL_STORIES_READ_STORIES, TLConstructor.STORIES_READ_STORIES) ||
+                    TLConstructor.is(object, ClassNames.TL_STORIES_INCREMENT_STORY_VIEWS, TLConstructor.STORIES_INCREMENT_STORY_VIEWS);
         }
     }
 }

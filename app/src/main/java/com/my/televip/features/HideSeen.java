@@ -9,18 +9,103 @@ import com.my.televip.Class.ClassLoad;
 import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.AutomationResolver;
 import com.my.televip.virtuals.SQLite.SQLiteCursor;
+import com.my.televip.virtuals.messenger.MessageObject;
 import com.my.televip.virtuals.messenger.MessagesController;
 import com.my.televip.virtuals.messenger.MessagesStorage;
 import com.my.televip.virtuals.messenger.UserConfig;
 import com.my.televip.virtuals.messenger.Utilities;
 import com.my.televip.virtuals.tgnet.ConnectionsManager;
 import com.my.televip.virtuals.tgnet.RequestDelegate;
+import com.my.televip.virtuals.tgnet.TLConstructor;
 import com.my.televip.virtuals.tgnet.TLRPC;
 
 import com.my.televip.reflect.XReflect;
+import com.my.televip.base.AbstractMethodHook;
+import com.my.televip.diagnostics.HookHealth;
+import com.my.televip.diagnostics.OptionalSymbols;
+import com.my.televip.hooks.HMethod;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HideSeen {
 
+
+    /** Mentions the chat has just cleared, which Hide seen lets the server hear about. */
+    private static final Set<Integer> mentionReads = ConcurrentHashMap.newKeySet();
+    /** TL_message's flag for "mentions you" (its mentioned field). */
+    private static final int MESSAGE_MENTIONED = 1 << 4;
+
+    /**
+     * A mention on screen is marked seen with readMessageContents, which Hide seen blocked as a
+     * read receipt: the "@" mark came back every time the chat was opened. Marking a text mention
+     * seen tells the other members nothing, so those requests are let through.
+     */
+    public static void initMentions() {
+        try {
+            Class<?> controller = ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER);
+            Class<?> messageObject = ClassLoad.getClass(ClassNames.MESSAGE_OBJECT);
+            if (controller == null || messageObject == null) return;
+            String name = AutomationResolver.resolve("MessagesController", "markMessageContentAsRead", AutomationResolver.ResolverType.Method);
+            Method found = XReflect.findMethodExactIfExists(controller, name, messageObject);
+            if (found == null) {
+                HookHealth.missingMember("MessagesController#markMessageContentAsRead");
+                Logger.l("Not in this build: MessagesController#markMessageContentAsRead ("
+                        + OptionalSymbols.reason("MessagesController#markMessageContentAsRead") + ")");
+                return;
+            }
+            HMethod.hookMethod(found, new AbstractMethodHook() {
+                @Override
+                protected void beforeMethod(MethodHookParam param) {
+                    if (!ConfigManager.hideSeen.isEnable() || param.args[0] == null) return;
+                    try {
+                        MessageObject message = new MessageObject(param.args[0]);
+                        TLRPC.Message owner = message.getMessageOwner();
+                        // A mention on screen; a played voice message still tells the sender.
+                        if ((owner.getFlags() & MESSAGE_MENTIONED) != 0 && !message.isVoice()) {
+                            mentionReads.add(owner.getID());
+                        }
+                    } catch (Throwable t) {
+                        Logger.e(t);
+                    }
+                }
+            });
+        } catch (Throwable t) {
+            Logger.e(t);
+        }
+    }
+
+    /**
+     * Lets the read of these messages through Hide seen once: "Mark as seen" on secret media is
+     * the user asking for the sender to be told.
+     */
+    public static void allowContentRead(int mid) {
+        mentionReads.add(mid);
+    }
+
+    /** Whether a readMessageContents request only clears mentions the chat just cleared. */
+    private static boolean clearsMentionsOnly(Object request) {
+        if (mentionReads.isEmpty()) return false;
+        for (Class<?> c = request.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+            for (Field field : c.getDeclaredFields()) {
+                if (field.getType() != ArrayList.class || Modifier.isStatic(field.getModifiers())) continue;
+                try {
+                    field.setAccessible(true);
+                    Object value = field.get(request);
+                    if (!(value instanceof ArrayList) || ((ArrayList<?>) value).isEmpty()) continue;
+                    if (!mentionReads.containsAll((ArrayList<?>) value)) return false;
+                    mentionReads.removeAll((ArrayList<?>) value);
+                    return true;
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+        return false;
+    }
 
     public static Object TLChannels_readHistory;
     public static Object TLMessages_readHistory;
@@ -49,7 +134,7 @@ public class HideSeen {
         if (!ClientChecker.isTgnetObfuscated()) {
             return object.getClass().getName().contains("TL_messages_readHistory");
         } else {
-            return object.getClass().getName().equals(AutomationResolver.resolve(ClassNames.TL_MESSAGES_READ_HISTORY));
+            return TLConstructor.is(object, ClassNames.TL_MESSAGES_READ_HISTORY, TLConstructor.MESSAGES_READ_HISTORY);
         }
     }
 
@@ -57,7 +142,7 @@ public class HideSeen {
         if (!ClientChecker.isTgnetObfuscated()) {
             return object.getClass().getName().contains("TL_channels_readHistory");
         } else {
-            return object.getClass().getName().equals(AutomationResolver.resolve(ClassNames.TL_CHANNELS_READ_HISTORY));
+            return TLConstructor.is(object, ClassNames.TL_CHANNELS_READ_HISTORY, TLConstructor.CHANNELS_READ_HISTORY);
         }
     }
 
@@ -82,25 +167,16 @@ public class HideSeen {
             channelReadMessageContents = className.contains("TL_channels_readMessageContents");
             channelReadHistory = className.contains("TL_channels_readHistory");
         } else {
-            Class<?> objectClass = object.getClass();
+            readHistory = TLConstructor.is(object, ClassNames.TL_MESSAGES_READ_HISTORY, TLConstructor.MESSAGES_READ_HISTORY);
+            readDiscussion = TLConstructor.is(object, ClassNames.TL_MESSAGES_READ_DISCUSSION, TLConstructor.MESSAGES_READ_DISCUSSION);
+            encryptedHistory = TLConstructor.is(object, ClassNames.TL_MESSAGES_READ_ENCRYPTED_HISTORY, TLConstructor.MESSAGES_READ_ENCRYPTED_HISTORY);
+            readMessageContents = TLConstructor.is(object, ClassNames.TL_MESSAGES_READ_MESSAGE_CONTENTS, TLConstructor.MESSAGES_READ_MESSAGE_CONTENTS);
+            channelReadMessageContents = TLConstructor.is(object, ClassNames.TL_CHANNELS_READ_MESSAGE_CONTENTS, TLConstructor.CHANNELS_READ_MESSAGE_CONTENTS);
+            channelReadHistory = TLConstructor.is(object, ClassNames.TL_CHANNELS_READ_HISTORY, TLConstructor.CHANNELS_READ_HISTORY);
+        }
 
-            readHistory = objectClass.equals(ClassLoad.getClass(
-                    AutomationResolver.resolve(ClassNames.TL_MESSAGES_READ_HISTORY)));
-
-            readDiscussion = objectClass.equals(ClassLoad.getClass(
-                    AutomationResolver.resolve(ClassNames.TL_MESSAGES_READ_DISCUSSION)));
-
-            encryptedHistory = objectClass.equals(ClassLoad.getClass(
-                    AutomationResolver.resolve(ClassNames.TL_MESSAGES_READ_ENCRYPTED_HISTORY)));
-
-            readMessageContents = objectClass.equals(ClassLoad.getClass(
-                    AutomationResolver.resolve(ClassNames.TL_MESSAGES_READ_MESSAGE_CONTENTS)));
-
-            channelReadMessageContents = objectClass.equals(ClassLoad.getClass(
-                    AutomationResolver.resolve(ClassNames.TL_CHANNELS_READ_MESSAGE_CONTENTS)));
-
-            channelReadHistory = objectClass.equals(ClassLoad.getClass(
-                    AutomationResolver.resolve(ClassNames.TL_CHANNELS_READ_HISTORY)));
+        if ((readMessageContents || channelReadMessageContents) && clearsMentionsOnly(object)) {
+            return false;
         }
 
         if (!(readHistory || readDiscussion ||
@@ -252,31 +328,30 @@ public class HideSeen {
                 className.contains("TL_messages_sendMultiMedia"))
             return new TLRPC.InputPeer(getPeer(object));
         } else {
-            Class<?> objectClass = object.getClass();
-            if (objectClass.equals(ClassLoad.getClass(AutomationResolver.resolve(ClassNames.TL_MESSAGES_SEND_MESSAGE))) ||
-                    objectClass.equals(ClassLoad.getClass(AutomationResolver.resolve(ClassNames.TL_MESSAGES_SEND_MEDIA))) ||
-                    objectClass.equals(ClassLoad.getClass(AutomationResolver.resolve(ClassNames.TL_MESSAGES_SEND_REACTION))) ||
-                    objectClass.equals(ClassLoad.getClass(AutomationResolver.resolve(ClassNames.TL_MESSAGES_SEND_PAID_REACTION))) ||
-                    objectClass.equals(ClassLoad.getClass(AutomationResolver.resolve(ClassNames.TL_MESSAGES_SEND_MULTI_MEDIA))))
+            if (sendRequestName(object) != null)
                 return new TLRPC.InputPeer(getPeer(object));
         }
         return null;
     }
 
+    /** The unrenamed name of a send request, by the constructor it sends; null for other requests. */
+    private static String sendRequestName(Object request) {
+        if (TLConstructor.is(request, ClassNames.TL_MESSAGES_SEND_MESSAGE, TLConstructor.MESSAGES_SEND_MESSAGE))
+            return "TLRPC$TL_messages_sendMessage";
+        if (TLConstructor.is(request, ClassNames.TL_MESSAGES_SEND_MEDIA, TLConstructor.MESSAGES_SEND_MEDIA))
+            return "TLRPC$TL_messages_sendMedia";
+        if (TLConstructor.is(request, ClassNames.TL_MESSAGES_SEND_REACTION, TLConstructor.MESSAGES_SEND_REACTION))
+            return "TLRPC$TL_messages_sendReaction";
+        if (TLConstructor.is(request, ClassNames.TL_MESSAGES_SEND_PAID_REACTION, TLConstructor.MESSAGES_SEND_PAID_REACTION))
+            return "TLRPC$TL_messages_sendPaidReaction";
+        if (TLConstructor.is(request, ClassNames.TL_MESSAGES_SEND_MULTI_MEDIA, TLConstructor.MESSAGES_SEND_MULTI_MEDIA))
+            return "TLRPC$TL_messages_sendMultiMedia";
+        return null;
+    }
+
     private static Object getPeer(Object msg) {
-        Class<?> objectClass = msg.getClass();
-        String msgName = null;
         if (ClientChecker.isTgnetObfuscated()) {
-            if (objectClass.equals(ClassLoad.getClass(AutomationResolver.resolve(ClassNames.TL_MESSAGES_SEND_MESSAGE))))
-                msgName = "TLRPC$TL_messages_sendMessage";
-            if (objectClass.equals(ClassLoad.getClass(AutomationResolver.resolve(ClassNames.TL_MESSAGES_SEND_MEDIA))))
-                msgName = "TLRPC$TL_messages_sendMedia";
-            if (objectClass.equals(ClassLoad.getClass(AutomationResolver.resolve(ClassNames.TL_MESSAGES_SEND_REACTION))))
-                msgName = "TLRPC$TL_messages_sendReaction";
-            if (objectClass.equals(ClassLoad.getClass(AutomationResolver.resolve(ClassNames.TL_MESSAGES_SEND_PAID_REACTION))))
-                msgName = "TLRPC$TL_messages_sendPaidReaction";
-            if (objectClass.equals(ClassLoad.getClass(AutomationResolver.resolve(ClassNames.TL_MESSAGES_SEND_MULTI_MEDIA))))
-                msgName = "TLRPC$TL_messages_sendMultiMedia";
+            String msgName = sendRequestName(msg);
             return XReflect.getObjectField(msg, AutomationResolver.resolve(msgName, "peer", AutomationResolver.ResolverType.Field));
         } else {
             return XReflect.getObjectField(msg, "peer");

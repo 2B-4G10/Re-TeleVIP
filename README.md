@@ -16,7 +16,7 @@
 
 [![Download the latest APK](https://img.shields.io/badge/Download-latest%20APK-2AABEE?style=for-the-badge&logo=android&logoColor=white)](../../releases/latest)
 
-[Changelog](CHANGELOG.md) · [Telegram group](https://t.me/Re_TeleVIP) · [Report a problem](../../issues)
+[Changelog](CHANGELOG.md) · [Telegram channel](https://t.me/Revived_TeleVIP) · [Report a problem](../../issues)
 
 </div>
 
