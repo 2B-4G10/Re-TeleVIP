@@ -177,5 +177,17 @@
   "GregorianMonthSeptemberStandalone": "Сентябрь",
   "GregorianMonthOctoberStandalone": "Октябрь",
   "GregorianMonthNovemberStandalone": "Ноябрь",
-  "GregorianMonthDecemberStandalone": "Декабрь"
+  "GregorianMonthDecemberStandalone": "Декабрь",
+  "CheckForUpdates": "Сообщать о новых версиях",
+  "CheckForUpdatesDesc": "Раз в день узнаёт на GitHub последнюю версию Re: TeleVIP. Никаких данных о вас или телефоне не отправляется.",
+  "CheckForUpdatesNow": "Проверить обновления",
+  "CheckForUpdatesNowDesc": "Установленная версия",
+  "UpdateChecking": "Проверка обновлений…",
+  "UpdateCheckFailed": "Не удалось связаться с GitHub. Попробуйте позже.",
+  "UpdateUpToDate": "У вас последняя версия (%s)",
+  "UpdateAvailable": "Вышел Re: TeleVIP %s",
+  "UpdateInstalled": "У вас версия %s.",
+  "UpdateDownload": "Скачать",
+  "UpdateLater": "Позже",
+  "UpdateSkip": "Пропустить эту версию"
 }

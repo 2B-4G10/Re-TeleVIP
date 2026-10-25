@@ -148,5 +148,17 @@
   "ClearSavedDataMessage": "نسخه‌های قدیمی پیام‌های ویرایش‌شده و فهرست رسانه‌های خودتخریب نگه‌داشته‌شده از این گوشی حذف می‌شوند. پیام‌های حذف‌شده‌ای که نگه داشته‌اید در گفتگوهایشان می‌مانند؛ آن‌ها را مثل هر پیام دیگری همان‌جا حذف کنید.",
   "SavedDataCleared": "داده‌های ذخیره‌شده پاک شد",
   "SecretMediaSavedTo": "در %s ذخیره شد. برنامه‌هایی که به عکس‌های شما دسترسی دارند می‌توانند آن را ببینند.",
-  "SecretMediaNotFound": "در این نسخه از برنامه مشخص نشد کدام فایل است، پس چیزی ذخیره نشد"
+  "SecretMediaNotFound": "در این نسخه از برنامه مشخص نشد کدام فایل است، پس چیزی ذخیره نشد",
+  "CheckForUpdates": "نسخه‌های جدید رو بهم خبر بده",
+  "CheckForUpdatesDesc": "روزی یک بار آخرین نسخه Re: TeleVIP رو از GitHub می‌پرسه. هیچ اطلاعاتی از شما یا گوشیتون فرستاده نمی‌شه.",
+  "CheckForUpdatesNow": "بررسی آپدیت",
+  "CheckForUpdatesNowDesc": "نسخه نصب‌شده",
+  "UpdateChecking": "در حال بررسی آپدیت…",
+  "UpdateCheckFailed": "به GitHub وصل نشد. بعداً دوباره امتحان کن.",
+  "UpdateUpToDate": "آخرین نسخه رو داری (%s)",
+  "UpdateAvailable": "Re: TeleVIP %s اومد",
+  "UpdateInstalled": "نسخه فعلی شما %s هست.",
+  "UpdateDownload": "دانلود",
+  "UpdateLater": "بعداً",
+  "UpdateSkip": "از این نسخه بگذر"
 }
