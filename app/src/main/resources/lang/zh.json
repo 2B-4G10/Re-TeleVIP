@@ -148,5 +148,7 @@
   "SecretMediaNotFound": "在此版本的应用上无法确定是哪个文件，因此未保存",
   "Language": "语言",
   "LanguageDesc": "用于 Re: TeleVIP 的设置和菜单",
-  "LanguageSameAsApp": "跟随应用"
+  "LanguageSameAsApp": "跟随应用",
+  "Support": "支持 Re: TeleVIP",
+  "SupportDesc": "挤出时间写出来的 ☕ 你在 Patreon 上的支持让一切都值得！"
 }
