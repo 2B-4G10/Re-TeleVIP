@@ -9,6 +9,7 @@ import com.my.televip.Class.ClassLoad;
 import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.AutomationResolver;
 import com.my.televip.virtuals.SQLite.SQLiteCursor;
+import com.my.televip.virtuals.messenger.MessageObject;
 import com.my.televip.virtuals.messenger.MessagesController;
 import com.my.televip.virtuals.messenger.MessagesStorage;
 import com.my.televip.virtuals.messenger.UserConfig;
@@ -19,9 +20,84 @@ import com.my.televip.virtuals.tgnet.TLConstructor;
 import com.my.televip.virtuals.tgnet.TLRPC;
 
 import com.my.televip.reflect.XReflect;
+import com.my.televip.base.AbstractMethodHook;
+import com.my.televip.diagnostics.HookHealth;
+import com.my.televip.diagnostics.OptionalSymbols;
+import com.my.televip.hooks.HMethod;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HideSeen {
 
+
+    /** Mentions the chat has just cleared, which Hide seen lets the server hear about. */
+    private static final Set<Integer> mentionReads = ConcurrentHashMap.newKeySet();
+    /** TL_message's flag for "mentions you" (its mentioned field). */
+    private static final int MESSAGE_MENTIONED = 1 << 4;
+
+    /**
+     * A mention on screen is marked seen with readMessageContents, which Hide seen blocked as a
+     * read receipt: the "@" mark came back every time the chat was opened. Marking a text mention
+     * seen tells the other members nothing, so those requests are let through.
+     */
+    public static void initMentions() {
+        try {
+            Class<?> controller = ClassLoad.getClass(ClassNames.MESSAGES_CONTROLLER);
+            Class<?> messageObject = ClassLoad.getClass(ClassNames.MESSAGE_OBJECT);
+            if (controller == null || messageObject == null) return;
+            String name = AutomationResolver.resolve("MessagesController", "markMessageContentAsRead", AutomationResolver.ResolverType.Method);
+            Method found = XReflect.findMethodExactIfExists(controller, name, messageObject);
+            if (found == null) {
+                HookHealth.missingMember("MessagesController#markMessageContentAsRead");
+                Logger.l("Not in this build: MessagesController#markMessageContentAsRead ("
+                        + OptionalSymbols.reason("MessagesController#markMessageContentAsRead") + ")");
+                return;
+            }
+            HMethod.hookMethod(found, new AbstractMethodHook() {
+                @Override
+                protected void beforeMethod(MethodHookParam param) {
+                    if (!ConfigManager.hideSeen.isEnable() || param.args[0] == null) return;
+                    try {
+                        MessageObject message = new MessageObject(param.args[0]);
+                        TLRPC.Message owner = message.getMessageOwner();
+                        // A mention on screen; a played voice message still tells the sender.
+                        if ((owner.getFlags() & MESSAGE_MENTIONED) != 0 && !message.isVoice()) {
+                            mentionReads.add(owner.getID());
+                        }
+                    } catch (Throwable t) {
+                        Logger.e(t);
+                    }
+                }
+            });
+        } catch (Throwable t) {
+            Logger.e(t);
+        }
+    }
+
+    /** Whether a readMessageContents request only clears mentions the chat just cleared. */
+    private static boolean clearsMentionsOnly(Object request) {
+        if (mentionReads.isEmpty()) return false;
+        for (Class<?> c = request.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+            for (Field field : c.getDeclaredFields()) {
+                if (field.getType() != ArrayList.class || Modifier.isStatic(field.getModifiers())) continue;
+                try {
+                    field.setAccessible(true);
+                    Object value = field.get(request);
+                    if (!(value instanceof ArrayList) || ((ArrayList<?>) value).isEmpty()) continue;
+                    if (!mentionReads.containsAll((ArrayList<?>) value)) return false;
+                    mentionReads.removeAll((ArrayList<?>) value);
+                    return true;
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+        return false;
+    }
 
     public static Object TLChannels_readHistory;
     public static Object TLMessages_readHistory;
@@ -89,6 +165,10 @@ public class HideSeen {
             readMessageContents = TLConstructor.is(object, ClassNames.TL_MESSAGES_READ_MESSAGE_CONTENTS, TLConstructor.MESSAGES_READ_MESSAGE_CONTENTS);
             channelReadMessageContents = TLConstructor.is(object, ClassNames.TL_CHANNELS_READ_MESSAGE_CONTENTS, TLConstructor.CHANNELS_READ_MESSAGE_CONTENTS);
             channelReadHistory = TLConstructor.is(object, ClassNames.TL_CHANNELS_READ_HISTORY, TLConstructor.CHANNELS_READ_HISTORY);
+        }
+
+        if ((readMessageContents || channelReadMessageContents) && clearsMentionsOnly(object)) {
+            return false;
         }
 
         if (!(readHistory || readDiscussion ||

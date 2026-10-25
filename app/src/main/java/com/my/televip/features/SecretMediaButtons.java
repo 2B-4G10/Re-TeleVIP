@@ -110,23 +110,33 @@ public final class SecretMediaButtons {
 
         TLRPC.Message owner = new MessageObject(messageObject).getMessageOwner();
         int mid = owner.getID();
-        // Secret chats are left as they were: their files are encrypted, and their read receipt
-        // would start the deletion on this phone too.
-        boolean show = ConfigManager.preventMedia.isEnable() && mid > 0;
+        boolean show = ConfigManager.preventMedia.isEnable() && mid != 0;
         row.setVisibility(show ? View.VISIBLE : View.GONE);
         if (!show) return true;
+        save.setOnClickListener(v -> save(v.getContext(), owner.message));
+        if (mid < 0) {
+            // A secret chat: its read receipt starts the timer on this phone too, so "Mark as seen"
+            // and "Delete for both" are one thing there, the timer running out on both phones.
+            seen.setVisibility(View.GONE);
+            delete.setVisibility(View.VISIBLE);
+            delete.setOnClickListener(v -> confirm(v, () -> {
+                ((View) v.getParent()).setVisibility(View.GONE);
+                close(viewer, photoViewer);
+                if (!PreventMedia.readSecretChatMedia(messageObject)) Logger.w("Delete for both: no secret read to send");
+            }));
+            return true;
+        }
         long dialogId = PreventMedia.dialogIdOf(messageObject);
 
         boolean seenAlready = KeptSecretMedia.contains(dialogId, mid);
         seen.setVisibility(PreventMedia.canMarkSeen() && !seenAlready ? View.VISIBLE : View.GONE);
-        save.setOnClickListener(v -> save(v.getContext(), owner.message));
         seen.setOnClickListener(v -> {
             if (PreventMedia.markSeen(dialogId, mid, ttl)) {
                 v.setVisibility(View.GONE);
                 toast(v.getContext(), Translator.get(Keys.SecretMediaMarkedSeen));
             }
         });
-        delete.setOnClickListener(v -> confirm(v, viewer, photoViewer, dialogId, mid));
+        delete.setOnClickListener(v -> confirm(v, () -> delete(v, viewer, photoViewer, dialogId, mid)));
         return true;
     }
 
@@ -346,17 +356,27 @@ public final class SecretMediaButtons {
         Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
     }
 
-    private static void confirm(View button, Object viewer, boolean photoViewer, long dialogId, int mid) {
+    private static void confirm(View button, Runnable onDelete) {
         AlertDialog dialog = new AlertDialog(button.getContext());
         dialog.setTitle(Translator.get(Keys.SecretMediaDeleteTitle));
         dialog.setMessage(Translator.get(Keys.SecretMediaDeleteMessage));
-        dialog.setPositiveButton(Translator.get(Keys.Delete), AlertDialog.click(() -> delete(button, viewer, photoViewer, dialogId, mid)));
+        dialog.setPositiveButton(Translator.get(Keys.Delete), AlertDialog.click(onDelete::run));
         dialog.setNegativeButton(Translator.get(Keys.Cancel), null);
         dialog.show();
     }
 
     private static void delete(View button, Object viewer, boolean photoViewer, long dialogId, int mid) {
         ((View) button.getParent()).setVisibility(View.GONE);
+        close(viewer, photoViewer);
+        KeptSecretMedia.remove(dialogId, mid);
+        ArrayList<Integer> ids = new ArrayList<>();
+        ids.add(mid);
+        if (!MessagesController.getInstance(UserConfig.getSelectedAccount()).deleteMessages(ids, dialogId, true)) {
+            Logger.w("Delete for both: deleteMessages not found");
+        }
+    }
+
+    private static void close(Object viewer, boolean photoViewer) {
         try {
             if (photoViewer) {
                 closePhotoViewer(viewer);
@@ -365,12 +385,6 @@ public final class SecretMediaButtons {
             }
         } catch (Throwable t) {
             Logger.e(t);
-        }
-        KeptSecretMedia.remove(dialogId, mid);
-        ArrayList<Integer> ids = new ArrayList<>();
-        ids.add(mid);
-        if (!MessagesController.getInstance(UserConfig.getSelectedAccount()).deleteMessages(ids, dialogId, true)) {
-            Logger.w("Delete for both: deleteMessages not found");
         }
     }
 
