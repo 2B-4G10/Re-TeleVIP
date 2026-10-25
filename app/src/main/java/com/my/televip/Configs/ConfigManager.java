@@ -273,6 +273,14 @@ public class ConfigManager {
         try {
             for (ConfigItem item : items) {
                 if (item == null) continue;
+                // A group's switches (Hide seen's) start their features too: skipping them left
+                // Ghost Mode off after a restart when Hide seen was its only option on.
+                if (item.getType() == ConfigItem.EXPANDABLE_SWITCH) {
+                    for (ConfigItem child : item.getChildren()) {
+                        if (child != null && child.isEnable()) child.run();
+                    }
+                    continue;
+                }
                 if (item.getType() != ConfigItem.SWITCH && item.getCustomCalendar() == 0) continue;
                 if (item.isEnable()) item.run();
             }
