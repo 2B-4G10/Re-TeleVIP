@@ -7,6 +7,7 @@ import android.content.Context;
 import com.my.televip.Configs.ConfigManager;
 import com.my.televip.application.AndroidUtilities;
 import com.my.televip.diagnostics.HookHealth;
+import com.my.televip.features.GhostMode;
 import com.my.televip.language.Translator;
 import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.RuntimeMappings;
@@ -28,6 +29,7 @@ public class TeleVip {
 
             ConfigManager.loadAndRead(context);
             SettingsManager.init(settingsController);
+            GhostMode.warnIfNotWorking();
 
         } catch (Throwable e){
             Logger.e(e);

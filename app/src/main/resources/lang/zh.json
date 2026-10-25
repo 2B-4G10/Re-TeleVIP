@@ -107,7 +107,6 @@
   "Delete": "删除",
   "SecretMediaMarkSeen": "标记为已查看",
   "SecretMediaMarkedSeen": "发送者现在会看到已查看",
-  "SecretMediaSaved": "已保存到相册",
   "SecretMediaSaveFailed": "保存失败",
   "SecretMediaNotDownloaded": "请等它加载完成",
   "TeleVipGroup": "加入 Re: TeleVIP 群组",
@@ -137,5 +136,13 @@
   "DisableNumberRoundingDesc": "显示精确数字，例如 5300 而不是 5.3K",
   "HideUpdateAppDesc": "隐藏客户端的应用更新提示",
   "FixTLErrorDesc": "隐藏客户端偶尔弹出的“TL error”提示",
-  "RestartAppDesc": "应用标记为“需要重新启动”的设置"
+  "RestartAppDesc": "应用标记为“需要重新启动”的设置",
+  "GhostModeNotWorking": "幽灵模式在此版本的应用上无法工作：%s。在 Re: TeleVIP 适配之前，这些会照常发送。请检查更新或在群组中告诉我们。",
+  "ClearSavedData": "清除已保存的数据",
+  "ClearSavedDataDesc": "删除此手机上保存的编辑记录和保留的阅后即焚媒体列表",
+  "ClearSavedDataTitle": "清除已保存的数据？",
+  "ClearSavedDataMessage": "已编辑消息的旧版本和保留的阅后即焚媒体列表将从此手机删除。你保留的已删除消息仍在各自的聊天中，可像普通消息一样在那里删除。",
+  "SavedDataCleared": "已清除保存的数据",
+  "SecretMediaSavedTo": "已保存到 %s。可访问你照片的其他应用也能看到它。",
+  "SecretMediaNotFound": "在此版本的应用上无法确定是哪个文件，因此未保存"
 }

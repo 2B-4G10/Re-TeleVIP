@@ -1,6 +1,10 @@
 package com.my.televip.features;
 
 import com.my.televip.Configs.ConfigPreferences;
+import com.my.televip.logging.Logger;
+import com.my.televip.virtuals.messenger.BaseController;
+import com.my.televip.virtuals.messenger.MessagesController;
+import com.my.televip.virtuals.messenger.UserConfig;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,7 +29,15 @@ final class KeptSecretMedia {
     private KeptSecretMedia() {
     }
 
-    private static String key(long dialogId, int mid) {
+    /**
+     * Per account: a message id is only unique within one account's chat. Entries older versions
+     * saved have no account and still count for every account, until they age out.
+     */
+    private static String key(long account, long dialogId, int mid) {
+        return account + ":" + dialogId + ":" + mid;
+    }
+
+    private static String legacyKey(long dialogId, int mid) {
         return dialogId + ":" + mid;
     }
 
@@ -50,14 +62,14 @@ final class KeptSecretMedia {
 
     private static void addMid(String entry) {
         try {
-            mids.add(Integer.parseInt(entry.substring(entry.indexOf(':') + 1)));
+            mids.add(Integer.parseInt(entry.substring(entry.lastIndexOf(':') + 1)));
         } catch (NumberFormatException ignored) {
         }
     }
 
-    static synchronized void add(long dialogId, int mid) {
+    static synchronized void add(long account, long dialogId, int mid) {
         LinkedHashSet<String> set = load();
-        if (!set.add(key(dialogId, mid))) return;
+        if (!set.add(key(account, dialogId, mid))) return;
         if (set.size() > LIMIT) {
             List<String> all = new ArrayList<>(set);
             set.clear();
@@ -66,12 +78,42 @@ final class KeptSecretMedia {
         save();
     }
 
-    static synchronized void remove(long dialogId, int mid) {
-        if (load().remove(key(dialogId, mid))) save();
+    static synchronized void remove(long account, long dialogId, int mid) {
+        LinkedHashSet<String> set = load();
+        boolean removed = set.remove(key(account, dialogId, mid));
+        removed |= set.remove(legacyKey(dialogId, mid));
+        if (removed) save();
     }
 
-    static synchronized boolean contains(long dialogId, int mid) {
-        return load().contains(key(dialogId, mid));
+    static synchronized boolean contains(long account, long dialogId, int mid) {
+        LinkedHashSet<String> set = load();
+        return set.contains(key(account, dialogId, mid)) || set.contains(legacyKey(dialogId, mid));
+    }
+
+    /** Forgets every kept media: the client may then let the server's expired copy replace it. */
+    static synchronized void clear() {
+        load().clear();
+        save();
+    }
+
+    /** The user id of the account a client controller (MessagesController, MessagesStorage) is for. */
+    static long accountOf(Object controller) {
+        try {
+            return new BaseController(controller).getUserConfig().getClientUserId();
+        } catch (Throwable t) {
+            Logger.e(t);
+            return 0;
+        }
+    }
+
+    /** The user id of the account on screen. */
+    static long selectedAccount() {
+        try {
+            return accountOf(MessagesController.getInstance(UserConfig.getSelectedAccount()).getMessagesController());
+        } catch (Throwable t) {
+            Logger.e(t);
+            return 0;
+        }
     }
 
     /** Cheap first check for history loads: is any kept media this message id? */

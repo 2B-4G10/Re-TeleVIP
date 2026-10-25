@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased — privacy and security
+
+- **Ghost Mode tells you when it can't work.** If an app update moves what Ghost Mode relies
+  on, Re: TeleVIP now says which options are affected, when the app starts and when you open
+  its settings, instead of leaving the switches on while read receipts, typing or online status
+  are sent as normal.
+- **Ghost Mode no longer lets an occasional request slip through.** With Mark read after send
+  on, a typing, online or read request sent at the same moment could go out unhidden.
+- **Edit histories stay with their own message.** A message could show "edits" that came from
+  another chat, or from another of your accounts. Histories are now kept per account and per
+  chat. Histories saved by older versions are cleared once, since they can't be sorted out.
+- **Clear saved data.** A new button under Messages deletes the edit histories and the list of
+  kept self-destructing media stored on your phone.
+- **Saving secret media is more careful.** Re: TeleVIP tells you which folder it saved to, and
+  that other apps with photo access can see it there. On versions where it can't tell which
+  file the media is, it now saves nothing rather than risk saving a different chat's media. A
+  save that fails no longer leaves an empty item in the gallery.
+- **Safer releases.** Every build step is pinned and checked, and the signing key is only
+  handed to the step that signs the release, so a compromised build tool can't take it.
+  Releases now come with the signed APK only. Two unused libraries were removed from the
+  module.
+
 ## 1.3 — Graph Messenger, save secret media, and chats that load with Ghost Mode
 
 - **You decide when the sender sees your secret media as opened.** With Prevent media on,
