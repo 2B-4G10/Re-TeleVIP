@@ -174,6 +174,7 @@ public class PreventMedia {
         try {
             Object controller = MessagesController.getInstance(UserConfig.getSelectedAccount()).getMessagesController();
             // ttl only sizes the local deletion the hook drops, but 0 makes the client skip it all.
+            HideSeen.allowContentRead(mid);
             markAsRead.invoke(controller, dialogId, mid, null, ttl > 0 ? ttl : Integer.MAX_VALUE, 0L, true);
             return true;
         } catch (Throwable t) {

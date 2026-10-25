@@ -79,6 +79,14 @@ public class HideSeen {
         }
     }
 
+    /**
+     * Lets the read of these messages through Hide seen once: "Mark as seen" on secret media is
+     * the user asking for the sender to be told.
+     */
+    public static void allowContentRead(int mid) {
+        mentionReads.add(mid);
+    }
+
     /** Whether a readMessageContents request only clears mentions the chat just cleared. */
     private static boolean clearsMentionsOnly(Object request) {
         if (mentionReads.isEmpty()) return false;
