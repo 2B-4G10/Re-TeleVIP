@@ -97,36 +97,35 @@ public class ConverterCalendar {
 
     public static String formatDate(long date) {
         try {
-            Calendar now = Calendar.getInstance();
-            now.setTimeInMillis(System.currentTimeMillis());
-            CalendarDate rightNow = ConverterCalendar.toCalendar(now);
-
-            int day = rightNow.getDay();
-            int year = rightNow.getYear();
-
+            CalendarDate today = ConverterCalendar.toCalendar(System.currentTimeMillis());
+            CalendarDate yesterday = ConverterCalendar.toCalendar(System.currentTimeMillis() - 86400000L);
 
             SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
             String dateHour = sdf.format(new Date(date));
 
-            rightNow = ConverterCalendar.toCalendar(date);
+            CalendarDate edited = ConverterCalendar.toCalendar(date);
 
-            int dateDay = rightNow.getDay();
-            int dateYear = rightNow.getYear();
-            int dateMonth = rightNow.getMonth();
-            String dateMonthName = rightNow.getMonthName();
+            int dateDay = edited.getDay();
+            int dateYear = edited.getYear();
+            int dateMonth = edited.getMonth();
+            String dateMonthName = edited.getMonthName();
 
-
-            if (dateDay == day && year == dateYear) {
+            if (sameDay(edited, today)) {
                 return Translator.get(Keys.TodayAt) + dateHour;
-            } else if (dateDay + 1 == day && year == dateYear) {
+            } else if (sameDay(edited, yesterday)) {
                 return Translator.get(Keys.YesterdayAt) + dateHour;
             } else if (Math.abs(System.currentTimeMillis() - date) < 31536000000L) {
-                return Translator.get(Keys.Edited) + dateDay + " " + dateMonthName + " " + dateHour;
+                String dayMonth = Translator.isDayFirst() ? dateDay + " " + dateMonthName : dateMonthName + " " + dateDay;
+                return Translator.get(Keys.Edited) + dayMonth + " " + dateHour;
             } else {
                 return Translator.get(Keys.Edited) + dateYear + "/" + dateMonth + "/" + dateDay + " " + dateHour;
             }
         } catch (Exception e) {}
         return null;
+    }
+
+    private static boolean sameDay(CalendarDate a, CalendarDate b) {
+        return a.getYear() == b.getYear() && a.getMonth() == b.getMonth() && a.getDay() == b.getDay();
     }
 
 }

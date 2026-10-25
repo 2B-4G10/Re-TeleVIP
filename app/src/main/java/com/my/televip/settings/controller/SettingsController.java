@@ -89,6 +89,21 @@ public class SettingsController {
     /** "Don't show again" for the current group; a new key, so the move to a new group is shown once. */
     private static final String JOIN_DISMISSED = "JoinRevivedTeleVip";
 
+    /** Builds the open settings again, in the language picked just now. */
+    public void refresh() {
+        try {
+            if (settingsView == null) {
+                openView();
+                return;
+            }
+            settingsView.removeAllViews();
+            settingsActivity = new SettingsActivity(getContext());
+            settingsView.addView(settingsActivity.createView(this));
+        } catch (Throwable e) {
+            Logger.e(e);
+        }
+    }
+
     private void showJoinTeleVip() {
         try {
             if (!ConfigPreferences.getBoolean(JOIN_DISMISSED)) {
@@ -109,7 +124,7 @@ public class SettingsController {
 
                 alertDialog.setNegativeButton(Translator.get(Keys.Cancel), null);
                 alertDialog.setNeutralButton(Translator.get(Keys.DontShowAgain), AlertDialog.click(() -> ConfigPreferences.putBoolean(JOIN_DISMISSED, true)));
-                alertDialog.show();
+                Translator.withTextDirection(alertDialog::show);
             }
         } catch (Throwable e) {
             Logger.e(e);

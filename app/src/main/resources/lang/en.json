@@ -145,5 +145,8 @@
   "ClearSavedDataMessage": "The old versions of edited messages and the list of kept self-destructing media will be deleted from this phone. Deleted messages you kept stay in their chats; delete them there like any message.",
   "SavedDataCleared": "Saved data cleared",
   "SecretMediaSavedTo": "Saved to %s. Other apps with access to your photos can see it.",
-  "SecretMediaNotFound": "Couldn't tell which file this is on this version of the app, so nothing was saved"
+  "SecretMediaNotFound": "Couldn't tell which file this is on this version of the app, so nothing was saved",
+  "Language": "Language",
+  "LanguageDesc": "For Re: TeleVIP's settings and menus",
+  "LanguageSameAsApp": "Same as app"
 }
