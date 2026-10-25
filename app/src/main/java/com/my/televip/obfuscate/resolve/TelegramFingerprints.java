@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public final class TelegramFingerprints {
 
-    public static final int VERSION = 18;
+    public static final int VERSION = 20;
 
     private TelegramFingerprints() {
     }
@@ -512,6 +512,12 @@ public final class TelegramFingerprints {
                 .sig("boolean", "java.lang.Runnable", "long"));
         s.add(method("FileLoadOperation", "updateParams").sig("void")
                 .where(constant(2097152000)));
+        // start(stream, offset, preload): picks 8 download connections over 2 when isPremium says so.
+        s.add(method("FileLoadOperation", "startSJZ").named("start").sig("boolean", Symbol.ANY, "long", "boolean")
+                .where(callsSymbol("UserConfig#isPremium")));
+        // Nekogram 13 moves that part of start into a method of its own.
+        s.add(method("FileLoadOperation", "startConnections").sig("void")
+                .where(callsSymbol("UserConfig#isPremium")));
         s.add(method("FileLoader", "getInstance").sig("org.telegram.messenger.FileLoader", "int"));
         s.add(method("FileLoader", "getPathToMessageO").named("getPathToMessage")
                 .sig("java.io.File", "org.telegram.tgnet.TLRPC$Message"));

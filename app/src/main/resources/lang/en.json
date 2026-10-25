@@ -121,7 +121,7 @@
   "ShowDeletedMessagesDesc": "Keeps messages others delete and marks them as deleted",
   "ShowMessageIDDesc": "Shows the ID of each message in the chat",
   "SaveEditsHistoryDesc": "Keeps earlier versions of edited messages so you can look back at them",
-  "DownloadSpeedDesc": "Downloads files in larger parts with more parallel requests",
+  "DownloadSpeedDesc": "Downloads files in larger parts with more parallel requests. Only on accounts with real Telegram Premium: Telegram slows down the rest when they ask for more",
   "SecretMediaSaveDesc": "Opens self-destructing photos and videos as normal media so you can save them",
   "PreventMediaDesc": "Keeps self-destructing media after you open it, and the sender isn't told. In the viewer you can save it, mark it as seen, or delete it for both",
   "EnableSavingStoriesDesc": "Allows saving and screenshots of stories that block them",
