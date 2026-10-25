@@ -128,4 +128,14 @@ public class Keys {
     public static final String LanguageDesc = "LanguageDesc";
     public static final String LanguageSameAsApp = "LanguageSameAsApp";
 
+    public static final String CheckForUpdates = "CheckForUpdates";
+    public static final String CheckForUpdatesNow = "CheckForUpdatesNow";
+    public static final String UpdateChecking = "UpdateChecking";
+    public static final String UpdateCheckFailed = "UpdateCheckFailed";
+    public static final String UpdateUpToDate = "UpdateUpToDate";
+    public static final String UpdateAvailable = "UpdateAvailable";
+    public static final String UpdateInstalled = "UpdateInstalled";
+    public static final String UpdateDownload = "UpdateDownload";
+    public static final String UpdateLater = "UpdateLater";
+    public static final String UpdateSkip = "UpdateSkip";
 }

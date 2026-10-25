@@ -13,6 +13,7 @@ import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.RuntimeMappings;
 import com.my.televip.settings.SettingsManager;
 import com.my.televip.settings.controller.SettingsController;
+import com.my.televip.updates.UpdateCheck;
 import com.my.televip.utils.Utils;
 
 public class TeleVip {
@@ -30,6 +31,7 @@ public class TeleVip {
             ConfigManager.loadAndRead(context);
             SettingsManager.init(settingsController);
             GhostMode.warnIfNotWorking();
+            UpdateCheck.init(settingsController);
 
         } catch (Throwable e){
             Logger.e(e);

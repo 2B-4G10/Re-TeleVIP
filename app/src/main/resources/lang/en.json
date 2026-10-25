@@ -150,5 +150,17 @@
   "LanguageDesc": "For Re: TeleVIP's settings and menus",
   "LanguageSameAsApp": "Same as app",
   "Support": "Support Re: TeleVIP",
-  "SupportDesc": "Coded in squeezed-in time ☕ Your support on Patreon makes up for it!"
+  "SupportDesc": "Coded in squeezed-in time ☕ Your support on Patreon makes up for it!",
+  "CheckForUpdates": "Tell me about new versions",
+  "CheckForUpdatesDesc": "Once a day, asks GitHub for the latest Re: TeleVIP release. Nothing about you or your phone is sent.",
+  "CheckForUpdatesNow": "Check for updates",
+  "CheckForUpdatesNowDesc": "Installed version",
+  "UpdateChecking": "Checking for updates…",
+  "UpdateCheckFailed": "Couldn't reach GitHub. Try again later.",
+  "UpdateUpToDate": "You have the latest version (%s)",
+  "UpdateAvailable": "Re: TeleVIP %s is out",
+  "UpdateInstalled": "You have version %s.",
+  "UpdateDownload": "Download",
+  "UpdateLater": "Later",
+  "UpdateSkip": "Skip this version"
 }
