@@ -15,6 +15,7 @@ import com.my.televip.language.Keys;
 import com.my.televip.language.Translator;
 import com.my.televip.logging.Logger;
 import com.my.televip.settings.controller.SettingsController;
+import com.my.televip.updates.UpdateCheck;
 import com.my.televip.utils.DialogUtils;
 import com.my.televip.utils.Utils;
 import com.my.televip.virtuals.ActionBar.AlertDialog;
@@ -211,6 +212,9 @@ public class SettingsAdapter {
                         case Keys.Language:
                             showLanguagePicker(settingsController);
                             break;
+                        case Keys.CheckForUpdatesNow:
+                            UpdateCheck.checkNow(settingsController);
+                            break;
                     }
                 }
             });
@@ -291,6 +295,9 @@ public class SettingsAdapter {
                 view.set(title, explanation, value, SettingsIcons.language());
                 break;
             }
+            case Keys.CheckForUpdatesNow:
+                view.set(title, explanation, UpdateCheck.installedVersion(), SettingsIcons.update());
+                break;
             case Keys.TeleVipGroup:
                 view.set(title, SettingsController.GROUP_LINK, null, SettingsIcons.logo());
                 view.getTitleView().setTextColor(Theme.getTextBlueColor());

@@ -148,5 +148,17 @@
   "ClearSavedDataMessage": "The old versions of edited messages and the list of kept self-destructing media will be deleted from this phone. Deleted messages you kept stay in their chats; delete them there like any message.",
   "SavedDataCleared": "Saved data cleared",
   "SecretMediaSavedTo": "Saved to %s. Other apps with access to your photos can see it.",
-  "SecretMediaNotFound": "Couldn't tell which file this is on this version of the app, so nothing was saved"
+  "SecretMediaNotFound": "Couldn't tell which file this is on this version of the app, so nothing was saved",
+  "CheckForUpdates": "Tell me about new versions",
+  "CheckForUpdatesDesc": "Once a day, asks GitHub for the latest Re: TeleVIP release. Nothing about you or your phone is sent.",
+  "CheckForUpdatesNow": "Check for updates",
+  "CheckForUpdatesNowDesc": "Installed version",
+  "UpdateChecking": "Checking for updates…",
+  "UpdateCheckFailed": "Couldn't reach GitHub. Try again later.",
+  "UpdateUpToDate": "You have the latest version (%s)",
+  "UpdateAvailable": "Re: TeleVIP %s is out",
+  "UpdateInstalled": "You have version %s.",
+  "UpdateDownload": "Download",
+  "UpdateLater": "Later",
+  "UpdateSkip": "Skip this version"
 }

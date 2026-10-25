@@ -95,9 +95,11 @@ public class ConfigManager {
     public static ConfigItem disableNumberRounding;
     public static ConfigItem hideUpdateApp;
     public static ConfigItem fixTLError;
+    public static ConfigItem checkForUpdates;
 
     // Button
     public static ConfigItem btnLanguage;
+    public static ConfigItem btnCheckForUpdates;
     public static ConfigItem btnChannel;
     public static ConfigItem btnRestartApp;
 
@@ -258,11 +260,18 @@ public class ConfigManager {
             items.add(fixTLError);
         }
 
+        // On until the user turns it off; read by UpdateCheck at start, so it needs no action here.
+        checkForUpdates = new ConfigItem(ConfigItem.SWITCH, Keys.CheckForUpdates, ConfigPreferences.getBoolean(Keys.CheckForUpdates, true), null);
+        items.add(checkForUpdates);
+
         items.add(shadows);
 
-        // The language, invite and restart buttons share a card.
+        // The language, update, invite and restart buttons share a card.
         btnLanguage = new ConfigItem(ConfigItem.TEXT, Keys.Language);
         items.add(btnLanguage);
+
+        btnCheckForUpdates = new ConfigItem(ConfigItem.TEXT, Keys.CheckForUpdatesNow);
+        items.add(btnCheckForUpdates);
 
         btnChannel = new ConfigItem(ConfigItem.TEXT, Keys.TeleVipGroup);
         items.add(btnChannel);
