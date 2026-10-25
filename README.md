@@ -236,4 +236,10 @@ Partly based on [Re-Telegram](https://github.com/Sakion-Team/Re-Telegram).
 [GPL-3.0](LICENSE). This project is for educational use.<br>
 Modified clients can put a Telegram account at risk, so use it at your own risk.
 
+<br>
+
+---
+
+Made in Saudi 🇸🇦 By: i_2B_4G10🚀
+
 </div>
