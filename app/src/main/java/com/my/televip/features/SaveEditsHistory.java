@@ -30,6 +30,7 @@ import com.my.televip.virtuals.messenger.MessagesStorage;
 import com.my.televip.virtuals.messenger.UserConfig;
 import com.my.televip.virtuals.tgnet.NativeByteBuffer;
 import com.my.televip.virtuals.tgnet.TLRPC;
+import com.my.televip.virtuals.ui.BaseFragment;
 import com.my.televip.virtuals.ui.ChatActivity;
 
 import java.lang.reflect.Method;
@@ -46,7 +47,7 @@ public class SaveEditsHistory {
         try {
             if (!isEnable) {
                 isEnable = true;
-                messageDatabase = new MessageDatabase(context);
+                messageDatabase = MessageDatabase.get(context);
 
                 if (ClassLoad.getClass(ClassNames.CHAT_ACTIVITY) != null) {
 
@@ -65,9 +66,10 @@ public class SaveEditsHistory {
 
                                                 TLRPC.Message message = messageObject.getMessageOwner();
                                                 if (message != null && message.getID() > 0) {
+                                                    long account = accountOf(param.thisObject);
                                                     long dialogId = getDialogId(message);
 
-                                                    if (dialogId != 0 && messageDatabase.getMessage(dialogId, message.getID()) != null) {
+                                                    if (dialogId != 0 && messageDatabase.getMessage(account, dialogId, message.getID()) != null) {
 
                                                         ArrayList<Integer> icons;
                                                         ArrayList<CharSequence> items;
@@ -111,17 +113,18 @@ public class SaveEditsHistory {
                                                 if (messageObject.getMessageOwner() != null) {
 
                                                     TLRPC.Message message = messageObject.getMessageOwner();
+                                                    long account = accountOf(param.thisObject);
                                                     long dialogId = getDialogId(message);
                                                     if (message.message != null && message.getID() > 0 && message.getMessage() != null) {
 
-                                                        if (dialogId != 0 && messageDatabase.searchMessage(dialogId, message.getID())) {
+                                                        if (dialogId != 0 && messageDatabase.searchMessage(account, dialogId, message.getID())) {
 
                                                             AlertDialog alertDialog = new AlertDialog(context);
                                                             alertDialog.setTitle(Translator.get(Keys.EditsHistory));
 
                                                             TextView textView = new TextView(context);
 
-                                                            int maxMsgCount = messageDatabase.getMaxMessageCount(dialogId, message.getID());
+                                                            int maxMsgCount = messageDatabase.getMaxMessageCount(account, dialogId, message.getID());
 
                                                             StringBuilder builder = new StringBuilder();
 
@@ -129,11 +132,11 @@ public class SaveEditsHistory {
 
                                                                 for (int i = 1; i <= maxMsgCount; i++) {
 
-                                                                    String msg = messageDatabase.getMessage(dialogId, message.getID(), i);
+                                                                    String msg = messageDatabase.getMessage(account, dialogId, message.getID(), i);
 
                                                                     if (msg != null) {
 
-                                                                        long messageDate = messageDatabase.getMessageDate(dialogId, message.getID(), i);
+                                                                        long messageDate = messageDatabase.getMessageDate(account, dialogId, message.getID(), i);
 
                                                                         if (messageDate != 0) {
                                                                             String date = ConverterCalendar.formatDate(messageDate);
@@ -144,14 +147,14 @@ public class SaveEditsHistory {
                                                                     }
                                                                 }
                                                             } else {
-                                                                long messageDate = messageDatabase.getMessageDate(dialogId, message.getID(), 1);
+                                                                long messageDate = messageDatabase.getMessageDate(account, dialogId, message.getID(), 1);
 
                                                                 if (messageDate != 0) {
                                                                     String date = ConverterCalendar.formatDate(messageDate);
 
                                                                     builder.append(date).append("\n");
                                                                 }
-                                                                builder.append(messageDatabase.getMessage(dialogId, message.getID()));
+                                                                builder.append(messageDatabase.getMessage(account, dialogId, message.getID()));
                                                             }
 
                                                             textView.setText(builder.toString());
@@ -236,7 +239,7 @@ public class SaveEditsHistory {
                     long dialogId = getDialogId(message);
                     if (oldMessage.getMessage() != null && message.getMessage() != null
                             && !oldMessage.getMessage().equals(message.getMessage()) && dialogId != 0) {
-                        messageDatabase.addMessage(dialogId, oldMessage.getID(), oldMessage.getMessage());
+                        messageDatabase.addMessage(clientUserId, dialogId, oldMessage.getID(), oldMessage.getMessage());
                     }
                 } catch (Throwable t) {
                     Logger.e(t);
@@ -272,35 +275,55 @@ public class SaveEditsHistory {
         }
     }
 
-    /**
-     * Where a message's history is kept: its sender, or for channel posts, which have none, the
-     * channel. Channel edits were not kept before.
-     */
-    private static long getDialogId(TLRPC.Message message) {
-        long sender = getDialogId(message.getFrom_id());
-        if (sender != 0) return sender;
+    /** The user id of the account whose chat is open, so two accounts' histories never mix. */
+    private static long accountOf(Object chatActivity) {
         try {
-            return getDialogId(message.getPeer_id());
+            return new BaseFragment(chatActivity).getUserConfig().getClientUserId();
         } catch (Throwable t) {
-            return 0;   // a build where peer_id is not mapped
+            Logger.e(t);
+            return 0;
         }
     }
 
-    private static long getDialogId(TLRPC.Peer peer) {
-        if (peer.isEmpty()) return 0;
-        long user_id = peer.getUser_id();
-        long chat_id = peer.getChat_id();
-        long channel_id = peer.getChannel_id();
-        long dialogId = 0;
+    /** TL_message's "out" flag: the account sent it. */
+    private static final int MESSAGE_OUT = 1 << 1;
 
-        if (user_id != 0) {
-            dialogId = user_id;
-        } else if (chat_id != 0) {
-            dialogId = chat_id;
-        } else if (channel_id != 0) {
-            dialogId = channel_id;
+    /**
+     * The chat a message is in, as the client numbers dialogs: a user's id for a private chat,
+     * minus the group's or channel's id for the others. Message ids are only unique within that
+     * chat (and, for private chats and small groups, the account), so history is kept per chat.
+     * Worked out from the message itself: MessageObject.getDialogId is mis-mapped on some renamed
+     * builds (Nekogram 12.10.5).
+     */
+    private static long getDialogId(TLRPC.Message message) {
+        try {
+            TLRPC.Peer peer = message.getPeer_id();
+            if (!peer.isEmpty()) {
+                if (peer.getChat_id() != 0) return -peer.getChat_id();
+                if (peer.getChannel_id() != 0) return -peer.getChannel_id();
+                if (peer.getUser_id() != 0) {
+                    if ((message.getFlags() & MESSAGE_OUT) != 0) return peer.getUser_id();
+                    long sender = getDialogId(message.getFrom_id());
+                    return sender != 0 ? sender : peer.getUser_id();
+                }
+            }
+        } catch (Throwable t) {
+            // A build where peer_id is not mapped: the sender still tells most chats apart.
         }
-        return dialogId;
+        try {
+            return getDialogId(message.getFrom_id());
+        } catch (Throwable t) {
+            return 0;
+        }
+    }
+
+    /** A user's id, or minus a group's or channel's id. */
+    private static long getDialogId(TLRPC.Peer peer) {
+        if (peer == null || peer.isEmpty()) return 0;
+        if (peer.getUser_id() != 0) return peer.getUser_id();
+        if (peer.getChat_id() != 0) return -peer.getChat_id();
+        if (peer.getChannel_id() != 0) return -peer.getChannel_id();
+        return 0;
     }
 
 }

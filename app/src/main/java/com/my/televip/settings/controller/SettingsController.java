@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import com.my.televip.Configs.ConfigPreferences;
+import com.my.televip.features.GhostMode;
 import com.my.televip.language.Keys;
 import com.my.televip.language.Translator;
 import com.my.televip.settings.ui.SettingsActivity;
@@ -58,13 +59,30 @@ public class SettingsController {
 
             settingsView.removeAllViews();
             settingsActivity = new SettingsActivity(context);
-            showJoinTeleVip();
+            if (!showGhostModeWarning()) showJoinTeleVip();
 
             settingsView.addView(settingsActivity.createView(this));
 
             show(settingsView);
         } catch (Throwable e) {
             Logger.e(e);
+        }
+    }
+
+    /** Says so when a Ghost Mode option is on but cannot work on this build; true if shown. */
+    private boolean showGhostModeWarning() {
+        try {
+            String warning = GhostMode.warning();
+            if (warning == null) return false;
+            AlertDialog alertDialog = new AlertDialog(getContext());
+            alertDialog.setTitle(Translator.get(Keys.GhostModeSettings));
+            alertDialog.setMessage(warning);
+            alertDialog.setPositiveButton(Translator.get(Keys.Done), null);
+            alertDialog.show();
+            return true;
+        } catch (Throwable e) {
+            Logger.e(e);
+            return false;
         }
     }
 

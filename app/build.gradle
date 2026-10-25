@@ -72,9 +72,9 @@ dependencies {
     // Provided at runtime by the framework.
     compileOnly libs.libxposed
 
-    implementation libs.gson
+    // For androidx.core (ColorUtils, PathParser) and androidx.annotation. Every library here
+    // ships inside the module and runs in the client's process: add one only when the code uses it.
     implementation libs.appcompat
-    implementation libs.material
 
     testImplementation libs.junit
 }

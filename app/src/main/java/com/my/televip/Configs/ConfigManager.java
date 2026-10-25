@@ -66,6 +66,7 @@ public class ConfigManager {
     public static ConfigItem showDeletedMessages;
     public static ConfigItem showMessageId;
     public static ConfigItem saveEditsHistory;
+    public static ConfigItem clearSavedData;
 
     // Connections
     public static ConfigItem connections;
@@ -168,6 +169,10 @@ public class ConfigManager {
 
         saveEditsHistory = new ConfigItem(ConfigItem.SWITCH, Keys.SaveEditsHistory, ConfigPreferences.getBoolean(Keys.SaveEditsHistory), () -> SaveEditsHistory.init(context));
         items.add(saveEditsHistory);
+
+        // Nothing TeleVip keeps has to stay forever: one tap deletes it all.
+        clearSavedData = new ConfigItem(ConfigItem.TEXT, Keys.ClearSavedData);
+        items.add(clearSavedData);
 
         items.add(shadows);
 

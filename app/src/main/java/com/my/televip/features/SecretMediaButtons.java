@@ -45,6 +45,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.my.televip.application.AndroidUtilities.dp;
 
@@ -134,7 +135,7 @@ public final class SecretMediaButtons {
         }
         long dialogId = PreventMedia.dialogIdOf(messageObject);
 
-        boolean seenAlready = KeptSecretMedia.contains(dialogId, mid);
+        boolean seenAlready = KeptSecretMedia.contains(KeptSecretMedia.selectedAccount(), dialogId, mid);
         seen.setVisibility(PreventMedia.canMarkSeen() && !seenAlready ? View.VISIBLE : View.GONE);
         seen.setOnClickListener(v -> {
             if (PreventMedia.markSeen(dialogId, mid, ttl)) {
@@ -251,11 +252,16 @@ public final class SecretMediaButtons {
             encrypted = new File(app.getExternalCacheDir(), file.getName() + ".enc");
         }
         if (file == null || (!file.isFile() && !encrypted.isFile())) {
-            // Nothing maps the path on some renamed builds (Nekogram 12.10.5). The viewer just
-            // loaded this media, so it is most likely the newest encrypted file in the cache.
-            File newest = newestEncrypted(app);
-            if (newest != null) {
-                Logger.w("Save secret media: no path for the message, using the newest cached " + newest.getName());
+            // Nothing maps the path on some renamed builds (Nekogram 12.10.5). Only an encrypted
+            // file that can be nothing else is used: saving another chat's media by mistake would
+            // put it in the gallery.
+            File newest = onlyEncrypted(app);
+            if (newest == null) {
+                Logger.w("Save secret media: no path for the message, and the cache does not tell which file it is");
+                toast(context, Translator.get(Keys.SecretMediaNotFound));
+                return;
+            } else {
+                Logger.w("Save secret media: no path for the message, using the only candidate " + newest.getName());
                 encrypted = newest;
                 String name = newest.getName();
                 file = new File(newest.getParentFile(), name.substring(0, name.length() - ".enc".length()));
@@ -271,25 +277,38 @@ public final class SecretMediaButtons {
         File source = file;
         File encryptedFile = encrypted;
         new Thread(() -> {
-            boolean saved = copyToGallery(context, source.getName(), () -> plain
+            String folder = copyToGallery(context, source.getName(), () -> plain
                     ? new FileInputStream(source) : decrypt(encryptedFile, key));
-            new Handler(Looper.getMainLooper()).post(() ->
-                    toast(context, Translator.get(saved ? Keys.SecretMediaSaved : Keys.SecretMediaSaveFailed)));
+            new Handler(Looper.getMainLooper()).post(() -> toast(context, folder != null
+                    ? Translator.get(Keys.SecretMediaSavedTo, folder) : Translator.get(Keys.SecretMediaSaveFailed)));
         }, "TeleVipSaveSecretMedia").start();
     }
 
-    /** Pictures/Telegram or Movies/Telegram, where the client saves media too. */
-    /** The newest <name>.enc in the external cache that has its key. */
-    private static File newestEncrypted(Context app) {
+    /** How recently the viewer must have loaded a file for it to count as the one on screen. */
+    private static final long JUST_LOADED_MS = 10 * 60 * 1000L;
+
+    /**
+     * The <name>.enc in the external cache (with its key) that must be the media on screen: the
+     * only one there, or else the only one loaded in the last few minutes. Null when several
+     * could be it.
+     */
+    private static File onlyEncrypted(Context app) {
         File dir = app.getExternalCacheDir();
         File[] files = dir == null ? null : dir.listFiles((d, n) -> n.endsWith(".enc"));
         if (files == null) return null;
-        File newest = null;
+        List<File> candidates = new ArrayList<>();
         for (File f : files) {
-            if (!new File(app.getCacheDir(), f.getName() + ".key").isFile()) continue;
-            if (newest == null || f.lastModified() > newest.lastModified()) newest = f;
+            if (new File(app.getCacheDir(), f.getName() + ".key").isFile()) candidates.add(f);
         }
-        return newest;
+        if (candidates.size() == 1) return candidates.get(0);
+        File recent = null;
+        long since = System.currentTimeMillis() - JUST_LOADED_MS;
+        for (File f : candidates) {
+            if (f.lastModified() < since) continue;
+            if (recent != null) return null;
+            recent = f;
+        }
+        return recent;
     }
 
     private interface Source {
@@ -314,42 +333,64 @@ public final class SecretMediaButtons {
         return new javax.crypto.CipherInputStream(new FileInputStream(encrypted), cipher);
     }
 
-    private static boolean copyToGallery(Context context, String name, Source source) {
+    /**
+     * Copies the media to Pictures/Telegram or Movies/Telegram, where the client saves media too,
+     * and returns that folder, or null when it failed. A failed copy leaves nothing behind.
+     */
+    private static String copyToGallery(Context context, String name, Source source) {
         String lower = name.toLowerCase();
         boolean video = lower.endsWith(".mp4") || lower.endsWith(".mov") || lower.endsWith(".webm");
         String mime = video ? (lower.endsWith(".webm") ? "video/webm" : "video/mp4")
                 : (lower.endsWith(".png") ? "image/png" : "image/jpeg");
         if (!name.contains(".")) name += video ? ".mp4" : ".jpg";
         String folder = video ? Environment.DIRECTORY_MOVIES : Environment.DIRECTORY_PICTURES;
+        String shown = folder + "/Telegram";
+        Uri uri = null;
+        ContentResolver resolver = context.getContentResolver();
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ContentResolver resolver = context.getContentResolver();
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
                 values.put(MediaStore.MediaColumns.MIME_TYPE, mime);
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, folder + "/Telegram");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, shown);
+                // Hidden from the gallery until it is whole.
+                values.put(MediaStore.MediaColumns.IS_PENDING, 1);
                 Uri collection = video
                         ? MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
                         : MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
-                Uri uri = resolver.insert(collection, values);
-                if (uri == null) return false;
+                uri = resolver.insert(collection, values);
+                if (uri == null) return null;
                 try (InputStream in = source.open(); OutputStream out = resolver.openOutputStream(uri)) {
-                    if (out == null) return false;
+                    if (out == null) throw new java.io.IOException("no output stream for " + uri);
                     copy(in, out);
                 }
+                ContentValues done = new ContentValues();
+                done.put(MediaStore.MediaColumns.IS_PENDING, 0);
+                resolver.update(uri, done, null, null);
+                uri = null;
             } else {
                 File dir = new File(Environment.getExternalStoragePublicDirectory(folder), "Telegram");
-                if (!dir.isDirectory() && !dir.mkdirs()) return false;
+                if (!dir.isDirectory() && !dir.mkdirs()) return null;
                 File target = new File(dir, name);
                 try (InputStream in = source.open(); OutputStream out = new FileOutputStream(target)) {
                     copy(in, out);
+                } catch (Throwable t) {
+                    //noinspection ResultOfMethodCallIgnored
+                    target.delete();
+                    throw t;
                 }
                 MediaScannerConnection.scanFile(context, new String[]{target.getAbsolutePath()}, new String[]{mime}, null);
             }
-            return true;
+            return shown;
         } catch (Throwable t) {
             Logger.e(t);
-            return false;
+            if (uri != null) {
+                try {
+                    resolver.delete(uri, null, null);
+                } catch (Throwable ignored) {
+                }
+            }
+            return null;
         }
     }
 
@@ -375,7 +416,7 @@ public final class SecretMediaButtons {
     private static void delete(View button, Object viewer, boolean photoViewer, long dialogId, int mid) {
         ((View) button.getParent()).setVisibility(View.GONE);
         close(viewer, photoViewer);
-        KeptSecretMedia.remove(dialogId, mid);
+        KeptSecretMedia.remove(KeptSecretMedia.selectedAccount(), dialogId, mid);
         ArrayList<Integer> ids = new ArrayList<>();
         ids.add(mid);
         if (!MessagesController.getInstance(UserConfig.getSelectedAccount()).deleteMessages(ids, dialogId, true)) {
