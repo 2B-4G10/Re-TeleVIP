@@ -493,6 +493,14 @@ public final class XReflect {
         }
     }
 
+    public static void setStaticBooleanField(Class<?> clazz, String fieldName, boolean value) {
+        try {
+            findField(clazz, fieldName).setBoolean(null, value);
+        } catch (Throwable t) {
+            throw unwrap(t);
+        }
+    }
+
     public static int getStaticIntField(Class<?> clazz, String fieldName) {
         try {
             return findField(clazz, fieldName).getInt(null);

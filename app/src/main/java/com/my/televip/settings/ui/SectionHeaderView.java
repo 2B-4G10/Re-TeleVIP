@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.my.televip.application.AndroidUtilities;
+import com.my.televip.language.Translator;
 import com.my.televip.virtuals.Theme;
 
 /**
@@ -28,11 +29,17 @@ public class SectionHeaderView extends LinearLayout {
         setGravity(Gravity.CENTER_VERTICAL);
         setPadding(AndroidUtilities.dp(18), AndroidUtilities.dp(14), AndroidUtilities.dp(18), AndroidUtilities.dp(6));
 
+        // Mirrored by hand for a right-to-left language: the settings are laid out left to right.
+        boolean rtl = Translator.isRTL();
+
         icon = new ImageView(context);
         icon.setVisibility(GONE);
         LayoutParams iconParams = new LayoutParams(AndroidUtilities.dp(28), AndroidUtilities.dp(28));
-        iconParams.setMarginEnd(AndroidUtilities.dp(12));
-        addView(icon, iconParams);
+        if (rtl) {
+            iconParams.leftMargin = AndroidUtilities.dp(12);
+        } else {
+            iconParams.rightMargin = AndroidUtilities.dp(12);
+        }
 
         title = new TextView(context);
         title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
@@ -40,7 +47,16 @@ public class SectionHeaderView extends LinearLayout {
         title.setTextColor(Theme.getTextBlueColor());
         title.setSingleLine(true);
         title.setEllipsize(TextUtils.TruncateAt.END);
-        addView(title, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
+        title.setGravity((rtl ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL);
+        LayoutParams titleParams = new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f);
+
+        if (rtl) {
+            addView(title, titleParams);
+            addView(icon, iconParams);
+        } else {
+            addView(icon, iconParams);
+            addView(title, titleParams);
+        }
     }
 
     public void set(CharSequence text, Drawable drawable) {

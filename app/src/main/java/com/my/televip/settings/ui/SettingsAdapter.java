@@ -1,7 +1,6 @@
 package com.my.televip.settings.ui;
 
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.text.TextUtils;
@@ -201,14 +200,16 @@ public class SettingsAdapter {
                             confirm.show();
                             break;
                         case Keys.Calendar:
-                            Dialog dlg = DialogUtils.createSingleChoiceDialog((Activity) settingsController.getContext(), new String[]{
+                            Translator.withTextDirection(() -> DialogUtils.createSingleChoiceDialog((Activity) settingsController.getContext(), new String[]{
                                             Translator.get(Keys.Gregorian), Translator.get(Keys.Hijri), Translator.get(Keys.Persian)},
                                     Translator.get(Keys.Calendar), item.getCustomCalendar(), (dialog, which) -> {
                                         item.setCustomCalendar(which);
                                         item.run();
                                         bind(row, settingsController, position);
-                                    });
-                            dlg.show();
+                                    }).show());
+                            break;
+                        case Keys.Language:
+                            showLanguagePicker(settingsController);
                             break;
                     }
                 }
@@ -241,6 +242,29 @@ public class SettingsAdapter {
         return next == ConfigItem.SWITCH || next == ConfigItem.EXPANDABLE_SWITCH || next == ConfigItem.TEXT;
     }
 
+    /**
+     * Lets the user pick the language of Re: TeleVIP's texts, or keep the client's, each listed in
+     * its own language so it can be found from any of them. The settings then open again in it.
+     */
+    private static void showLanguagePicker(SettingsController settingsController) {
+        String[] codes = Translator.PICKER_LANGUAGES;
+        String[] options = new String[codes.length + 1];
+        options[0] = Translator.get(Keys.LanguageSameAsApp);
+        int selected = 0;
+        String picked = Translator.getPickedLanguage();
+        for (int i = 0; i < codes.length; i++) {
+            options[i + 1] = Translator.nativeName(codes[i]);
+            if (codes[i].equals(picked)) selected = i + 1;
+        }
+        int current = selected;
+        Translator.withTextDirection(() -> DialogUtils.createSingleChoiceDialog((Activity) settingsController.getContext(),
+                options, Translator.get(Keys.Language), current, (dialog, which) -> {
+                    if (which == current) return;
+                    Translator.setPickedLanguage(which == 0 ? "" : codes[which - 1]);
+                    settingsController.refresh();
+                }).show());
+    }
+
     private static void bindAction(ActionRowView view, ConfigItem item) {
         String title = Translator.get(item.getKey());
         String explanation = Translator.optional(item.getKey() + "Desc");
@@ -259,6 +283,12 @@ public class SettingsAdapter {
                         break;
                 }
                 view.set(title, explanation, value, null);
+                break;
+            }
+            case Keys.Language: {
+                String picked = Translator.getPickedLanguage();
+                String value = picked.isEmpty() ? Translator.get(Keys.LanguageSameAsApp) : Translator.nativeName(picked);
+                view.set(title, explanation, value, SettingsIcons.language());
                 break;
             }
             case Keys.TeleVipGroup:

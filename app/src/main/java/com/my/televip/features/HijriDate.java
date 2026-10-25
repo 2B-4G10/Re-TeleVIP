@@ -9,7 +9,7 @@ import com.my.televip.calendar.ConverterCalendar;
 import com.my.televip.hooks.HMethod;
 import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.AutomationResolver;
-import com.my.televip.virtuals.messenger.LocaleController;
+import com.my.televip.language.Translator;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -142,17 +142,17 @@ public class HijriDate {
 
             switch (type) {
                 case DAY_MONTH:
-                    return LocaleController.isRTL()
+                    return Translator.isDayFirst()
                             ? dateDay + " " + dateMonthName
                             : dateMonthName + " " + dateDay;
 
                 case DAY_MONTH_YEAR:
-                    return LocaleController.isRTL()
+                    return Translator.isDayFirst()
                             ? dateDay + " " + dateMonthName + " " + dateYear
                             : dateMonthName + " " + dateDay + " " + dateYear;
 
                 case TIME_DAY_MONTH_YEAR:
-                    return LocaleController.isRTL()
+                    return Translator.isDayFirst()
                             ? dateDay + " " + dateMonthName + " " + dateYear + " " + dateHour
                             : dateMonthName + " " + dateDay + " " + dateYear + " " + dateHour;
 
@@ -181,7 +181,7 @@ public class HijriDate {
             rightNow = ConverterCalendar.toCalendar(date);
 
             int dateYear = rightNow.getYear();
-            String dateMonthName = rightNow.getMonthName();
+            String dateMonthName = rightNow.getStandaloneMonthName();
 
             if (year == dateYear && !alwaysShowYear) {
                 return dateMonthName;
