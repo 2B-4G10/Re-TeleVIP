@@ -7,7 +7,7 @@
 **Privacy, ad blocking and quality-of-life features for Telegram and its forks,<br>as a Vector / Xposed module.**
 
 [![Release](https://img.shields.io/github/v/release/2B-4G10/Re-TeleVIP?label=release&color=FFD500)](../../releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/2B-4G10/Re-TeleVIP/total?color=2AABEE)](../../releases)
+[![Downloads](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2F2B-4G10%2FRe-TeleVIP%2Fbadges%2Fdownloads.json)](../../releases)
 [![Client watch](https://img.shields.io/github/actions/workflow/status/2B-4G10/Re-TeleVIP/client-watch.yml?label=client%20watch)](../../actions/workflows/client-watch.yml)
 [![Xposed API](https://img.shields.io/badge/libxposed-API%20102-4A4D54)](#-getting-started)
 [![License](https://img.shields.io/badge/license-GPL--3.0-F99B1C)](LICENSE)
