@@ -53,6 +53,23 @@ public class ConfigPreferences {
         }
     }
 
+    public static long getLong(String key) {
+        try {
+            return sharedPreferences.getLong(key, 0);
+        } catch (ClassCastException e) {
+            sharedPreferences.edit().remove(key).apply();
+            return 0;
+        }
+    }
+
+    public static void putLong(String key, long var) {
+        try {
+            sharedPreferences.edit().putLong(key, var).apply();
+        } catch (ClassCastException e) {
+            sharedPreferences.edit().remove(key).apply();
+        }
+    }
+
     public static String getString(String key) {
         try {
             return sharedPreferences.getString(key, null);

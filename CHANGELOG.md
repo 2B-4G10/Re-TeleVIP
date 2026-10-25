@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased — update check
+
+- **Re: TeleVIP tells you when a new version is out.** Once a day it asks GitHub for the latest
+  release. When there's a newer one, it shows what's new with a **Download** button that opens
+  the release page, plus **Later** and **Skip this version**. **Check for updates** in the
+  settings looks right away and shows the version you have.
+- **What the check sends.** It's the only connection Re: TeleVIP makes of its own: a plain
+  request to GitHub for the latest release, with nothing about you, your account or your phone.
+  GitHub sees your IP address, as with any website. If it can't connect, it stays quiet and
+  tries again the next day. Turn it off any time with **Tell me about new versions** under
+  Other features.
+
 ## Unreleased — privacy and security
 
 - **Ghost Mode tells you when it can't work.** If an app update moves what Ghost Mode relies

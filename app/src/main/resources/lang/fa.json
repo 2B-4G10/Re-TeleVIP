@@ -150,5 +150,17 @@
   "LanguageDesc": "برای تنظیمات و منوهای Re: TeleVIP",
   "LanguageSameAsApp": "مثل برنامه",
   "Support": "حمایت از Re: TeleVIP",
-  "SupportDesc": "در وقت‌های تنگ کدنویسی شده ☕ حمایت شما در Patreon جبرانش می‌کند!"
+  "SupportDesc": "در وقت‌های تنگ کدنویسی شده ☕ حمایت شما در Patreon جبرانش می‌کند!",
+  "CheckForUpdates": "نسخه‌های جدید رو بهم خبر بده",
+  "CheckForUpdatesDesc": "روزی یک بار آخرین نسخه Re: TeleVIP رو از GitHub می‌پرسه. هیچ اطلاعاتی از شما یا گوشیتون فرستاده نمی‌شه.",
+  "CheckForUpdatesNow": "بررسی آپدیت",
+  "CheckForUpdatesNowDesc": "نسخه نصب‌شده",
+  "UpdateChecking": "در حال بررسی آپدیت…",
+  "UpdateCheckFailed": "به GitHub وصل نشد. بعداً دوباره امتحان کن.",
+  "UpdateUpToDate": "آخرین نسخه رو داری (%s)",
+  "UpdateAvailable": "Re: TeleVIP %s اومد",
+  "UpdateInstalled": "نسخه فعلی شما %s هست.",
+  "UpdateDownload": "دانلود",
+  "UpdateLater": "بعداً",
+  "UpdateSkip": "از این نسخه بگذر"
 }

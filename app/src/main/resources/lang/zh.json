@@ -150,5 +150,17 @@
   "LanguageDesc": "用于 Re: TeleVIP 的设置和菜单",
   "LanguageSameAsApp": "跟随应用",
   "Support": "支持 Re: TeleVIP",
-  "SupportDesc": "挤出时间写出来的 ☕ 你在 Patreon 上的支持让一切都值得！"
+  "SupportDesc": "挤出时间写出来的 ☕ 你在 Patreon 上的支持让一切都值得！",
+  "CheckForUpdates": "有新版本时通知我",
+  "CheckForUpdatesDesc": "每天一次向 GitHub 查询 Re: TeleVIP 的最新版本。不会发送任何关于你或你手机的信息。",
+  "CheckForUpdatesNow": "检查更新",
+  "CheckForUpdatesNowDesc": "已安装版本",
+  "UpdateChecking": "正在检查更新…",
+  "UpdateCheckFailed": "无法连接 GitHub，请稍后再试。",
+  "UpdateUpToDate": "已是最新版本（%s）",
+  "UpdateAvailable": "Re: TeleVIP %s 已发布",
+  "UpdateInstalled": "你当前的版本是 %s。",
+  "UpdateDownload": "下载",
+  "UpdateLater": "稍后",
+  "UpdateSkip": "跳过此版本"
 }
