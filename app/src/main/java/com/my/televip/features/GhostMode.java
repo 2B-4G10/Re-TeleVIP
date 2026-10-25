@@ -23,6 +23,7 @@ public class GhostMode {
             // on, so waiting for isGhostMode() left Ghost Mode off until a restart.
             if (!isEnable) {
                 isEnable = true;
+                HideSeen.initMentions();
                 if (ClassLoad.getClass(ClassNames.CONNECTIONS_MANAGER) != null) {
                     HMethod.hookMethod(ClassLoad.getClass(ClassNames.CONNECTIONS_MANAGER), AutomationResolver.resolve("ConnectionsManager", "sendRequestInternal", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("sendRequestInternal", new Class<?>[]{ClassLoad.getClass(ClassNames.TL_OBJECT), ClassLoad.getClass(ClassNames.REQUEST_DELEGATE), ClassLoad.getClass(ClassNames.REQUEST_DELEGATE_TIMESTAMP), ClassLoad.getClass(ClassNames.QUICK_ACK_DELEGATE), ClassLoad.getClass(ClassNames.WRITE_TO_SOCKET_DELEGATE), int.class, int.class, int.class, boolean.class, int.class}), new AbstractMethodHook() {
                         @Override

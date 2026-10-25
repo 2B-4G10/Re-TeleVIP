@@ -41,13 +41,16 @@ public class PreventMedia {
                     HMethod.hookMethod(ClassLoad.getClass(ClassNames.CHAT_ACTIVITY), AutomationResolver.resolve("ChatActivity", "sendSecretMessageRead", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("sendSecretMessageRead", new Class<?>[]{ClassLoad.getClass(ClassNames.MESSAGE_OBJECT), boolean.class}), new AbstractMethodHook() {
                         @Override
                         protected void beforeMethod(MethodHookParam param) {
-                            if (!ConfigManager.preventMedia.isEnable()) return;
+                            if (!ConfigManager.preventMedia.isEnable() || reportingRead) return;
                             // Opening it reports nothing: the sender is told only on "Mark as seen".
                             param.setResult(null);
                             // readNow false: a viewer is about to open it. Current builds show it
                             // in PhotoViewer, older ones in SecretMediaViewer (which also calls this).
                             Object message = messageArg(param.args);
                             if (message != null && !readNowArg(param.args)) {
+                                secretRead = param.method instanceof Method ? (Method) param.method : null;
+                                secretReadOwner = param.thisObject;
+                                secretReadArgs = param.args.clone();
                                 SecretMediaButtons.showFor(message, new MessageObject(message).getMessageOwner().getTtl());
                             }
                         }
@@ -120,6 +123,40 @@ public class PreventMedia {
             }
         } catch (Throwable t){
             Logger.e(t);
+        }
+    }
+
+    /** ChatActivity.sendSecretMessageRead and the chat that last called it, for secret chats. */
+    private static volatile Method secretRead;
+    private static volatile Object secretReadOwner;
+    private static volatile Object[] secretReadArgs;
+    private static volatile boolean reportingRead;
+
+    /**
+     * In a secret chat, reports the media as opened the way the chat does when Prevent media is
+     * off: its timer then starts on both phones, and it is deleted on both when the timer ends.
+     * Secret chats keep nothing on the server, so the copy here cannot be kept alone.
+     */
+    public static boolean readSecretChatMedia(Object messageObject) {
+        Method read = secretRead;
+        Object[] opened = secretReadArgs;
+        if (read == null || opened == null) return false;
+        // The call that opened it, now with readNow true.
+        Object[] args = opened.clone();
+        for (int i = 0; i < args.length; i++) {
+            if (args[i] instanceof Boolean) args[i] = true;
+            else if (messageObject.getClass().isInstance(args[i])) args[i] = messageObject;
+        }
+        reportingRead = true;
+        try {
+            read.setAccessible(true);
+            read.invoke(secretReadOwner, args);
+            return true;
+        } catch (Throwable t) {
+            Logger.e(t);
+            return false;
+        } finally {
+            reportingRead = false;
         }
     }
 
