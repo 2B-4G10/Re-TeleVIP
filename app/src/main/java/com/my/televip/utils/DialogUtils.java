@@ -40,11 +40,4 @@ public class DialogUtils {
         return builder.create();
     }
 
-    public static void showQuranAlert(Context context){
-        AlertDialog alertDialog = new AlertDialog(context);
-        alertDialog.setTitle("TeleVip");
-        alertDialog.setMessage(Translator.get(Keys.QuranNotification));
-        alertDialog.setPositiveButton(Translator.get(Keys.Done), null);
-        alertDialog.show();
-    }
 }

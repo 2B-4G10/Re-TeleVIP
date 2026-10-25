@@ -10,6 +10,7 @@ import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.AutomationResolver;
 
 import com.my.televip.reflect.XReflect;
+import com.my.televip.virtuals.tgnet.TLConstructor;
 
 public class GhostMode {
 
@@ -17,9 +18,13 @@ public class GhostMode {
 
     public static void init() {
         try {
+            // Hooked whether or not an option is on yet: the hook checks the switches on every
+            // request. Turning on a Hide seen option runs this before Hide seen itself counts as
+            // on, so waiting for isGhostMode() left Ghost Mode off until a restart.
             if (!isEnable) {
                 isEnable = true;
-                if (ClassLoad.getClass(ClassNames.CONNECTIONS_MANAGER) != null && ConfigManager.isGhostMode()) {
+                HideSeen.initMentions();
+                if (ClassLoad.getClass(ClassNames.CONNECTIONS_MANAGER) != null) {
                     HMethod.hookMethod(ClassLoad.getClass(ClassNames.CONNECTIONS_MANAGER), AutomationResolver.resolve("ConnectionsManager", "sendRequestInternal", AutomationResolver.ResolverType.Method), AutomationResolver.merge(AutomationResolver.resolveObject("sendRequestInternal", new Class<?>[]{ClassLoad.getClass(ClassNames.TL_OBJECT), ClassLoad.getClass(ClassNames.REQUEST_DELEGATE), ClassLoad.getClass(ClassNames.REQUEST_DELEGATE_TIMESTAMP), ClassLoad.getClass(ClassNames.QUICK_ACK_DELEGATE), ClassLoad.getClass(ClassNames.WRITE_TO_SOCKET_DELEGATE), int.class, int.class, int.class, boolean.class, int.class}), new AbstractMethodHook() {
                         @Override
                         protected void beforeMethod(MethodHookParam param) {
@@ -70,7 +75,7 @@ public class GhostMode {
         if (!ClientChecker.isTgnetObfuscated()) {
             return object.getClass().getName().contains("TL_account$updateStatus");
         } else {
-            return object.getClass().getName().equals(AutomationResolver.resolve(ClassNames.TL_ACCOUNT_UPDATE_STATUS));
+            return TLConstructor.is(object, ClassNames.TL_ACCOUNT_UPDATE_STATUS, TLConstructor.ACCOUNT_UPDATE_STATUS);
         }
     }
 

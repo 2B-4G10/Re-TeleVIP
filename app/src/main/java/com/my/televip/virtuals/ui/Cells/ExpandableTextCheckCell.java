@@ -39,10 +39,6 @@ public class ExpandableTextCheckCell extends LinearLayout {
         childContainer.setOrientation(VERTICAL);
         childContainer.setVisibility(GONE);
 
-        textCheckCell.getView().setOnLongClickListener(v -> {
-            SettingsAdapter.playAudio(context);
-            return true;
-        });
         addView(childContainer, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         textCheckCell.getView().setOnClickListener(v -> setExpanded(!expanded, true));
@@ -69,10 +65,6 @@ public class ExpandableTextCheckCell extends LinearLayout {
             row.setOrientation(HORIZONTAL);
             row.setBackgroundResource(resIdRow);
             row.setPadding(dp(), 0, 0, 0);
-            row.setOnLongClickListener(v -> {
-                SettingsAdapter.playAudio(context);
-                return true;
-            });
             row.addView(textCheckCell1.getView(),
                     new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
@@ -86,8 +78,9 @@ public class ExpandableTextCheckCell extends LinearLayout {
                 boolean newChecked = !textCheckCell1.isChecked();
                 textCheckCell1.setChecked(newChecked);
                 child.setEnable(newChecked);
-                child.run();
+                // The group's switch first: the child's feature reads it (Hide seen for Ghost Mode).
                 updateMainStateFromChildren(item);
+                child.run();
             });
 
             updateMainStateFromChildren(item);

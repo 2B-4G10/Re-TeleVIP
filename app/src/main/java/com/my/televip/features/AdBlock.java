@@ -14,6 +14,7 @@ import com.my.televip.logging.Logger;
 import com.my.televip.obfuscate.AutomationResolver;
 import com.my.televip.reflect.XReflect;
 import com.my.televip.virtuals.messenger.MessagesController;
+import com.my.televip.virtuals.tgnet.TLConstructor;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -48,6 +49,11 @@ public class AdBlock {
             ClassNames.TL_MESSAGES_GET_SPONSORED_MESSAGES,
             ClassNames.TL_CONTACTS_GET_SPONSORED_PEERS,
             ClassNames.TL_HELP_GET_PROMO_DATA,
+    };
+    private static final int[] AD_CONSTRUCTORS = {
+            TLConstructor.MESSAGES_GET_SPONSORED_MESSAGES,
+            TLConstructor.CONTACTS_GET_SPONSORED_PEERS,
+            TLConstructor.HELP_GET_PROMO_DATA,
     };
 
     /** Where checkPromoInfoInternal saves the promo channel, which the client restores on start. */
@@ -111,7 +117,7 @@ public class AdBlock {
                     @Override
                     protected void beforeMethod(MethodHookParam param) {
                         Object request = param.args[0];
-                        if (request != null && adRequests.contains(request.getClass()) && enabled()) {
+                        if (request != null && adRequests.contains(request.getClass()) && enabled() && isAdRequest(request)) {
                             // The caller's callback never runs: to it the ads are still loading.
                             param.setResult(null);
                         }
@@ -119,13 +125,23 @@ public class AdBlock {
                 }));
     }
 
-    /** Reads an ad request's answer as the server's "no ads" answer instead. */
-    private static void emptyAdAnswers() {
-        emptyAnswer(ClassNames.TL_MESSAGES_GET_SPONSORED_MESSAGES, ClassNames.TL_MESSAGES_SPONSORED_MESSAGES_EMPTY);
-        emptyAnswer(ClassNames.TL_CONTACTS_GET_SPONSORED_PEERS, ClassNames.TL_CONTACTS_SPONSORED_PEERS_EMPTY);
+    /** A renamed build may keep an ad request in one class with others: those are let through. */
+    private static boolean isAdRequest(Object request) {
+        for (int i = 0; i < AD_REQUESTS.length; i++) {
+            if (TLConstructor.is(request, AD_REQUESTS[i], AD_CONSTRUCTORS[i])) return true;
+        }
+        return false;
     }
 
-    private static void emptyAnswer(String requestName, String emptyName) {
+    /** Reads an ad request's answer as the server's "no ads" answer instead. */
+    private static void emptyAdAnswers() {
+        emptyAnswer(ClassNames.TL_MESSAGES_GET_SPONSORED_MESSAGES, TLConstructor.MESSAGES_GET_SPONSORED_MESSAGES,
+                ClassNames.TL_MESSAGES_SPONSORED_MESSAGES_EMPTY);
+        emptyAnswer(ClassNames.TL_CONTACTS_GET_SPONSORED_PEERS, TLConstructor.CONTACTS_GET_SPONSORED_PEERS,
+                ClassNames.TL_CONTACTS_SPONSORED_PEERS_EMPTY);
+    }
+
+    private static void emptyAnswer(String requestName, int requestConstructor, String emptyName) {
         Class<?> request = ClassLoad.getClass(requestName);
         final Class<?> empty = ClassLoad.getClass(emptyName);
         Method read = request == null || empty == null ? null : answerReader(request);
@@ -150,7 +166,8 @@ public class AdBlock {
             @Override
             protected void afterMethod(MethodHookParam param) throws Throwable {
                 Object answer = param.getResult();
-                if (answer != null && !empty.isInstance(answer) && enabled()) {
+                if (answer != null && !empty.isInstance(answer) && enabled()
+                        && TLConstructor.is(param.thisObject, requestName, requestConstructor)) {
                     // The caller handles it like any answer without ads: it shows none and moves on.
                     param.setResult(create != null ? create.newInstance() : XReflect.allocateInstance(empty));
                 }
