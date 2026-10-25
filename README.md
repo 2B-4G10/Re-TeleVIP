@@ -151,7 +151,7 @@ A release that breaks something opens an issue.
 ## 🧪 Tested on
 
 Every release is tried on Android emulators with each root manager and Vector, in every client above.<br>
-Android 13 to 16 were checked for 1.2. 1.3's new features were tried on Android 14 with Nekogram 12.10.5 and on Android 17 with Telegram 13.1:
+Android 13 to 16 were checked for 1.2. 1.4 was tried on Android 14 with Telegram 13.1 and Nekogram 13.0.3 using two accounts:
 
 <table>
 <tr>
@@ -168,7 +168,7 @@ Android 13 to 16 were checked for 1.2. 1.3's new features were tried on Android 
     <img src=".github/assets/root/bakasu.png" width="36" height="36" alt="BakaSU" title="BakaSU">&nbsp;
     <img src=".github/assets/root/apatch.png" width="36" height="36" alt="APatch" title="APatch">
   </td>
-  <td><sub>Works with Magisk 31.0+ and a current Vector build. 1.3 was tried here with Telegram 13.1; the other root managers are expected to work as on Android 16.</sub></td>
+  <td><sub>Works with Magisk 31.0+ and a current Vector build. 1.3 was tried here with Telegram 13.1 and Cherrygram; the other root managers are expected to work as on Android 16.</sub></td>
 </tr>
 <tr>
   <td align="center"><b>16</b></td>
