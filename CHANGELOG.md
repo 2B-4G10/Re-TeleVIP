@@ -73,7 +73,7 @@
   saying what it does, in English, Arabic, Persian and Chinese. "Restart required" sits on its own
   line. Your saved settings are kept.
 - **Join the Re: TeleVIP group.** The developer channel button is replaced by the new group,
-  [t.me/Re_TeleVIP](https://t.me/Re_TeleVIP), shown with the app's logo. The join prompt points
+  [t.me/Revived_TeleVIP](https://t.me/Revived_TeleVIP), shown with the app's logo. The join prompt points
   there too.
 
 ## 1.1.9 — no more broken hooks on Nagram, Nekogram and Nagram X
