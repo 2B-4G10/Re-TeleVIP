@@ -52,10 +52,20 @@ public class EditOnlineTextView {
                                             }
 
                                             if (ConfigManager.showUserID != null && ConfigManager.showUserID.isEnable()) {
-                                                SimpleTextView simpleTextView2 = new SimpleTextView(onlineTextViewArray[3]);
+                                                // The status line: [3] in builds before Telegram 13.1, where it shows
+                                                // the status; from 13.1 [3] is an empty overlay on top of [1].
+                                                SimpleTextView overlay = new SimpleTextView(onlineTextViewArray[3]);
+                                                CharSequence shown = overlay.getSimpleTextView() != null ? overlay.getText() : null;
+                                                boolean statusInOverlay = shown != null && shown.length() > 0
+                                                        && !shown.toString().trim().startsWith("ID: ");
+                                                final SimpleTextView simpleTextView2 = statusInOverlay || onlineTextViewArray[1] == null
+                                                        ? overlay : new SimpleTextView(onlineTextViewArray[1]);
                                                 if (simpleTextView2.getSimpleTextView() != null) {
 
                                                     CharSequence oldText = simpleTextView2.getText();
+                                                    String id = String.valueOf(getID(profileActivity));
+                                                    // Already added: the client does not always set the text again.
+                                                    if (oldText != null && oldText.toString().contains("ID: " + id)) return;
 
                                                     SpannableStringBuilder sb = new SpannableStringBuilder();
                                                     sb.append("\u200E");
@@ -65,7 +75,6 @@ public class EditOnlineTextView {
                                                     sb.append("\n");
 
                                                     int start = sb.length();
-                                                    String id = String.valueOf(getID(profileActivity));
                                                     sb.append("ID: ").append(id);
 
                                                     sb.setSpan(new RelativeSizeSpan(1.0f), start, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
