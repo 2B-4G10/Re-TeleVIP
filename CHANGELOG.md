@@ -1,38 +1,34 @@
 # Changelog
 
-## Unreleased — update check
+## 1.4 — a big clean-up: fixes from your reports, privacy, five languages and a new look
 
-- **Re: TeleVIP tells you when a new version is out.** Once a day it asks GitHub for the latest
-  release. When there's a newer one, it shows what's new with a **Download** button that opens
-  the release page, plus **Later** and **Skip this version**. **Check for updates** in the
-  settings looks right away and shows the version you have.
-- **What the check sends.** It's the only connection Re: TeleVIP makes of its own: a plain
-  request to GitHub for the latest release, with nothing about you, your account or your phone.
-  GitHub sees your IP address, as with any website. If it can't connect, it stays quiet and
-  tries again the next day. Turn it off any time with **Tell me about new versions** under
-  Other features.
+Thank you to everyone who reported bugs in the group. Every report was tried on real clients with two accounts, and these are the fixes.
 
-## Unreleased — privacy and security
+**Fixed**
 
-- **Ghost Mode tells you when it can't work.** If an app update moves what Ghost Mode relies
-  on, Re: TeleVIP now says which options are affected, when the app starts and when you open
-  its settings, instead of leaving the switches on while read receipts, typing or online status
-  are sent as normal.
-- **Ghost Mode no longer lets an occasional request slip through.** With Mark read after send
-  on, a typing, online or read request sent at the same moment could go out unhidden.
-- **Edit histories stay with their own message.** A message could show "edits" that came from
-  another chat, or from another of your accounts. Histories are now kept per account and per
-  chat. Histories saved by older versions are cleared once, since they can't be sorted out.
-- **Clear saved data.** A new button under Messages deletes the edit histories and the list of
-  kept self-destructing media stored on your phone.
-- **Saving secret media is more careful.** Re: TeleVIP tells you which folder it saved to, and
-  that other apps with photo access can see it there. On versions where it can't tell which
-  file the media is, it now saves nothing rather than risk saving a different chat's media. A
-  save that fails no longer leaves an empty item in the gallery.
-- **Safer releases.** Every build step is pinned and checked, and the signing key is only
-  handed to the step that signs the release, so a compromised build tool can't take it.
-  Releases now come with the signed APK only. Two unused libraries were removed from the
-  module.
+- **Ghost Mode works again after a restart.** With Hide seen as the only Ghost Mode option on, nothing was hidden after the app restarted, and switching it on did nothing until the next restart.
+- **No more "post was removed" on Nekogram.** With Hide seen on, Nekogram 13 couldn't open linked posts. Read receipts stay hidden.
+- **Mentions clear once you've seen them.** With Hide seen on, the "@" mark came back every time you opened the chat.
+- **Downloads are no longer slowed down.** With Local Premium or Faster downloads on, accounts without real Telegram Premium downloaded slower, because Telegram limits accounts that ask for more connections than they're allowed. Downloads now run at your account's full speed.
+- **Secret chats get Save and Delete for both** in the media viewer too. And **Mark as seen** now really tells the sender, even with Hide seen on.
+- **Save works with Prevent media off.** The media then expires as it was sent, and you can still keep a copy. The message after saving says which folder it went to.
+- **Edits history keeps channel posts' edits** too, not only people's.
+- **Show user ID shows the whole ID** on Telegram 13.1, where it was cut off.
+- **The calendar is out of beta.** Hijri and Persian dates were checked in light and dark mode.
+- **Removed a hidden leftover from the original fork:** long-pressing a settings row started an internet radio stream and showed a dialog about it.
+
+**Privacy**
+
+- Ghost Mode now tells you if an option can't work on your client, instead of failing silently.
+- **Clear saved data** deletes the saved edit histories and the list of kept secret media in one tap.
+- Edit histories are kept per account and chat. Older saved histories are cleared once by this update.
+
+**New**
+
+- **Five languages:** English, فارسی, Русский, العربية and 简体中文. Re: TeleVIP follows your client's language, or pick one under **Language**.
+- **Update check:** **Check for updates** in settings, and a daily check you can turn off. It only asks GitHub for the latest release.
+- **A new look** for the settings, and a **Support Re: TeleVIP** card if you'd like to help on Patreon.
+- **New Telegram channel:** [t.me/Revived_TeleVIP](https://t.me/Revived_TeleVIP). Ask for help in its comments.
 
 ## 1.3 — Graph Messenger, save secret media, and chats that load with Ghost Mode
 
