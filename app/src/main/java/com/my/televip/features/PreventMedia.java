@@ -111,7 +111,7 @@ public class PreventMedia {
                                             for (int a = messages.size() - 1; a >= 0; a--) {
                                                 TLRPC.Message message = new TLRPC.Message(messages.get(a));
                                                 int mid = message.getID();
-                                                if (KeptSecretMedia.containsMid(mid) && KeptSecretMedia.contains(dialogIdOf(message), mid)) {
+                                                if (KeptSecretMedia.containsMid(mid) && KeptSecretMedia.contains(KeptSecretMedia.accountOf(param.thisObject), dialogIdOf(message), mid)) {
                                                     messages.remove(a);
                                                 }
                                             }
@@ -212,7 +212,7 @@ public class PreventMedia {
             protected void beforeMethod(MethodHookParam param) {
                 if (ConfigManager.preventMedia.isEnable() && Boolean.TRUE.equals(param.args[5])) {
                     param.args[5] = false;
-                    KeptSecretMedia.add((long) param.args[0], (int) param.args[1]);
+                    KeptSecretMedia.add(KeptSecretMedia.accountOf(param.thisObject), (long) param.args[0], (int) param.args[1]);
                 }
             }
         });

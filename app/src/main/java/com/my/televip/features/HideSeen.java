@@ -29,6 +29,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -267,7 +269,19 @@ public class HideSeen {
         });
     }
 
-    public static boolean isReadMessages = false;
+    /**
+     * The read requests Mark read after send makes itself, which Ghost Mode must let through.
+     * Told apart by identity: a flag that let "the next request" through let whatever request
+     * another thread sent first skip Ghost Mode (a typing or online request, or another chat's
+     * read), and left ours to be blocked.
+     */
+    private static final Set<Object> ownReads =
+            Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
+
+    /** Whether {@code request} is one of ours; each is let through once. */
+    public static boolean isOwnRead(Object request) {
+        return !ownReads.isEmpty() && ownReads.remove(request);
+    }
 
     public static void markReadOnServer(int messageId, TLRPC.InputPeer peer) {
         try {
@@ -303,7 +317,7 @@ public class HideSeen {
                 req = request.getTL_messages_readHistory();
             }
 
-            isReadMessages = true;
+            ownReads.add(req);
             getConnectionsManager().sendRequest(req, RequestDelegate.run((response, error) -> {
                 if (error == null) {
                     if (ClassLoad.getClass(ClassNames.TL_MESSAGES_AFFECTED).isInstance(response)) {

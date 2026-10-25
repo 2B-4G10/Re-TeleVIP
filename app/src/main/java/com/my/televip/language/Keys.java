@@ -114,7 +114,13 @@ public class Keys {
     public static final String Save = "Save";
     public static final String SecretMediaMarkSeen = "SecretMediaMarkSeen";
     public static final String SecretMediaMarkedSeen = "SecretMediaMarkedSeen";
-    public static final String SecretMediaSaved = "SecretMediaSaved";
     public static final String SecretMediaSaveFailed = "SecretMediaSaveFailed";
     public static final String SecretMediaNotDownloaded = "SecretMediaNotDownloaded";
+    public static final String GhostModeNotWorking = "GhostModeNotWorking";
+    public static final String ClearSavedData = "ClearSavedData";
+    public static final String ClearSavedDataTitle = "ClearSavedDataTitle";
+    public static final String ClearSavedDataMessage = "ClearSavedDataMessage";
+    public static final String SavedDataCleared = "SavedDataCleared";
+    public static final String SecretMediaSavedTo = "SecretMediaSavedTo";
+    public static final String SecretMediaNotFound = "SecretMediaNotFound";
 }
