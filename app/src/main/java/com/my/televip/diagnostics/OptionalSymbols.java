@@ -31,6 +31,10 @@ public final class OptionalSymbols {
         r.put("org.telegram.ui.SettingsActivity$SettingCell", "only paints the app icon on TeleVip's row");
         r.put("StoriesController#hasStories", "inlined by R8 in some builds (Telegram 13.1); hasStories(long) still"
                 + " hides each chat's stories");
+        r.put("FileLoadOperation#startSJZ", "Nekogram 13 moves the part that reads isPremium into startConnections,"
+                + " which is hooked there instead");
+        r.put("FileLoadOperation#startConnections", "only in builds that split it out of start(stream, offset, preload),"
+                + " which is hooked otherwise");
         r.put("MessagesController#markMessageContentAsRead", "only lets mentions clear with Hide seen on; reads"
                 + " stay hidden without it");
         r.put("SecretMediaViewer#openMedia", "the old secret media viewer; ChatActivity's hooks cover current builds");
