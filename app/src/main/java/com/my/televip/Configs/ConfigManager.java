@@ -272,6 +272,11 @@ public class ConfigManager {
 
         items.add(shadows);
 
+        // Last, on a card of its own.
+        items.add(new ConfigItem(ConfigItem.TEXT, Keys.Support));
+
+        items.add(shadows);
+
     }
 
     public static List<ConfigItem> getItems() {

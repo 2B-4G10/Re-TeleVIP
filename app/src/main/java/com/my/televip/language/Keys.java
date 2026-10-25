@@ -17,6 +17,7 @@ public class Keys {
     public static final String EnableSavingStories = "EnableSavingStories";
     public static final String GhostModeSettings = "GhostModeSettings";
     public static final String TeleVipGroup = "TeleVipGroup";
+    public static final String Support = "Support";
     public static final String HideOnline = "HideOnline";
     public static final String PreventMedia = "PreventMedia";
     public static final String HidePhone = "HidePhone";
