@@ -108,7 +108,6 @@
   "Delete": "Delete",
   "SecretMediaMarkSeen": "Mark as seen",
   "SecretMediaMarkedSeen": "The sender now sees it as opened",
-  "SecretMediaSaved": "Saved to your gallery",
   "SecretMediaSaveFailed": "Couldn't save it",
   "SecretMediaNotDownloaded": "Let it finish loading first",
   "TeleVipGroup": "Join the Re: TeleVIP group",
@@ -138,5 +137,13 @@
   "DisableNumberRoundingDesc": "Shows exact counts, for example 5300 instead of 5.3K",
   "HideUpdateAppDesc": "Hides the client's prompts to update the app",
   "FixTLErrorDesc": "Hides the 'TL error' pop-up the client sometimes shows",
-  "RestartAppDesc": "Applies the settings marked 'Restart required'"
+  "RestartAppDesc": "Applies the settings marked 'Restart required'",
+  "GhostModeNotWorking": "Ghost Mode can't work on this version of the app: %s. Until Re: TeleVIP is updated for it, these are sent as normal. Check for an update or tell us in the group.",
+  "ClearSavedData": "Clear saved data",
+  "ClearSavedDataDesc": "Deletes the edit histories and the list of kept self-destructing media stored on this phone",
+  "ClearSavedDataTitle": "Clear saved data?",
+  "ClearSavedDataMessage": "The old versions of edited messages and the list of kept self-destructing media will be deleted from this phone. Deleted messages you kept stay in their chats; delete them there like any message.",
+  "SavedDataCleared": "Saved data cleared",
+  "SecretMediaSavedTo": "Saved to %s. Other apps with access to your photos can see it.",
+  "SecretMediaNotFound": "Couldn't tell which file this is on this version of the app, so nothing was saved"
 }
