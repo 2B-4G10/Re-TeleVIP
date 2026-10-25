@@ -64,7 +64,12 @@ public class ExpandableTextCheckCell extends LinearLayout {
             LinearLayout row = new LinearLayout(context);
             row.setOrientation(HORIZONTAL);
             row.setBackgroundResource(resIdRow);
-            row.setPadding(dp(), 0, 0, 0);
+            // Indented on the side the text starts.
+            if (Translator.isRTL()) {
+                row.setPadding(0, 0, dp(), 0);
+            } else {
+                row.setPadding(dp(), 0, 0, 0);
+            }
             row.addView(textCheckCell1.getView(),
                     new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 

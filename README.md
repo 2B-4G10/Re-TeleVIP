@@ -60,6 +60,7 @@
 </table>
 
 <sub>…and more in <b>Re: TeleVIP Settings 🛸</b>, at the top of the client's own <b>Settings</b>.</sub>
+<br><sub>In English, فارسی, Русский, العربية and 简体中文: it follows the client's language, or pick one under <b>Language</b>.</sub>
 
 <br>
 

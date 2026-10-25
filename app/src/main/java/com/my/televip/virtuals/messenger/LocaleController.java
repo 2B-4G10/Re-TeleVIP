@@ -24,4 +24,8 @@ public class LocaleController {
         return (boolean) XReflect.getStaticBooleanField(ClassLoad.getClass(ClassNames.LOCALE_CONTROLLER), AutomationResolver.resolve("LocaleController", "isRTL", AutomationResolver.ResolverType.Field));
     }
 
+    public static void setRTL(boolean rtl) {
+        XReflect.setStaticBooleanField(ClassLoad.getClass(ClassNames.LOCALE_CONTROLLER), AutomationResolver.resolve("LocaleController", "isRTL", AutomationResolver.ResolverType.Field), rtl);
+    }
+
 }
