@@ -138,5 +138,8 @@
   "DisableNumberRoundingDesc": "Shows exact counts, for example 5300 instead of 5.3K",
   "HideUpdateAppDesc": "Hides the client's prompts to update the app",
   "FixTLErrorDesc": "Hides the 'TL error' pop-up the client sometimes shows",
-  "RestartAppDesc": "Applies the settings marked 'Restart required'"
+  "RestartAppDesc": "Applies the settings marked 'Restart required'",
+  "Language": "Language",
+  "LanguageDesc": "For Re: TeleVIP's settings and menus",
+  "LanguageSameAsApp": "Same as app"
 }

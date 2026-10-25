@@ -96,6 +96,7 @@ public class ConfigManager {
     public static ConfigItem fixTLError;
 
     // Button
+    public static ConfigItem btnLanguage;
     public static ConfigItem btnChannel;
     public static ConfigItem btnRestartApp;
 
@@ -254,7 +255,10 @@ public class ConfigManager {
 
         items.add(shadows);
 
-        // The invite and restart buttons share a card.
+        // The language, invite and restart buttons share a card.
+        btnLanguage = new ConfigItem(ConfigItem.TEXT, Keys.Language);
+        items.add(btnLanguage);
+
         btnChannel = new ConfigItem(ConfigItem.TEXT, Keys.TeleVipGroup);
         items.add(btnChannel);
 

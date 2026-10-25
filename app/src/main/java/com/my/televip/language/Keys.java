@@ -117,4 +117,8 @@ public class Keys {
     public static final String SecretMediaSaved = "SecretMediaSaved";
     public static final String SecretMediaSaveFailed = "SecretMediaSaveFailed";
     public static final String SecretMediaNotDownloaded = "SecretMediaNotDownloaded";
+    public static final String Language = "Language";
+    public static final String LanguageDesc = "LanguageDesc";
+    public static final String LanguageSameAsApp = "LanguageSameAsApp";
+
 }
