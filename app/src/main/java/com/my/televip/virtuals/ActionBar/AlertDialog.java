@@ -13,7 +13,9 @@ import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
+import com.my.televip.language.Translator;
 import com.my.televip.logging.Logger;
 import com.my.televip.virtuals.Theme;
 
@@ -130,15 +132,40 @@ public class AlertDialog {
                 background.setColor(Theme.getBackgroundWhiteOrBlueColor());
                 background.setCornerRadius(dp(14));
                 window.setBackgroundDrawable(new InsetDrawable(background, dp(16)));
+                // The dialog takes its direction from the client's locale; its buttons and texts
+                // follow Re: TeleVIP's language instead, which may read the other way. Not on the
+                // window's root view: Android sets that one's direction itself when it lays it out.
+                View content = window.findViewById(android.R.id.content);
+                if (content != null) {
+                    content.setLayoutDirection(Translator.isRTL() ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
+                }
             }
             int accent = Theme.getTextBlueColor();
             for (int which : new int[]{DialogInterface.BUTTON_POSITIVE, DialogInterface.BUTTON_NEGATIVE, DialogInterface.BUTTON_NEUTRAL}) {
                 Button button = dialog.getButton(which);
                 if (button != null) button.setTextColor(accent);
             }
+            mirrorButtons(dialog.getButton(DialogInterface.BUTTON_POSITIVE));
         } catch (Throwable t) {
             Logger.e(t);
         }
+    }
+
+    /**
+     * Clients that don't declare RTL support (Telegram) lay every view out left to right, whatever
+     * direction it is given, so the button row is turned around by hand when it reads the wrong way.
+     */
+    private static void mirrorButtons(Button positive) {
+        if (positive == null || !(positive.getParent() instanceof LinearLayout)) return;
+        LinearLayout row = (LinearLayout) positive.getParent();
+        boolean rtl = Translator.isRTL();
+        if (row.getOrientation() != LinearLayout.HORIZONTAL
+                || (row.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) == rtl) return;
+        int count = row.getChildCount();
+        View[] children = new View[count];
+        for (int i = 0; i < count; i++) children[i] = row.getChildAt(i);
+        row.removeAllViews();
+        for (int i = count - 1; i >= 0; i--) row.addView(children[i]);
     }
 
     private static DialogInterface.OnClickListener listener(Object click) {
