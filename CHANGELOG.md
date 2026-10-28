@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.5 — read times, stories off for real, and group edits that stick
+
+**New**
+
+- **Show read time.** A new switch under **Messages**. In private chats, each of your messages that was read shows when, like "Read 12:41", with the day if it was read on another day. Checking this never marks anything as read, so Ghost Mode keeps working. Telegram only tells for the last 7 days, and not when either of you hides read times; those messages keep their usual ticks.
+- **Support goes straight to Patreon's membership page**, where you can pick a tier: Buy me a Coffee? ($5), Big Fan! ($10) or Super Fan!! ($25).
+- **Made in Saudi 🇸🇦 By: i_2B_4G10🚀** now sits at the bottom of the settings.
+
+**Fixed**
+
+- **Disable stories hides the stories row again on Telegram 13.1.** The row at the top of the chat list stayed visible on that version.
+- **Edits history works in groups**, including edits made while the group wasn't open or your phone was offline. If a message is edited several times while you're offline, Telegram only delivers the final text, so the versions in between can't be kept.
+- **Arabic and Persian dialogs read right to left.** The buttons in **Clear saved data** and other dialogs are now in the right order when Re: TeleVIP is in Arabic or Persian.
+
 ## 1.4 — a big clean-up: fixes from your reports, privacy, five languages and a new look
 
 Thank you to everyone who reported bugs in the group. Every report was tried on real clients with two accounts, and these are the fixes.
