@@ -195,7 +195,11 @@ public class SaveEditsHistory {
                                             else if (messagesObject == null && messagesClass != null && messagesClass.isInstance(arg)) messagesObject = arg;
                                         }
 
-                                        if (load_type != null && load_type == -2) {
+                                        // -2 is an edit as it happens. Any other load can bring a message
+                                        // edited while the chat was not open (a busy group gets no live
+                                        // updates then), so those are checked too, edited ones only.
+                                        if (load_type != null) {
+                                            final boolean editsOnly = load_type != -2;
                                             Object messagesStorageObject = param.thisObject;
 
                                             if (messagesObject != null) {
@@ -204,7 +208,7 @@ public class SaveEditsHistory {
                                                 // thread, where it raced the client's own database work.
                                                 final Object edited = messagesObject;
                                                 MessagesStorage messagesStorage = new MessagesStorage(messagesStorageObject);
-                                                messagesStorage.getStorageQueue().postRunnable(() -> saveOldTexts(messagesStorageObject, edited));
+                                                messagesStorage.getStorageQueue().postRunnable(() -> saveOldTexts(messagesStorageObject, edited, editsOnly));
                                             }
                                         }
                                     }
@@ -217,8 +221,14 @@ public class SaveEditsHistory {
         }
     }
 
-    /** Keeps the stored text of each edited message that the edit changes. */
-    private static void saveOldTexts(Object messagesStorageObject, Object messagesObject) {
+    /** TL_message's "edit_date" flag: the message was edited at some point. */
+    private static final int MESSAGE_EDITED = 1 << 15;
+
+    /**
+     * Keeps the stored text of each message whose new copy changes it. With {@code editsOnly},
+     * only messages marked as edited are looked up, so loading a chat's history stays cheap.
+     */
+    private static void saveOldTexts(Object messagesStorageObject, Object messagesObject, boolean editsOnly) {
         try {
             MessagesStorage messagesStorage = new MessagesStorage(messagesStorageObject);
             TLRPC.messages_Messages messages = new TLRPC.messages_Messages(messagesObject);
@@ -227,6 +237,7 @@ public class SaveEditsHistory {
             ArrayList<Object> list = messages.getMessages();
             for (int a = 0, count = list.size(); a < count; a++) {
                 TLRPC.Message message = new TLRPC.Message(list.get(a));
+                if (editsOnly && (message.getFlags() & MESSAGE_EDITED) == 0) continue;
                 SQLiteCursor cursor = null;
                 try {
                     cursor = sqLiteDatabase.queryFinalized(String.format(Locale.US, "SELECT data FROM messages_v2 WHERE mid = %d AND uid = %d", message.getID(), MessageObject.getDialogId(message)), new Object[]{});

@@ -10,6 +10,7 @@ import com.my.televip.Class.ClassLoad;
 import com.my.televip.Class.ClassNames;
 import com.my.televip.Configs.ConfigManager;
 import com.my.televip.base.AbstractMethodHook;
+import com.my.televip.features.ReadTime;
 import com.my.televip.features.ShowDeletedMessages;
 import com.my.televip.hooks.HMethod;
 import com.my.televip.language.Keys;
@@ -37,8 +38,9 @@ public class ChatMessageCell {
                         protected void afterMethod(MethodHookParam param) {
                             boolean showDeleted = ConfigManager.showDeletedMessages != null && ConfigManager.showDeletedMessages.isEnable();
                             boolean showMessageId = ConfigManager.showMessageId != null && ConfigManager.showMessageId.isEnable();
+                            boolean showReadTime = ConfigManager.showReadTime != null && ConfigManager.showReadTime.isEnable();
 
-                            if (showDeleted || showMessageId) {
+                            if (showDeleted || showMessageId || showReadTime) {
                                 try {
                                     MessageObject messageObject = new MessageObject(param.args[0]);
 
@@ -47,6 +49,11 @@ public class ChatMessageCell {
                                     TLRPC.Message owner = messageObject.getMessageOwner();
                                     if (owner == null)
                                         return;
+
+                                    if (showReadTime) {
+                                        String read = ReadTime.label(messageObject.getMessageObject(), owner);
+                                        if (read != null) setSpannableStringBuilderText(read + " \u00B7", param.thisObject, false);
+                                    }
 
                                     if (showMessageId) {
                                         if (owner.getID() != 0) {

@@ -42,6 +42,8 @@ public class Keys {
     public static final String OtherFeaturesSettings = "OtherFeaturesSettings";
     public static final String FixTLError = "FixTLError";
     public static final String ShowMessageID = "ShowMessageID";
+    public static final String ShowReadTime = "ShowReadTime";
+    public static final String ReadAt = "ReadAt";
     public static final String DownloadSpeed = "DownloadSpeed";
     public static final String ConnectionsSettings = "ConnectionsSettings";
     public static final String Message = "Message";
