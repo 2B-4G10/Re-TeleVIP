@@ -9,6 +9,10 @@ name: Auto-merge
 # merged. Dependabot's updates are squashed; everything else gets a merge commit made as the
 # owner. A merge that changes versionName starts Release, since a push made with this workflow's
 # token starts no workflows on its own.
+#
+# The history stays free of AI traces: a pull request whose commits carry an AI author, committer
+# or co-author line is not merged, AI footers are taken out of its description, and the merge
+# message and the deleted branch leave no branch name behind.
 on:
   workflow_run:
     workflows: [Build APK, Client watch]
@@ -91,6 +95,41 @@ jobs:
           echo "branch=$(jq -r .headRefName pr.json)" >> "$GITHUB_OUTPUT"
           echo "title=$(jq -r .title pr.json)" >> "$GITHUB_OUTPUT"
 
+      - name: Check the commits for AI traces
+        id: clean
+        if: steps.pr.outputs.number != ''
+        env:
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          traces=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/commits?per_page=100" --paginate --jq '.[]
+              | select([.commit.author.email, .commit.committer.email, .commit.message]
+                  | map(test("(?i)anthropic|co-authored-by:[^\\n]*claude|claude-session:")) | any)
+              | .sha[0:7] + " " + (.commit.message | split("\n")[0])')
+          if [ -n "$traces" ]; then
+            echo "::error::#$PR has commits with an AI author, committer or co-author line. Re-author them as the owner and drop the trailers, then push again:"
+            echo "$traces"
+            exit 1
+          fi
+          gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json body --jq .body > body.md
+          python3 - body.md <<'PY'
+          import re, sys
+          path = sys.argv[1]
+          body = open(path).read()
+          lines = [l for l in body.splitlines()
+                   if not re.search(r"(?i)generated (with|by) \[claude code\]|claude\.ai/code/session_", l)]
+          lines = [re.sub(r"^(_Requested by \*\*[^*]+\*\*) · \[project thread\]\([^)]*\)_$", r"\1_", l) for l in lines]
+          while lines and lines[-1].strip() in ("", "---"):
+              lines.pop()
+          cleaned = "\n".join(lines) + "\n"
+          if cleaned.strip() != body.strip():
+              open(path, "w").write(cleaned)
+              open("cleaned", "w").close()
+          PY
+          if [ -e cleaned ]; then
+            gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --body-file body.md
+            echo "Took the AI footer out of #$PR's description."
+          fi
+
       - name: Squash Dependabot's update
         if: steps.pr.outputs.author == 'app/dependabot'
         run: gh pr merge "${{ steps.pr.outputs.number }}" --repo "$GITHUB_REPOSITORY" --squash --delete-branch
@@ -117,7 +156,7 @@ jobs:
           before=$(grep -m1 'versionName' app/build.gradle | cut -d'"' -f2)
           # Something may have landed on main in the meantime: merge onto it and try again.
           for attempt in 1 2 3; do
-            if ! git merge -q --no-ff "$HEAD_SHA" -m "Merge pull request #$PR from $GITHUB_REPOSITORY_OWNER/$BRANCH" -m "$TITLE"; then
+            if ! git merge -q --no-ff "$HEAD_SHA" -m "Merge pull request #$PR" -m "$TITLE"; then
               git merge --abort || true
               echo "::error::#$PR does not merge cleanly into main. Update its branch and it merges once Build APK passes."
               exit 1
@@ -129,6 +168,7 @@ jobs:
           done
           after=$(grep -m1 'versionName' app/build.gradle | cut -d'"' -f2)
           echo "Merged #$PR into main."
+          git push -q origin --delete "$BRANCH" || echo "Branch $BRANCH was already gone."
           [ "$before" = "$after" ] || echo "release=$after" >> "$GITHUB_OUTPUT"
 
       - name: Start Release
