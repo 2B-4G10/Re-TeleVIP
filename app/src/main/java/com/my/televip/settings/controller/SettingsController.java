@@ -25,7 +25,7 @@ public class SettingsController {
     /** The Re: TeleVIP group, opened from the settings' invite row and the join prompt. */
     public static final String GROUP_LINK = "t.me/Revived_TeleVIP";
     public static final String GROUP_URL = "https://" + GROUP_LINK;
-    public static final String SUPPORT_URL = "https://www.patreon.com/Dossary";
+    public static final String SUPPORT_URL = "https://www.patreon.com/Dossary/membership";
 
     public FrameLayout settingsView;
     private final Context context;
