@@ -21,6 +21,7 @@ public class ClassNames {
     public static final String STORY_ITEM_HOLDER = "org.telegram.ui.Stories.PeerStoriesView$StoryItemHolder";
     public static final String TLRPC_USER = "org.telegram.tgnet.TLRPC$User";
     public static final String STORIES_CONTROLLER = "org.telegram.ui.Stories.StoriesController";
+    public static final String TL_STORIES_PEER_STORIES = "org.telegram.tgnet.tl.TL_stories$PeerStories";
     public static final String FILE_LOAD_OPERATION = "org.telegram.messenger.FileLoadOperation";
     public static final String CONNECTIONS_MANAGER = "org.telegram.tgnet.ConnectionsManager";
     public static final String TL_ACCOUNT_UPDATE_STATUS = "org.telegram.tgnet.tl.TL_account$updateStatus";
