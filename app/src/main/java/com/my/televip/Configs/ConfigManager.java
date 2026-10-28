@@ -21,6 +21,7 @@ import com.my.televip.features.PreventMedia;
 import com.my.televip.features.RemovesContentSaving;
 import com.my.televip.features.SaveEditsHistory;
 import com.my.televip.features.SecretMediaSave;
+import com.my.televip.features.ReadTime;
 import com.my.televip.features.ShowDeletedMessages;
 import com.my.televip.features.TelePremium;
 import com.my.televip.features.TopicReactions;
@@ -45,6 +46,7 @@ public class ConfigManager {
 
     // GhostMode
     public static ConfigItem ghostModeSettings;
+    public static ConfigItem showReadTime;
     public static ConfigItem hideSeenPrivateChat;
     public static ConfigItem hideSeenChannel;
     public static ConfigItem hideSeen;
@@ -167,6 +169,14 @@ public class ConfigManager {
         if (!ClientChecker.check(ClientChecker.ClientType.NagramX)) {
             showMessageId = new ConfigItem(ConfigItem.SWITCH, Keys.ShowMessageID, ConfigPreferences.getBoolean(Keys.ShowMessageID), ChatMessageCell::init);
             items.add(showMessageId);
+        }
+
+        if (ReadTime.isSupported()) {
+            showReadTime = new ConfigItem(ConfigItem.SWITCH, Keys.ShowReadTime, ConfigPreferences.getBoolean(Keys.ShowReadTime), () -> {
+                ReadTime.init();
+                ChatMessageCell.init();
+            });
+            items.add(showReadTime);
         }
 
         saveEditsHistory = new ConfigItem(ConfigItem.SWITCH, Keys.SaveEditsHistory, ConfigPreferences.getBoolean(Keys.SaveEditsHistory), () -> SaveEditsHistory.init(context));
