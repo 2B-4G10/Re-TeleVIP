@@ -2,9 +2,12 @@ package com.my.televip.settings.ui;
 
 
 import android.content.Context;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.TextView;
 
 import com.my.televip.Class.ClassLoad;
 import com.my.televip.Class.ClassNames;
@@ -70,6 +73,7 @@ public class SettingsActivity {
             SettingsCells.prepare(context);
             // The client's switch rows take the direction of Re: TeleVIP's language.
             Translator.withTextDirection(() -> addRows(rows, settingsController));
+            rows.addView(createFooter(context), footerParams());
             View bottom = new View(context);
             rows.addView(bottom, new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, AndroidUtilities.dp(16)));
@@ -137,6 +141,26 @@ public class SettingsActivity {
         params.setMargins(AndroidUtilities.dp(12), AndroidUtilities.dp(12), AndroidUtilities.dp(12), 0);
         return params;
     }
+
+    /** The signature under the last card, the same in every language. */
+    private static TextView createFooter(Context context) {
+        TextView footer = new TextView(context);
+        footer.setText(FOOTER);
+        footer.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+        footer.setTextColor(Theme.getTextGrayColor());
+        footer.setGravity(Gravity.CENTER);
+        footer.setTextDirection(View.TEXT_DIRECTION_LTR);
+        return footer;
+    }
+
+    private static LinearLayout.LayoutParams footerParams() {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(AndroidUtilities.dp(16), AndroidUtilities.dp(24), AndroidUtilities.dp(16), AndroidUtilities.dp(8));
+        return params;
+    }
+
+    private static final String FOOTER = "Made in Saudi \uD83C\uDDF8\uD83C\uDDE6 By: i_2B_4G10\uD83D\uDE80";
 
     public SettingsActivity(Context context) {
         this.context = context;
