@@ -2,14 +2,13 @@ name: Download count
 
 # Adds up the release downloads here and in the Xposed Modules Repo mirror (where most installs come
 # from) and keeps the total in downloads.json on the badges branch, which the Downloads badge in the
-# README reads through shields.io. Runs every six hours and after each release; the branch holds a
+# README reads through shields.io. Runs every six hours and when a release is published; the branch holds a
 # single commit that is replaced each time, and only when the total changed.
 on:
   schedule:
     - cron: '17 */6 * * *'
-  workflow_run:
-    workflows: [Release]
-    types: [completed]
+  release:
+    types: [published, edited]
   workflow_dispatch:
 
 permissions:

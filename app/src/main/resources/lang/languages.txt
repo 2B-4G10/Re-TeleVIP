@@ -1,5 +1,0 @@
-en
-fa
-ru
-ar
-zh
