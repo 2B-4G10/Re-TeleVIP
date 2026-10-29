@@ -1,0 +1,68 @@
+name: Download count
+
+# Adds up the release downloads here and in the Xposed Modules Repo mirror (where most installs come
+# from) and keeps the total in downloads.json on the badges branch, which the Downloads badge in the
+# README reads through shields.io. Runs every six hours and when a release is published; the branch holds a
+# single commit that is replaced each time, and only when the total changed.
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  release:
+    types: [published, edited]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: download-count
+  cancel-in-progress: false
+
+jobs:
+  count:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MIRROR: Xposed-Modules-Repo/io.github.re_televip.televip
+    steps:
+      - name: Count the downloads
+        run: |
+          total=0
+          for repo in "$GITHUB_REPOSITORY" "$MIRROR"; do
+            n=$(gh api --paginate "repos/$repo/releases?per_page=100" \
+                --jq '[.[].assets[].download_count] | add // 0' | awk '{ s += $1 } END { print s + 0 }')
+            echo "$repo: $n" | tee -a "$GITHUB_STEP_SUMMARY"
+            total=$((total + n))
+          done
+          echo "Total: $total" | tee -a "$GITHUB_STEP_SUMMARY"
+          mkdir badge
+          TOTAL=$total python3 - <<'PY'
+          import json, os
+          n = int(os.environ["TOTAL"])
+          message = str(n)
+          for size, suffix in ((1_000_000, "M"), (1_000, "k")):
+              if n >= size:
+                  message = f"{n / size:.1f}".removesuffix(".0") + suffix
+                  break
+          badge = {"schemaVersion": 1, "label": "downloads", "message": message,
+                   "color": "2AABEE", "cacheSeconds": 3600}
+          open("badge/downloads.json", "w").write(json.dumps(badge, indent=2) + "\n")
+          PY
+          cat badge/downloads.json
+
+      - name: Publish to the badges branch
+        working-directory: badge
+        run: |
+          current=$(gh api "repos/$GITHUB_REPOSITORY/contents/downloads.json?ref=badges" \
+              --jq .content 2>/dev/null | base64 -d 2>/dev/null || true)
+          if [ "$current" = "$(cat downloads.json)" ]; then
+            echo "Unchanged."
+            exit 0
+          fi
+          git init -q -b badges
+          git config user.name "github-actions[bot]"
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add downloads.json
+          git commit -qm "Update the download count"
+          git push -qf "https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git" HEAD:badges
