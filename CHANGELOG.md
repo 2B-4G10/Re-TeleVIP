@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.2 — Downloads always at hand, user ID your way, and Bahasa Indonesia
+
+**New**
+
+- **Always show Downloads.** A new switch under **UI**. The Downloads button stays at the top of the chat list, even when nothing is downloading, so your files are one tap away. It still steps aside while you search. Restart the app after turning it on.
+- **Show user ID, your way.** **Show user ID** now has two options: **On my profile** and **On other profiles**. Turn on just the one you want. Whatever you had before carries over to both.
+- **Bahasa Indonesia.** Re: TeleVIP now speaks Indonesian. Pick it under **Language**, or it follows your app when the app is in Indonesian.
+
 ## 1.5.1 — fixes from your reports
 
 Thank you for the reports in the group.
