@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.5.1 — fixes from your reports
+
+Thank you for the reports in the group.
+
+**Fixed**
+
+- **Forwarding from chats that restrict saving content works.** With **Remove content-saving restrictions** on, these messages said "forwarded" but then failed with a red mark. They're now sent as your own copy: text and captions as new messages, and photos and files uploaded again from what's already on your phone. If a photo or file isn't downloaded yet, download it first.
+- **Turrit stops asking "Open Re: TeleVIP settings now?"** at every start and account switch once the Re: TeleVIP row is in its settings or side menu. The prompt also has a **Don't show again** button.
+- **Your own profile stays centred** on Telegram 13's new profile page with **Hide online** or **Show user ID** on, when it opens and after you scroll. **Show user ID** now shows your own ID there too.
+- **The Re: TeleVIP row in Forkgram Classic's side menu opens the settings again** (Forkgram Classic 13.0.2). Tapping it did nothing.
+
 ## 1.5 — read times, stories off for real, and group edits that stick
 
 **New**
