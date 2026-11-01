@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.5.3 — deleted messages that stay, a backup for them, and seconds on every message
+
+Thank you for the reports in the group.
+
+**New**
+
+- **Export and import deleted messages.** Two new rows under **Clear saved data**. **Export deleted messages** saves every message Show deleted messages kept, on all your accounts, to one file you choose. **Import deleted messages** puts them back, after a reinstall or on a new phone, into the account they came from. Choose **Merge** to keep what's already here, or **Overwrite** to let the file's messages replace the same ones here. Nothing else is deleted. Restart the app afterwards to see them.
+- **Show seconds.** A new switch under **Messages**: every message's time shows its seconds, like 12:41:07.
+- **Hide Language Suggestion.** On by default. The "Choose your language" pop-up no longer comes back each time you switch accounts.
+- **Say where a copy came from.** A new switch next to **Remove content-saving restrictions**, on by default. A message copied out of a chat that restricts forwarding ends with "Forwarded from" and the chat's name. Turn it off to send just the message.
+
+**Fixed**
+
+- **Deleted messages are kept for good.** They were lost when you came back to a busy group after a while (the app reloads such a group from scratch), when a chat had an auto-delete timer, and when the app's cache or local database was cleared. Messages already lost before this update can't be brought back. Deleting or clearing a chat yourself still removes them.
+- **Download Speed Boost works on every account**, not only on accounts with Telegram Premium. Thanks to TeleSpeed for the approach.
+- **Turrit translates quickly again with Local Premium on.**
+- **The Downloads button only moves while something downloads.** With **Always show Downloads** on, it now shows the full download sign, still, when nothing is downloading.
+- **Hidden stories stay hidden after the app restarts.** With **Disable stories** on, stories could come back in the top bar, where they couldn't be opened.
+- **Polls stay readable** with the deleted mark, message ID, read time or seconds on: the time moves to its own line instead of covering the votes.
+
+**Good to know**
+
+- **Re: TeleVIP now counts its active users.** Once a day it sends one anonymous message: a random ID made on your phone, the module version and the name of your Telegram app. Never your account, number, contacts or messages, and no IP address is kept. It only tells us how many people use Re: TeleVIP. Details are in the README under **What it sends**.
+
 ## 1.5.2 — Downloads always at hand, user ID your way, and Bahasa Indonesia
 
 **New**
