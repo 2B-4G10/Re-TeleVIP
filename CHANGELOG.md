@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.5.4 — Portuguese, group switches that work, and seconds on Nekogram
+## 1.5.4 (2 November 2026) — Portuguese, group switches that work, and seconds on Nekogram
 
 **New**
 
@@ -16,7 +16,7 @@
 - **Licence.** From this version Re: TeleVIP is © Faisal AlDossary, all rights reserved, and the source code is no longer attached to releases. Earlier versions keep their GPL-3.0 licence.
 - Large parts of the module were rewritten and tidied up. Everything works as before.
 
-## 1.5.3 — deleted messages that stay, a backup for them, and seconds on every message
+## 1.5.3 (1 November 2026) — deleted messages that stay, a backup for them, and seconds on every message
 
 Thank you for the reports in the group.
 
@@ -40,7 +40,7 @@ Thank you for the reports in the group.
 
 - **Re: TeleVIP now counts its active users.** Once a day it sends one anonymous message: a random ID made on your phone, the module version and the name of your Telegram app. Never your account, number, contacts or messages, and no IP address is kept. It only tells us how many people use Re: TeleVIP. Details are in the README under **What it sends**.
 
-## 1.5.2 — Downloads always at hand, user ID your way, and Bahasa Indonesia
+## 1.5.2 (30 October 2026) — Downloads always at hand, user ID your way, and Bahasa Indonesia
 
 **New**
 
@@ -48,7 +48,7 @@ Thank you for the reports in the group.
 - **Show user ID, your way.** **Show user ID** now has two options: **On my profile** and **On other profiles**. Turn on just the one you want. Whatever you had before carries over to both.
 - **Bahasa Indonesia.** Re: TeleVIP now speaks Indonesian. Pick it under **Language**, or it follows your app when the app is in Indonesian.
 
-## 1.5.1 — fixes from your reports
+## 1.5.1 (30 October 2026) — fixes from your reports
 
 Thank you for the reports in the group.
 
@@ -59,7 +59,7 @@ Thank you for the reports in the group.
 - **Your own profile stays centred** on Telegram 13's new profile page with **Hide online** or **Show user ID** on, when it opens and after you scroll. **Show user ID** now shows your own ID there too.
 - **The Re: TeleVIP row in Forkgram Classic's side menu opens the settings again** (Forkgram Classic 13.0.2). Tapping it did nothing.
 
-## 1.5 — read times, stories off for real, and group edits that stick
+## 1.5 (28 October 2026) — read times, stories off for real, and group edits that stick
 
 **New**
 
@@ -73,7 +73,7 @@ Thank you for the reports in the group.
 - **Edits history works in groups**, including edits made while the group wasn't open or your phone was offline. If a message is edited several times while you're offline, Telegram only delivers the final text, so the versions in between can't be kept.
 - **Arabic and Persian dialogs read right to left.** The buttons in **Clear saved data** and other dialogs are now in the right order when Re: TeleVIP is in Arabic or Persian.
 
-## 1.4 — a big clean-up: fixes from your reports, privacy, five languages and a new look
+## 1.4 (25 October 2026) — a big clean-up: fixes from your reports, privacy, five languages and a new look
 
 Thank you to everyone who reported bugs in the group. Every report was tried on real clients with two accounts, and these are the fixes.
 
@@ -88,6 +88,7 @@ Thank you to everyone who reported bugs in the group. Every report was tried on 
 - **Edits history keeps channel posts' edits** too, not only people's.
 - **Show user ID shows the whole ID** on Telegram 13.1, where it was cut off.
 - **The calendar is out of beta.** Hijri and Persian dates were checked in light and dark mode.
+- **Forum topics: the reactions mark clears** once you've seen the message that was reacted to.
 - **Removed a hidden leftover from the original fork:** long-pressing a settings row started an internet radio stream and showed a dialog about it.
 
 **Privacy**
@@ -103,7 +104,7 @@ Thank you to everyone who reported bugs in the group. Every report was tried on 
 - **A new look** for the settings, and a **Support Re: TeleVIP** card if you'd like to help on Patreon.
 - **New Telegram channel:** [t.me/Revived_TeleVIP](https://t.me/Revived_TeleVIP). Ask for help in its comments.
 
-## 1.3 — Graph Messenger, save secret media, and chats that load with Ghost Mode
+## 1.3 (21 October 2026) — Graph Messenger, save secret media, and chats that load with Ghost Mode
 
 - **You decide when the sender sees your secret media as opened.** With Prevent media on,
   opening a self-destructing photo or video tells the sender nothing. Tap **Mark as seen** in
@@ -123,7 +124,7 @@ Thank you to everyone who reported bugs in the group. Every report was tried on 
 - **Re: TeleVIP settings open every time.** After leaving the app with Back and opening it
   again, tapping the settings did nothing until the app was force stopped.
 
-## 1.2.2 — Nekogram 12.10.5, fair secret media, and smoother settings
+## 1.2.2 (21 October 2026) — Nekogram 12.10.5, fair secret media, and smoother settings
 
 - **Prevent media and Save secret media work on Nekogram 12.10.5.** Nekogram renamed part of
   the chat in that version, so tapping a photo no longer reached Re: TeleVIP. Newer Nekogram
@@ -140,12 +141,12 @@ Thank you to everyone who reported bugs in the group. Every report was tried on 
 - **Show deleted messages and Voice messages as music turn off right away**, without a
   restart. Save edits history and Show deleted messages are also gentler on the chat database.
 
-## 1.2.1 — no false "incompatible version" warning on Nekogram
+## 1.2.1 (20 October 2026) — no false "incompatible version" warning on Nekogram
 
 - **Fixed: Nekogram showed "Your Telegram client may be an incompatible version"** in the log
   with Prevent media on, after 1.2. Nothing was broken, and the warning is gone.
 
-## 1.2 — Ghost Mode fixed, tested on more phones, and no root needed
+## 1.2 (20 October 2026) — Ghost Mode fixed, tested on more phones, and no root needed
 
 - **Ghost Mode works again with Block ads on.** With both switched on, Ghost Mode quietly did
   nothing: chats were marked as read and others could see you typing and online. Now your
@@ -169,7 +170,7 @@ Thank you to everyone who reported bugs in the group. Every report was tried on 
   and Vector, in all 12 supported clients. The README shows which ones were tried on each
   Android version.
 
-## 1.1.10 — a clearer settings screen
+## 1.1.10 (20 October 2026) — a clearer settings screen
 
 - **Redesigned settings.** Each group (Ghost Mode, Stories, Messages, Connections, Media, UI and
   Other Features) is now its own card with an icon, and every option has a short line under it
@@ -179,351 +180,228 @@ Thank you to everyone who reported bugs in the group. Every report was tried on 
   [t.me/Revived_TeleVIP](https://t.me/Revived_TeleVIP), shown with the app's logo. The join prompt points
   there too.
 
-## 1.1.9 — no more broken hooks on Nagram, Nekogram and Nagram X
+## 1.1.9 (16 October 2026) — no more broken hooks on Nagram, Nekogram and Nagram X
 
-- **Fixed: Block Ads' second barrier did nothing on Nagram and Nekogram.** When an ad request
-  got through anyway, the module could not build the "no ads" answer to put in place of the
-  server's, because those builds strip its constructor (they never create it themselves). It is
-  now made without one, with its lists empty as usual.
-- **The hook health line no longer reports code a client removed on purpose as missing.** Nagram
-  X drops search ads (`contacts.getSponsoredPeers`), some Nagram builds drop
-  `MessagesController.getSponsoredMessages` and Nekogram drops the settings row's icon cell; the
-  module already covered each another way, but logged them as "missing" and "Your Telegram client
-  may be an incompatible version". They are now listed as "not in this build (fallback in use)",
-  with the reason, and a class that is not found is logged and counted once.
-- The list of what a build may lack now lives in the module itself, so the weekly client check
-  and the module's own report always agree. Checked on Telegram 13.0.3, Nekogram 13.0.2,
-  Cherrygram 11.3.0, Nagram 1253, Nagram X 1260 and Momogram 12.10.6: every hook resolves.
+- **Block Ads' second barrier works on Nagram and Nekogram.** When an ad request got through
+  anyway, Re: TeleVIP couldn't put its "no ads" answer in place of the server's on these
+  clients. Now it can, so those ads stay hidden too.
+- **No more false "incompatible version" warnings.** Nagram X, some Nagram builds and Nekogram
+  leave out a few parts of Telegram on purpose (like search ads). Re: TeleVIP already covered
+  each of them another way, but its log still called them missing. They're now listed as "not
+  in this build", with the reason.
+- The weekly client check and the module's own report now always agree. Checked on Telegram
+  13.0.3, Nekogram 13.0.2, Cherrygram 11.3.0, Nagram 1253, Nagram X 1260 and Momogram 12.10.6:
+  every feature finds what it needs.
 
-## 1.1.8 — Nekogram 13 and Nagram 1253
+## 1.1.8 (15 October 2026) — Nekogram 13 and Nagram 1253
 
-- **Fixed: Re: TeleVIP on Nekogram 13.0.2**, the first build on Telegram 13.0: secret media
-  saving, keeping messages forwardable, the voice-to-music switch and reading secret messages
-  could not find their code. Telegram 13 adds a table of every message type that misled the
-  module's lookup; it now skips it.
-- **Fixed: Re: TeleVIP on Nagram 1253** (12.10.6): its colours (dark theme check, message time
-  paint) were not found because Nagram now renames the theme class.
+- **Re: TeleVIP works on Nekogram 13.0.2**, the first Nekogram built on Telegram 13. Save secret
+  media, keeping messages forwardable, Voice messages as music and reading secret messages work
+  there again.
+- **Re: TeleVIP works on Nagram 1253** (12.10.6). Its colours, like the dark theme check and the
+  message time, are found again after Nagram renamed them.
 
-## 1.1.7 — weekly update
+## 1.1.7 (12 October 2026) — weekly update
 
-- Build: Bump gradle-wrapper from 9.8.0 to 9.8.1 in the gradle group (#5)
+- Updated the build tools.
 
-## 1.1.6 — the settings screen on every client, and Momogram
+## 1.1.6 (8 October 2026) — the settings screen on every client, and Momogram
 
-- **Fixed: Re: TeleVIP Settings could open empty**, showing only its title bar (reported on
-  Nagram X 12.9.2). The list was built on the client's own RecyclerView, which forks rename,
-  strip or change. It is now a plain scrolling list of the same rows, built directly, so it
-  depends on nothing the client may have changed; a row the client cannot build is left out
-  instead of blanking the whole screen. This also removes the separate settings adapter that
-  was injected into the client.
-- **Momogram 12.10.x: every feature works.** Momogram renames and reorders much of its code,
-  and looks its strings up by resource id, so Save secret media, Show deleted messages, edits
-  history and more found nothing to hook. Hide app update is no longer offered there: Momogram
-  updates itself through its own updater.
-- **Nagram X's "base" build** (`nu.gpu.nagramx`) is supported.
+- **Re: TeleVIP Settings no longer opens empty**, with only its title bar (reported on Nagram X
+  12.9.2). The screen is now a simple list built by Re: TeleVIP itself, so it no longer depends
+  on parts each client changes. A row a client can't show is left out instead of blanking the
+  whole screen.
+- **Momogram 12.10.x: every feature works.** Save secret media, Show deleted messages, edits
+  history and more found nothing to work with there before. Hide app update is no longer
+  offered on Momogram, because it updates itself through its own updater.
+- **Nagram X's "base" build is supported.**
 - The weekly client check now also covers Momogram and Nagram X base: ten clients, the last
   five releases of each.
 
-## 1.1.5 — the app is called Re: TeleVIP
+## 1.1.5 (8 October 2026) — the app is called Re: TeleVIP
 
 - **The module is now named "Re: TeleVIP"** in LSPosed / Vector and in Android's app list (it
-  was "TeleVip"), and as the title of the account-age dialog in profile menus. The README, here
-  and in the Xposed Modules Repo, uses the new name too. The package name and the APK's file
-  name are unchanged.
+  was "TeleVip"), and in the title of the account-age dialog in profile menus. The README, here
+  and in the Xposed Modules Repo, uses the new name too. Nothing else changes, and you don't
+  need to reinstall.
 
-## 1.1.4 — Re: TeleVIP Settings
+## 1.1.4 (8 October 2026) — Re: TeleVIP Settings
 
-- **TeleVip's entry in Settings is now called "Re: TeleVIP Settings 🛸"**, with "Made by:
-  @i_2B_4G10" below it. The settings screen it opens, and TeleVip's dialogs, use the new name
-  too, in all four languages (English, Arabic, Persian, Chinese).
+- **The entry in Settings is now called "Re: TeleVIP Settings 🛸"**, with "Made by: @i_2B_4G10"
+  below it. The settings screen and the dialogs use the new name too, in all four languages
+  (English, Arabic, Persian and Chinese).
 
-## 1.1.3 — TeleVip's own icon in Settings
+## 1.1.3 (8 October 2026) — its own icon in Settings
 
-- **TeleVip's entry in Settings shows TeleVip's app icon** — the paper plane on its yellow tile —
+- **The entry in Settings shows the app's own icon**, the paper plane on its yellow tile,
   instead of the ghost.
-- Also from 1.1.2: Cherrygram 11.3.0, which is built on Telegram 12.10.6, had the same problem as
-  Nekogram 12.10.6 and works again too.
+- **Cherrygram 11.3.0 works again.** It had the same problem as Nekogram 12.10.6, fixed in 1.1.2.
 
-## 1.1.2 — Nekogram 12.10.6 works again
+## 1.1.2 (8 October 2026) — Nekogram 12.10.6 works again
 
-- **Fixed: on Nekogram 12.10.6 TeleVip did almost nothing** — no TeleVip entry in Settings, ads
-  still shown, and most other features off. Since 1.0.8, TeleVip had mistaken that build for one
-  covered by an old name table made from Nekogram 12.8.1, so it looked for classes that do not
-  exist in 12.10.6. TeleVip now always reads the names from the installed app, on every client
-  and build, which is what the weekly client checks test. Cherrygram's table was mislabelled the
-  same way.
-- **TeleVip's entry is back at the top of Settings, with its ghost icon.** On builds that rename
-  the row's icon view beyond recognition, TeleVip now finds the icon by itself.
+- **TeleVip works on Nekogram 12.10.6 again.** It did almost nothing there: no entry in
+  Settings, ads still shown, and most other features off. It had mistaken that version for an
+  older one. It now always reads what it needs from the app you have installed, on every client
+  and every version, and that's exactly what the weekly checks test. Cherrygram had the same
+  mix-up and is fixed too.
+- **The entry is back at the top of Settings, with its ghost icon**, on builds where it had
+  lost its icon.
 
-## 1.1.1 — ads blocked at every step
+## 1.1.1 (7 October 2026) — ads blocked at every step
 
-- **Block Ads now has three barriers instead of one**, so a channel's sponsored post cannot get
-  through if one of them misses:
-  1. the request that fetches ads is dropped before it is sent, as before;
+- **Block Ads now has three barriers instead of one**, so a sponsored post can't slip through
+  if one of them misses:
+  1. the request that fetches ads is stopped before it's sent, as before;
   2. if an ad request is sent anyway, the server's answer is read as "no ads";
   3. a chat that asks for its sponsored posts is told there are none, whatever was fetched or
-     cached.
+     saved earlier.
 
-  This covers sponsored posts in channels and bot chats, the video player's ads and the "Ad"
+  This covers sponsored posts in channels and bot chats, ads in the video player and the "Ad"
   results in chat search. The pinned proxy sponsor channel stays removed as before.
-- **Block Ads is on by default.** If you never touched the switch, it is now on; if you turned
+- **Block Ads is on by default.** If you never touched the switch, it's now on. If you turned
   it off, it stays off.
 
-## 1.1.0 — new package name, for the Xposed Modules Repo
+## 1.1.0 (2 October 2026) — a new package name, for the Xposed Modules Repo
 
-- **TeleVip's package name is now `io.github.re_televip.televip`** (it was `com.my.televip`).
-  The Xposed Modules Repo (modules.lsposed.org) only lists modules whose package name their
-  author owns, and this one belongs to the Re-TeleVIP organisation. Android treats it as a new
-  app, so once:
-  1. Install this version, then uninstall the old *TeleVip* (`com.my.televip`).
+- **The module has a new package name, `io.github.re_televip.televip`** (it was
+  `com.my.televip`), so it can be listed in the Xposed Modules Repo (modules.lsposed.org).
+  Android sees it as a new app, so do this once:
+  1. Install this version, then uninstall the old *TeleVip*.
   2. In LSPosed / Vector, enable TeleVip again and tick your Telegram clients.
   3. Force stop the clients and reopen them.
 
-  Your TeleVip settings are kept: they are stored inside each Telegram client, not in TeleVip.
-- Releases are also published to TeleVip's page in the Xposed Modules Repo, so LSPosed's module
-  repository can offer updates.
+  Your settings are kept, because they're stored inside each Telegram client.
+- **Releases also appear in the Xposed Modules Repo**, so LSPosed / Vector can offer you
+  updates.
 
-## 1.0.8 — Show deleted messages on Nekogram 12.10.5+, Android 17 SDK
+## 1.0.8 (2 October 2026) — Show deleted messages on Nekogram 12.10.5+, Android 17
 
-- **Show deleted messages works on Nekogram 12.10.5 and 12.10.6.** 1.0.7 picked the wrong event
-  there: Nekogram numbers its events one higher than Telegram does. It also intercepted a
-  profile-screen event instead. The event is now read from the code that posts it, never
-  assumed. That is correct on all 37 builds checked, including Telegram FOSS 10.14.3, whose
-  events are numbered differently again.
-- Built against the Android 17 SDK (API 37). The weekly toolchain update now keeps the SDK
-  current too, alongside AGP, Gradle and the libxposed API, and pushes only if the build and
-  tests pass.
-- Client watch: the F-Droid listing no longer fails on clients with a long history (Forkgram).
-- Clean-up: unused resolver code removed, compiler warnings fixed, and deprecated Android calls
-  replaced (the client's version code; the audio player's stream type).
-- The builds TeleVip was last verified against are updated: Telegram Web 12.10.6, Nekogram
-  12.10.6, Cherrygram 11.3.0, Nagram 1248, NagramX 1258, Forkgram 12.10.4 and Forkgram Classic
-  12.10.8.
+- **Show deleted messages works on Nekogram 12.10.5 and 12.10.6.** 1.0.7 listened for the wrong
+  signal there, and could also catch a profile screen event by mistake. It now finds the right
+  one on every version. Checked on all 37 client builds, including Telegram FOSS 10.14.3.
+- **Ready for Android 17.** Built with the newest Android tools, which the weekly update now
+  keeps current too.
+- Under the hood: tidied up, and the weekly check no longer stumbles on clients with a long
+  history on F-Droid (Forkgram).
+- Checked again on Telegram Web 12.10.6, Nekogram 12.10.6, Cherrygram 11.3.0, Nagram 1248,
+  Nagram X 1258, Forkgram 12.10.4 and Forkgram Classic 12.10.8.
 
-## 1.0.7 — Nekogram 12.10.5+ and the last five releases of every client
+## 1.0.7 (1 October 2026) — Nekogram 12.10.5+ and the last five releases of every client
 
-- **Nekogram 12.10.5 and 12.10.6 are supported.** Their build renames, reorders, merges and
-  inlines much more than before, which broke the settings entry, Ghost Mode, Block Ads,
-  saving edits, the photo viewer and more. Every feature now finds its code there again.
-- **Mercurygram** is supported.
-- **Every feature was checked on the last five releases of each client** that can be
-  downloaded, 36 builds in all:
-  - Nekogram 12.9.2–12.10.6, Cherrygram 10.9–11.3, Nagram and NagramX;
+- **Nekogram 12.10.5 and 12.10.6 are supported.** These versions shuffle their insides much
+  more than before, which broke the settings entry, Ghost Mode, Block Ads, saving edits, the
+  photo viewer and more. Every feature works there again.
+- **Mercurygram is supported.**
+- **Every feature was checked on the last five releases of each client** you can download,
+  36 builds in all:
+  - Nekogram 12.9.2–12.10.6, Cherrygram 10.9–11.3, Nagram and Nagram X;
   - Forkgram 12.9.5–12.10.4, Forkgram Classic 12.10.3–12.10.8 and Mercurygram 12.9.0–12.10.5;
   - Telegram 12.10.5 and 12.10.6.
-- **The weekly Client watch now checks the last five releases of each of these clients**, not
-  just the newest one. Forkgram, Forkgram Classic and Mercurygram are fetched from F-Droid.
-- *Ghost Mode*: reading a channel without being seen marked it read with the wrong id on Nagram.
-  The account's own channel lookup is used now.
-- *Fix TL error*: the parse error is recognised by its message, where the build has no name
-  for it.
-- *Disable number rounding*, *Save edits history* and *Hide app updates* keep working where the
-  build reorders those methods' parameters or drops their return value.
-- TeleVip's dialogs use the system dialog everywhere. The Telegram-styled one never actually
-  loaded, because of a misspelt class name.
+- **The weekly client check now covers the last five releases of each client**, not just the
+  newest one. Forkgram, Forkgram Classic and Mercurygram come from F-Droid.
+- **Ghost Mode on Nagram:** reading a channel without being seen marked the wrong chat as read.
+  Fixed.
+- **Fix TL error, Disable number rounding, Save edits history and Hide app updates** keep
+  working on builds that change these parts of the app.
+- Dialogs now use your phone's own dialog style everywhere.
 
-## 1.0.6 — ad blocking that works
+## 1.0.6 (1 October 2026) — ad blocking that works
 
-- **Hide Proxy Sponsor is now Block Ads**, and your earlier setting carries over. It blocks the
-  requests that fetch ads before they are sent, so nothing is downloaded and nothing is shown:
+- **Hide Proxy Sponsor is now Block Ads**, and your earlier setting carries over. It stops ads
+  before they're even downloaded, so nothing is shown:
   - sponsored posts in channels and bot chats, and the ads in the video player;
   - the "Ad" results in chat search;
   - the proxy sponsor / announcement channel pinned to the top of the chat list.
-- **The sponsor channel no longer comes back.** It used to be removed only after the client had
-  already asked the server for it, so the reply put it straight back. The check is now skipped,
-  and a channel saved from before is removed along with the settings that restored it on start.
-- The ad requests are found by their protocol ids on renamed builds. Every Block Ads hook point
-  resolves on Telegram 12.10.5, Nekogram 12.10.3 and Cherrygram 12.10.1, and the weekly Client
-  watch checks them.
+- **The sponsor channel no longer comes back.** It used to be removed only after the app had
+  already asked for it, so it popped straight back. It's now never asked for, and one saved from
+  before is removed.
+- Block Ads was checked on Telegram 12.10.5, Nekogram 12.10.3 and Cherrygram 12.10.1, and the
+  weekly client check keeps checking it.
 
-## 1.0.5 — every feature reaches its code
+## 1.0.5 (28 September 2026) — every feature reaches its code
 
-Every feature's lookups were replayed against Telegram 12.10.5, Nekogram 12.10.3 and
-Cherrygram 12.10.1, and the ones that pointed at nothing were fixed:
+Every feature was tried again on Telegram 12.10.5, Nekogram 12.10.3 and Cherrygram 12.10.1, and
+the ones that did nothing were fixed:
 
-- **TeleVip's entry in Settings is back on official Telegram**, which made the methods it hooks
-  static and dropped their unused parameters.
-- **TeleVip's settings page no longer fails on Telegram and Cherrygram**: the switch rows it is
-  built from are found there again.
-- **Nicegram, Nagram, Turrit, Momogram and NekoX**: the parameter lists these forks changed are
-  honoured again (1.0.4 ignored them, which silently disabled some hooks there).
-- *Jump to message* works where Telegram inlined the overload it called; *Hide seen* finds
-  the channel lookup on renamed builds.
-- Found on more builds: the photo viewer, a viewer's image, the local file path of media and the
-  settings adapter.
-- Fingerprints hold on Nagram and NagramX too, which add their own menu items and look-alike cells.
-- Weekly automation: Dependabot updates are merged once they build, and the Monday Client watch
-  releases whatever changed if every client still checks out.
-- Removed the fourteen empty per-client name tables.
+- **The entry in Settings is back on official Telegram.**
+- **The settings page opens again on Telegram and Cherrygram.**
+- **Nicegram, Nagram, Turrit, Momogram and Nekogram X:** some features that 1.0.4 quietly turned
+  off on these clients work again.
+- **Jump to message** and **Hide seen** work on more builds.
+- The photo viewer, saving media and the settings list are found on more builds, Nagram and
+  Nagram X included.
+- **Weekly updates:** dependency updates are applied once they build, and the Monday client
+  check releases a new version if anything changed and every client still checks out.
 
-## 1.0.4 — official Telegram and Cherrygram
+## 1.0.4 (28 September 2026) — official Telegram and Cherrygram
 
-- **Official Telegram, Forkgram and the other unobfuscated forks now get the same runtime
-  resolution as Nekogram.** Telegram renames its UI classes (ChatActivity, SettingsActivity,
-  PhotoViewer's menus, ...) in every release, and TeleVip looked them up by their source names
-  there, so the features that hook them stayed off. Every client is now resolved from its own
-  APK, keeping a hand-made name table only on the exact build it was made for. Every feature hook
-  point resolves on Telegram 12.10.5.
-- **Cherrygram 12.10.1 is supported again.** It renames even the core `org.telegram.messenger`
-  and TL classes and nearly all of their methods. These are now found by strings only they load,
-  TL constructor ids, and the names that native code forces every build to keep. Every feature
-  hook point resolves on it.
-- Fingerprints follow more of R8's rewrites: methods turned static, narrowed field and return
-  types, and fields that are no longer narrowed.
-- The weekly Client watch also checks that no fingerprint ever picks a different symbol than the
-  real name, wherever a build keeps it.
+- **Official Telegram, Forkgram and similar clients now get the same treatment as Nekogram.**
+  Telegram renames parts of its app in every release, so some features stayed off there. Every
+  client is now read from the app you have installed. Every feature works on Telegram 12.10.5.
+- **Cherrygram 12.10.1 is supported again.** It renames almost everything, and Re: TeleVIP now
+  finds its way around that. Every feature works there.
+- More features keep working when a client update changes things around.
+- The weekly client check now also makes sure no feature ever latches on to the wrong part of
+  an app.
 
-## 1.0.3 — release safeguard
+## 1.0.3 (27 September 2026) — release safeguard
 
-- A release is never published without the signed APK: if the signing secrets are missing or
-  stop working, the release fails instead of shipping only the debug build.
-- Installs over 1.0.2 directly (same signing key).
+- A release is never published without the signed APK. If something goes wrong with signing,
+  nothing is released, instead of a release with only the test build.
+- Installs over 1.0.2 directly.
 
-## 1.0.2 — signed release APK
+## 1.0.2 (27 September 2026) — signed release APK
 
-- **The release APK is now signed**, so it installs directly. Builds read the key from the
-  `KEYSTORE_*` repository secrets (or a local `keystore.properties`); nothing secret is kept in
-  the repository. Because it is signed with a different key than the debug APK, uninstall a debug
-  build once before installing the release one.
-- Hooking several methods at once no longer skips the rest when one of them is missing.
-- Mapping caches of earlier client builds are deleted when a new one is written.
-- Removed unused code, resources and template files; Android Gradle Plugin 9.4.1.
+- **The release APK is now signed**, so it installs directly. It's signed with a different key
+  than the test builds, so if you have a test build installed, uninstall it once first.
+- If one hook can't be set, the others are still set instead of being skipped.
+- Old cached data from earlier client versions is cleaned up when new data is saved.
+- Removed unused code and files, and updated the build tools.
 
-## 1.0.1 — works on renamed builds, Ghost Mode dialog fixed
+## 1.0.1 (27 September 2026) — works on renamed builds, Ghost Mode dialog fixed
 
-Version numbering restarts at 1.0.1 (versionCode 341, so it still installs over 3.7.0).
+Version numbers start again at 1.0.1. It still installs over 3.7.0.
 
-### Fixed
+**Fixed**
 
-- **Tapping *Join* in the Ghost Mode dialog crashed Nekogram, and *Dismiss* left the Ghost Mode
-  button dead.** On Nekogram 12.10.3 `LaunchActivity.frameLayout` resolved to the tablet-only
-  `shadowTablet`, which is null on phones: showing the page failed and hiding it threw from
-  inside the dialog's click handler. The field is now found as the view `onCreate` hands to
-  `setContentView`, the wrapper checks it really is the window's content view (and falls back to
-  that view when it is not), `show`/`hide` can no longer throw, and dialog button actions run
-  inside a guard so a failure is logged instead of taking the client down.
-- The dialog button listener no longer depends on the listener method's name, and answers
-  `equals`/`hashCode` properly instead of returning null.
+- **Tapping *Join* in the Ghost Mode dialog crashed Nekogram**, and *Dismiss* left the Ghost
+  Mode button dead. Both work now, and a dialog button that runs into a problem no longer takes
+  the app down.
+- **Survives Telegram updates.** When an update changes something a feature relies on, the
+  feature now finds it again instead of quietly turning off, and never latches on to the wrong
+  thing.
 
-### Restored on obfuscated (R8-renamed) builds
+**Working again on Nekogram 12.10.3 and other clients with scrambled names**
 
-Every feature below was inactive on Nekogram 12.10.3 because its hook point was renamed,
-inlined, reordered or narrowed. Each is now found by what the code does, checked against the
-12.10.3 bytecode in `NekogramApkTest`:
+- Hide pinned messages
+- Remove content-saving restrictions
+- Save edits history
+- Show deleted messages
+- Save secret media and Prevent media in secret chats
+- Save protected stories
+- Disable stories
+- Always save media
+- The chat and profile menu entries: *To the beginning*, *To the message* and *Approximate
+  creation date*
+- Show user ID and Hide online on profiles
+- Menu and settings icons
 
-- **Hide pinned messages** — `updatePinnedMessageView` (R8 swapped its parameters to
-  `(int, boolean)`; the real order is now published to the hook), `createPinnedMessageView` and
-  the `pinnedMessageView` field.
-- **Remove content-saving restrictions** — `hasSelectedNoforwardsMessage`.
-- **Save edits history** — `fillMessageMenu`, `processSelectedOption`, `selectedObject`.
-- **Show deleted messages** — `measureTime` and the time-label fields it writes
-  (`currentTimeString`, `timeWidth`, `timeTextWidth`, `Theme.chat_timePaint`).
-- **Secret media save** — the chat's `didPressImage` (R8 dropped its unused flag).
-- **Save protected stories** — `StoryItemHolder.allowScreenshots`.
-- **Disable stories** — `hasStories(long)` is hooked on every client, since `hasStories()` is
-  inlined away in some builds.
-- **Always save media** — `setIsAboutToSwitchToIndex` and `galleryButton`; `openPhoto` and
-  `setParentActivity` fall back to the one overload R8 keeps.
-- **Chat and profile menu entries** (*To the beginning*, *To the message*, *Approximate creation
-  date*) — `ActionBarMenuItem` and its `addSubItem`/`lazilyAddSubItem`, `headerItem`,
-  `otherItem`, `createActionBarMenu`. Clicks are now routed from each screen's live menu listener
-  instead of by class name, which renamed builds do not keep.
-- **Show user ID / hide online status on profiles** — `updateProfileData`, `userId`, `chatId`,
-  `nameTextView`, `onlineTextView`, and `SimpleTextView`'s text methods (found by shape when
-  renamed).
-- Menu and settings icons fall back to the resource table when `R$drawable` has been stripped.
+**Also**
 
-The resolver gained the matching tools: parameter-order tolerance, "called by" and
-"stores a new anonymous subclass" facts, subtype-narrowed fields, and class lookup by one
-distinctive method. The fingerprint version is bumped, so a cached mapping from the previous
-module version is discarded and rebuilt on first start.
+- **A new app icon:** a paper plane.
+- The APK is built on GitHub, with install steps in the README.
+- A short line in the log at startup says how many features found what they need.
+- After this update, Re: TeleVIP takes a moment on first start to look at your client again.
 
-### Hook resilience
+## 3.7.0 (6 September 2026) — new Xposed framework, Vector 2.2, Zygisk Next, Nekogram X
 
-- **Signature drift no longer kills a hook.** When the exact signature is gone the method is
-  re-matched by name, but only when the match is unambiguous (same arity when parameter types are
-  given); anything else is left unhooked rather than attached to the wrong overload.
-- **A parameter type that no longer resolves is a wildcard** instead of failing the whole hook.
-- **`HookHealth` logs one line at startup**: how many hooks resolved, drifted or are missing.
-
-## 3.7.0 — Xposed API 102, Vector 2.2, Zygisk Next, Nekogram X
-
-### Modern Xposed API (libxposed 102)
-
-TeleVip is now a **libxposed API 102 module**, loaded through a single modern entry point:
-
-| Entry | Descriptor | Class |
-|---|---|---|
-| Modern (API 102) | `META-INF/xposed/java_init.list` + `module.prop` | `com.my.televip.xposed.TeleVipModule` |
-
-It funnels into `com.my.televip.xposed.ModuleEntry#attach`. The legacy API 93 entry
-(`assets/xposed_init` → `MainHook`) was dropped before release: leaving it in place would make
-LSPosed 1.9.x and EdXposed advertise the module and then fail at load time, because there is no
-longer a `de.robv` entry class for them to find.
-
-New compatibility layer under `com.my.televip.xposed`:
-
-- **`XBridge`** — the only seam to the framework: hooking, logging, module APK path, deoptimize,
-  framework name/version. Everything else in the module goes through it.
-- **`ModernBackend`** — adapts to `XposedInterface.hook(Executable).intercept(Hooker)`. API 102
-  replaced the before/after pair with an OkHttp-style interceptor chain, so the adapter rebuilds
-  classic semantics on top of `Chain`: a result set in `beforeMethod` short-circuits the chain
-  (original never runs), otherwise `chain.proceed(args)` runs with the mutated argument array and
-  its outcome is handed to `afterMethod`, which may still override it.
-
-`AbstractMethodHook` no longer extends `XC_MethodHook`; it is a plain class with a nested
-`MethodHookParam` that keeps the same surface (`args`, `thisObject`, `getResult`, `setResult`,
-`setThrowable`), so all existing feature code compiles unchanged. `XC_MethodReplacement` is
-replaced by `com.my.televip.base.MethodReplacement`.
-
-### No runtime dependency on `de.robv.*` for reflection
-
-A module loaded through the modern API gets **no legacy Xposed classes at all**, so every
-`XposedHelpers` call would have thrown `NoClassDefFoundError`. All 58 call sites now use
-`com.my.televip.reflect.XReflect`, a self-contained reimplementation with the same signatures,
-the same best-match argument resolution (exact match → boxing → primitive widening →
-`null`-compatible, most specific wins) and the same unchecked `NoSuchMethodError` /
-`NoSuchFieldError` behaviour. Field and class lookups are cached.
-
-### Vector 2.2 / Zygisk Next hardening
-
-- The module APK path no longer depends on `initZygote()`, which the modern API does not have and
-  which is unreliable for app-scoped modules under Zygisk Next. `XBridge#modulePath` takes it from
-  the backend (`getModuleApplicationInfo().sourceDir` on modern, `StartupParam` on legacy) and
-  falls back to deriving it from our own class loader.
-- Language packs moved from `assets/lang/` to `src/main/resources/lang/` and are read straight off
-  the module class loader — no APK path needed at all. The old ZIP scan is kept as a fallback and
-  still auto-discovers packs the index does not list.
-- `Logger` routes through `XBridge` and degrades to `android.util.Log` if no backend is
-  installed yet.
-- Startup now logs the active backend, framework name and version.
-
-### Nekogram
-
-- **Nekogram X added** (`nekox.messenger`): new `Clients/NekogramX.java` resolver, `ClientType`
-  entry and `META-INF/xposed/scope.list` item. Like its Momogram fork, NekoX ships unobfuscated
-  Telegram symbols, so the mapping tables are empty and names resolve to upstream Telegram names.
-- **Version drift is now visible.** `ClientChecker#checkClientVersion` records the build each
-  resolver table was generated against and logs one clear warning at startup when the installed
-  client differs — loud for the obfuscated clients (Nekogram, Cherrygram), where a mismatch means
-  essentially every hook silently fails.
-- **Official Telegram re-verified against 12.10.1** (build 70382). The symbols the module resolves
-  by name — `TLRPC.Message` fields, `TL_messages_readHistory` / `TL_channels_readHistory`,
-  `TL_updateDeleteMessages`, `MessagesController` / `ConnectionsManager` / `UserConfig` accessors
-  and `PeerStoriesView$StoryItemHolder#allowScreenshots` — are unchanged from the previously
-  verified build, so no hook needed updating.
-
-> The Nekogram/Cherrygram R8 mapping tables themselves still have to be regenerated from the target
-> APK whenever those clients update; that cannot be done from source.
-
-### Build / repo fixes
-
-- `settings.gradle` included `':TeleVip'`, a module that does not exist — removed.
-- `.gitignore` had an unresolved merge conflict (`<<<<<<< HEAD` … `>>>>>>>`) committed to it —
-  resolved, plus the generated `DexHolder.java` is now ignored.
-- Added `io.github.libxposed:api:102.0.0` as a `compileOnly` dependency in the version catalog.
-- ProGuard rules for both entry points (`-adaptresourcefilecontents META-INF/xposed/java_init.list`
-  and the `XposedModule` keep rule).
-- `xposeddescription` moved to a string resource, with `android:description` added for the modern
-  API (which reads the module description from there); Arabic kept in `values-ar`.
-- Version bumped to 3.7.0 (340).
+- **Built for the new Xposed framework (API 102).** Re: TeleVIP runs on **Vector 2.2** and works
+  with **Zygisk Next**. Older frameworks that only know the old API (LSPosed 1.9.x, EdXposed)
+  are no longer supported.
+- **Nekogram X is supported.**
+- **A clear warning when a client update may break things.** If your Telegram client is a
+  different version from the one Re: TeleVIP was checked on, you'll see one warning in the log
+  at startup.
+- **Official Telegram 12.10.1 checked:** everything works as before.
+- Languages load more reliably, and the module description shows in Arabic too.
+- Build fixes and updated tools.
