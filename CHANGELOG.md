@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.5.4 — Portuguese, group switches that work, and seconds on Nekogram
+
+**New**
+
+- **Português (Brasil).** Re: TeleVIP now speaks Brazilian Portuguese. Pick it under **Language**, or it follows your app when the app is in Portuguese.
+
+**Fixed**
+
+- **Group switches.** The switch on a group like **Show User ID** or **Hide "Seen" status** now turns all its options off, or all on. Tap the name to open the group as before.
+- **Show seconds on Nekogram** and other clients with scrambled names. Seconds now show for everyone who updated from 1.5.2.
+
+**Changed**
+
+- **Licence.** From this version Re: TeleVIP is © Faisal AlDossary, all rights reserved, and the source code is no longer attached to releases. Earlier versions keep their GPL-3.0 licence.
+- Large parts of the module were rewritten and tidied up. Everything works as before.
+
 ## 1.5.3 — deleted messages that stay, a backup for them, and seconds on every message
 
 Thank you for the reports in the group.
