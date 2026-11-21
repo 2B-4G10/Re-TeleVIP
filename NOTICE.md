@@ -8,6 +8,6 @@ From version 1.5.4, Re: TeleVIP is proprietary software under the terms in [LICE
 
 **Older versions.** Versions 1.5.3 and earlier were released under the GNU General Public License v3.0 with the extra terms that were in this notice then. Those copies keep that licence.
 
-Official sources: [github.com/2B-4G10/Re-TeleVIP](https://github.com/2B-4G10/Re-TeleVIP), the Xposed Modules Repository entry `io.github.re_televip.televip`, and [t.me/Revived_TeleVIP](https://t.me/Revived_TeleVIP). Anything else using this name or logo is not official.
+Official sources: [github.com/Dream1Works/Re-TeleVIP](https://github.com/Dream1Works/Re-TeleVIP), the Xposed Modules Repository entry `io.github.re_televip.televip`, and [t.me/Revived_TeleVIP](https://t.me/Revived_TeleVIP). Anything else using this name or logo is not official.
 
 For permission requests, contact [t.me/Revived_TeleVIP](https://t.me/Revived_TeleVIP).

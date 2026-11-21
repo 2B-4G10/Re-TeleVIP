@@ -6,7 +6,7 @@
 
 **Privacy, ad blocking and quality-of-life features for Telegram and its forks,<br>as a Vector / Xposed module.**
 
-[![Release](https://img.shields.io/github/v/release/2B-4G10/Re-TeleVIP?label=release&color=FFD500)](../../releases/latest)
+[![Release](https://img.shields.io/github/v/release/Dream1Works/Re-TeleVIP?label=release&color=FFD500)](../../releases/latest)
 [![Downloads](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2F2B-4G10%2FRe-TeleVIP%2Fbadges%2Fdownloads.json)](../../releases)
 [![Xposed API](https://img.shields.io/badge/libxposed-API%20102-4A4D54)](#-getting-started)
 [![License](https://img.shields.io/badge/license-All%20rights%20reserved-F99B1C)](LICENSE)
@@ -241,7 +241,7 @@ Details are in the [changelog](CHANGELOG.md).
 Re: TeleVIP talks to the internet for three things only:
 
 - **Update check.** Once a day it asks GitHub for the latest release (or reads the changelog through jsDelivr where GitHub is blocked). **Download** fetches the APK from GitHub, or from jsDelivr when GitHub doesn't answer, or opens the release's post in our Telegram channel. You can turn the daily check off under **Updates**.
-- **Client compatibility list.** Once a week it downloads [compat.json](https://github.com/2B-4G10/Re-TeleVIP/blob/main/compat.json) from GitHub (or jsDelivr where GitHub is blocked): which client versions the weekly check found working. It sends nothing about you.
+- **Client compatibility list.** Once a week it downloads [compat.json](https://github.com/Dream1Works/Re-TeleVIP/blob/main/compat.json) from GitHub (or jsDelivr where GitHub is blocked): which client versions the weekly check found working. It sends nothing about you.
 - **Active users count.** Once a day it sends one anonymous message so we know how many people use Re: TeleVIP. It holds a random ID made on your phone, the module version and the name of your Telegram app. It never sends your Telegram account, phone number, contacts or messages, and your IP address is not stored.
 
 <br>
